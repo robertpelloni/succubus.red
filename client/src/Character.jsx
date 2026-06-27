@@ -22,7 +22,7 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
         const loadedVrm = gltf.userData.vrm;
         VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
-        // Based on our tests, we need rotation.y = 0 for the retargeted Mixamo animations to make the character face the camera correctly! Wait, but without Mixamo animations applied, it faces backwards at 0. But with Mixamo animations applied, it turns around. The retargeting tracks rotate the character.
+        // Turn character to face camera
         loadedVrm.scene.rotation.y = Math.PI;
 
         setVrm(loadedVrm);
@@ -70,7 +70,6 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
       vrm.update(delta);
 
       if (vrm.expressionManager) {
-        // Handle basic lip sync procedurally since we use SpeechSynthesis directly
         if (isSpeaking) {
           const t = state.clock.elapsedTime * 15;
           const mouthOpen = (Math.sin(t) + 1) / 2;
