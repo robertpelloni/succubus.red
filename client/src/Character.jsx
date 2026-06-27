@@ -1,120 +1,118 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useFrame, useLoader, useThree } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
+import React, { useRef, useEffect, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import * as THREE from 'three';
-import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 
-export default function Character({ url, currentAnimation = 'idle', emotion = null, isSpeaking = false }) {
+export default function Character({ currentAnimation = 'idle', emotion = null, isSpeaking = false }) {
+  const group = useRef();
   const [vrm, setVrm] = useState(null);
-  const lipSyncRef = useRef(null);
-  const mixerRef = useRef(null);
-  const actionsRef = useRef({});
-  const activeActionRef = useRef(null);
-  const { camera } = useThree();
-
-  const idleFbx = useLoader(FBXLoader, '/Idle.fbx');
-  const waveFbx = useLoader(FBXLoader, '/Wave.fbx');
-
-  const gltf = useLoader(GLTFLoader, url, (loader) => {
-    loader.register((parser) => {
-      return new VRMLoaderPlugin(parser);
-    });
-  });
+  const [mixer, setMixer] = useState(null);
+  const [actions, setActions] = useState({});
 
   useEffect(() => {
-    if (gltf.userData.vrm) {
-      const loadedVrm = gltf.userData.vrm;
+    const loader = new GLTFLoader();
+    loader.register((parser) => new VRMLoaderPlugin(parser));
 
-      VRMUtils.removeUnnecessaryVertices(loadedVrm.scene);
-      VRMUtils.removeUnnecessaryJoints(loadedVrm.scene);
+    loader.load(
+      '/avatar.vrm',
+      (gltf) => {
+        const loadedVrm = gltf.userData.vrm;
+        VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
-      // Face the camera correctly. Default is facing away from +Z
-      loadedVrm.scene.rotation.y = Math.PI;
+        // Based on our tests, we need rotation.y = 0 for the retargeted Mixamo animations to make the character face the camera correctly! Wait, but without Mixamo animations applied, it faces backwards at 0. But with Mixamo animations applied, it turns around. The retargeting tracks rotate the character.
+        loadedVrm.scene.rotation.y = Math.PI;
 
-      setVrm(loadedVrm);
+        setVrm(loadedVrm);
 
-      // Animation Setup
-      const mixer = new THREE.AnimationMixer(loadedVrm.scene);
-      mixerRef.current = mixer;
+        const newMixer = new THREE.AnimationMixer(loadedVrm.scene);
+        setMixer(newMixer);
 
-      const prepareAnimation = (fbx, name) => {
-        const clip = loadMixamoAnimation(fbx, loadedVrm);
-        if (!clip) return;
+        const loadAnim = async (url, name) => {
+          try {
+            const fbxLoader = new FBXLoader();
+            const animGltf = await fbxLoader.loadAsync(url);
 
-        const action = mixer.clipAction(clip);
-        action.name = name;
-        actionsRef.current[name] = action;
-      };
+            const clip = loadMixamoAnimation(animGltf, loadedVrm);
+            if (clip) {
+              const action = newMixer.clipAction(clip);
+              setActions((prev) => ({ ...prev, [name]: action }));
 
-      prepareAnimation(idleFbx, 'idle');
-      prepareAnimation(waveFbx, 'wave');
+              if (name === currentAnimation) {
+                action.reset().fadeIn(0.2).play();
+              }
+            }
+          } catch (error) {
+            console.error('Error loading animation:', error);
+          }
+        };
 
-      if (actionsRef.current['idle']) {
-        actionsRef.current['idle'].play();
-        activeActionRef.current = actionsRef.current['idle'];
-      }
-    }
-  }, [gltf, idleFbx, waveFbx]);
-
-  useEffect(() => {
-    if (mixerRef.current && actionsRef.current[currentAnimation]) {
-      const newAction = actionsRef.current[currentAnimation];
-      const oldAction = activeActionRef.current;
-
-      if (oldAction !== newAction) {
-        if (oldAction) {
-          oldAction.fadeOut(0.35);
-        }
-        newAction.reset().fadeIn(0.35).play();
-        activeActionRef.current = newAction;
-      }
-    }
-  }, [currentAnimation]);
+        loadAnim('/Idle.fbx', 'idle');
+        loadAnim('/Wave.fbx', 'wave');
+      },
+      (progress) => console.log('Loading model...', 100.0 * (progress.loaded / progress.total), '%'),
+      (error) => console.error('Failed to load VRM:', error)
+    );
+  }, []);
 
   useEffect(() => {
-    if (vrm && emotion) {
-      vrm.expressionManager.setValue(emotion.name, emotion.value);
+    if (vrm && actions[currentAnimation]) {
+      Object.values(actions).forEach((action) => action.fadeOut(0.2));
+      actions[currentAnimation].reset().fadeIn(0.2).play();
     }
-  }, [emotion, vrm]);
+  }, [currentAnimation, actions, vrm]);
 
   useFrame((state, delta) => {
+    if (mixer) mixer.update(delta);
     if (vrm) {
-      // Look at tracking (follow camera)
-      if (vrm.lookAt) {
-        vrm.lookAt.target = camera;
-      }
-
-      if (lipSyncRef.current) {
-        const visemes = lipSyncRef.current.update();
-        vrm.expressionManager.setValue('aa', visemes.a);
-        vrm.expressionManager.setValue('ih', visemes.i);
-        vrm.expressionManager.setValue('ou', visemes.u);
-      } else if (isSpeaking) {
-        // Pseudo lipsync fallback when no audio context is hooked
-        const time = Date.now() * 0.01;
-        vrm.expressionManager.setValue('aa', Math.sin(time) * 0.5 + 0.5);
-        vrm.expressionManager.setValue('ih', Math.cos(time * 1.5) * 0.5 + 0.5);
-        vrm.expressionManager.setValue('ou', Math.sin(time * 0.8) * 0.5 + 0.5);
-      } else {
-        vrm.expressionManager.setValue('aa', 0);
-        vrm.expressionManager.setValue('ih', 0);
-        vrm.expressionManager.setValue('ou', 0);
-      }
-
-      if (mixerRef.current) {
-        mixerRef.current.update(delta);
-      }
-
       vrm.update(delta);
+
+      if (vrm.expressionManager) {
+        // Handle basic lip sync procedurally since we use SpeechSynthesis directly
+        if (isSpeaking) {
+          const t = state.clock.elapsedTime * 15;
+          const mouthOpen = (Math.sin(t) + 1) / 2;
+          vrm.expressionManager.setValue('aa', mouthOpen * 0.8);
+        } else {
+          vrm.expressionManager.setValue('aa', 0);
+        }
+
+        // Handle emotions
+        const emotions = ['happy', 'angry', 'sad', 'relaxed', 'surprised'];
+        emotions.forEach(emo => {
+          vrm.expressionManager.setValue(emo, 0);
+        });
+
+        if (emotion && emotion.name) {
+          const validEmotionMap = {
+            'joy': 'happy',
+            'happy': 'happy',
+            'angry': 'angry',
+            'sorrow': 'sad',
+            'sad': 'sad',
+            'fun': 'relaxed',
+            'relaxed': 'relaxed',
+            'surprised': 'surprised',
+            'excited': 'happy'
+          };
+
+          const targetEmo = validEmotionMap[emotion.name.toLowerCase()] || emotion.name.toLowerCase();
+
+          try {
+            vrm.expressionManager.setValue(targetEmo, emotion.value || 1);
+          } catch (e) {
+            // Ignore if expression doesn't exist
+          }
+        }
+      }
     }
   });
 
-  if (!vrm) {
-    return null;
-  }
-
-  return <primitive object={vrm.scene} dispose={null} />;
+  return (
+    <group ref={group} rotation={[0, Math.PI, 0]}>
+      {vrm && <primitive object={vrm.scene} dispose={null} />}
+    </group>
+  );
 }
