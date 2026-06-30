@@ -1,0 +1,6 @@
+[submodule "references/webwaifu3"]
+	path = references/webwaifu3
+	url = https://github.com/xsploit/webwaifu3.git
+[submodule "references/talkinghead"]
+	path = references/talkinghead
+	url = https://github.com/met4citizen/talkinghead.git

@@ -1,0 +1,15 @@
+# TODO
+- [x] Set up Vite + React project.
+- [x] Install three, @react-three/fiber, @react-three/drei, @pixiv/three-vrm.
+- [x] Add submodules for webwaifu3 and talkinghead.
+- [x] Build 3D viewport canvas.
+- [x] Load a basic VRM model.
+- [x] Implement procedural look-at animations.
+- [x] Implement Web Audio lip sync to drive VRM blendshapes.
+- [x] Create simple backend or proxy for LLM API (OpenRouter).
+- [x] Implement skeletal animation mixer and transitions (idle, talking, waving).
+- [x] Implement TTS engine (SpeechSynthesis).
+- [x] Implement chat UI overlay.
+- [x] Parse JSON output from backend for emotional animation mapping.
+- [x] Add local storage for settings and chat history.
+- [ ] Enhance UI/UX and MToon shading.
