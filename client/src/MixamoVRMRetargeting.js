@@ -88,9 +88,9 @@ export function loadMixamoAnimation(asset, vrm) {
 
 				const value = new Float32Array(track.values.length);
 				for (let i = 0; i < track.values.length; i += 3) {
-					let dx = track.values[i] - mixRestX;
+					let dx = 0; // Lock horizontal root translation
 					let dy = track.values[i + 1] - mixRestY;
-					let dz = track.values[i + 2] - mixRestZ;
+					let dz = 0; // Lock horizontal root translation
 					if (vrm.meta?.metaVersion === '0') { dx = -dx; dz = -dz; }
 					value[i] = vrmRestX + dx * hipsPositionScale;
 					value[i + 1] = vrmRestY + dy * hipsPositionScale;

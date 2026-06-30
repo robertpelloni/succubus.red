@@ -23,7 +23,7 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
         VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
         // Turn character to face camera
-        loadedVrm.scene.rotation.y = Math.PI;
+        loadedVrm.scene.rotation.y = 0;
 
         setVrm(loadedVrm);
 
@@ -110,7 +110,7 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
   });
 
   return (
-    <group ref={group} rotation={[0, Math.PI, 0]}>
+    <group ref={group}>
       {vrm && <primitive object={vrm.scene} dispose={null} />}
     </group>
   );
