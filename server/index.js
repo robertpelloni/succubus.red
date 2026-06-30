@@ -8,15 +8,19 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY || "dummy_key",
-});
-
 app.post("/api/chat", async (req, res) => {
-  const { userMessages, characterSystemPrompt } = req.body;
+  const { userMessages, characterSystemPrompt, apiKey } = req.body;
 
   try {
+    // Determine API Key
+    const resolvedApiKey = apiKey || process.env.OPENROUTER_API_KEY || "dummy_key";
+
+    // Setup OpenAI Client pointing to OpenRouter
+    const openai = new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: resolvedApiKey,
+    });
+
     const response = await openai.chat.completions.create({
       model: "Gryphe/Mythalion-13b",
       messages: [
@@ -35,7 +39,7 @@ app.post("/api/chat", async (req, res) => {
     res.end();
   } catch (error) {
     console.error("Error from OpenRouter API:", error);
-    res.status(500).send("Error communicating with AI API.");
+    res.status(500).json({ error: error.message || "Error communicating with AI API." });
   }
 });
 

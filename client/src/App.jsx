@@ -9,6 +9,23 @@ function App() {
   const [input, setInput] = useState('');
   const [currentAnimation, setCurrentAnimation] = useState('idle');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [emotion, setEmotion] = useState(null);
+
+  // Dashboard UI state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState(
+    `You are a helpful and playful AI companion.
+You must always output your response as a valid JSON object.
+The JSON object must have the following keys:
+"text": the string of what you want to say.
+"animation": an animation to play (choose from "idle", "wave").
+"emotion": an emotion string (choose from "joy", "angry", "sorrow", "fun") to map to a blendshape.
+
+Do not wrap the JSON in markdown code blocks, output only the JSON object.`
+  );
+  const [openRouterKey, setOpenRouterKey] = useState('');
+  const [errorMsg, setErrorMsg] = useState(null);
+
   const endOfMessagesRef = useRef(null);
 
   const speak = (text) => {
@@ -33,35 +50,35 @@ function App() {
     }
   };
 
-  const [emotion, setEmotion] = useState(null);
-
   useEffect(() => {
-    const saved = localStorage.getItem('chat_history');
-    if (saved) {
+    const savedChat = localStorage.getItem('chat_history');
+    if (savedChat) {
       try {
-        setMessages(JSON.parse(saved));
+        setMessages(JSON.parse(savedChat));
       } catch (e) {
         console.error("Failed to parse local storage chat history", e);
       }
     }
+    const savedPrompt = localStorage.getItem('system_prompt');
+    if (savedPrompt) setSystemPrompt(savedPrompt);
+    const savedKey = localStorage.getItem('openrouter_key');
+    if (savedKey) setOpenRouterKey(savedKey);
   }, []);
+
+  const handleSaveSettings = () => {
+    localStorage.setItem('system_prompt', systemPrompt);
+    localStorage.setItem('openrouter_key', openRouterKey);
+    setSettingsOpen(false);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
+    setErrorMsg(null);
     const newMessages = [...messages, { role: 'user', content: input }];
     setMessages(newMessages);
     setInput('');
 
     localStorage.setItem('chat_history', JSON.stringify(newMessages));
-
-    const characterSystemPrompt = `You are a helpful and playful AI companion.
-    You must always output your response as a valid JSON object.
-    The JSON object must have the following keys:
-    "text": the string of what you want to say.
-    "animation": an animation to play (choose from "idle", "wave").
-    "emotion": an emotion string (e.g., "joy", "angry", "sorrow", "fun") to map to a blendshape.
-
-    Do not wrap the JSON in markdown code blocks, output only the JSON object.`;
 
     try {
       const response = await fetch('http://localhost:3001/api/chat', {
@@ -69,12 +86,14 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userMessages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          characterSystemPrompt
+          characterSystemPrompt: systemPrompt,
+          // In a real app we'd pass this to the backend safely, or use client-side fetching
+          apiKey: openRouterKey
         })
       });
 
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
 
       const reader = response.body.getReader();
@@ -108,6 +127,7 @@ function App() {
 
       } catch (e) {
         console.error("Failed to parse JSON response:", textBuffer);
+        setErrorMsg("AI returned malformed JSON. Falling back to plain text.");
         const finalMessages = [...newMessages, { role: 'assistant', content: textBuffer }];
         setMessages(finalMessages);
         localStorage.setItem('chat_history', JSON.stringify(finalMessages));
@@ -116,6 +136,7 @@ function App() {
 
     } catch (error) {
       console.error("Error fetching from API:", error);
+      setErrorMsg(error.message || "Failed to communicate with the server.");
     }
   };
 
@@ -131,6 +152,63 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: 'radial-gradient(circle at center, #3a3a5a 0%, #1a1a2e 100%)' }}>
+
+      {/* Settings Toggle Button */}
+      <button
+        className="settings-toggle"
+        onClick={() => setSettingsOpen(!settingsOpen)}
+        title="Configuration Dashboard"
+      >
+        ⚙️
+      </button>
+
+      {/* Settings Dashboard Panel */}
+      <div className={`settings-panel ${settingsOpen ? 'open' : ''}`}>
+        <h2 style={{ marginTop: 0, borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '10px' }}>Dashboard</h2>
+
+        <div className="setting-group">
+          <label>
+            OpenRouter API Key
+            <span className="tooltip">?<span className="tooltiptext">Required to access uncensored LLM models via OpenRouter. Get one at openrouter.ai/keys.</span></span>
+          </label>
+          <input
+            type="password"
+            value={openRouterKey}
+            onChange={e => setOpenRouterKey(e.target.value)}
+            placeholder="sk-or-v1-..."
+          />
+        </div>
+
+        <div className="setting-group">
+          <label>
+            Character Prompt
+            <span className="tooltip">?<span className="tooltiptext">Defines the persona and response format. Must instruct the AI to output valid JSON for the avatar to animate properly.</span></span>
+          </label>
+          <textarea
+            rows={8}
+            value={systemPrompt}
+            onChange={e => setSystemPrompt(e.target.value)}
+          />
+        </div>
+
+        <button
+          onClick={handleSaveSettings}
+          style={{
+            width: '100%',
+            padding: '10px',
+            background: '#e91e63',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            marginTop: '10px'
+          }}
+        >
+          Save & Close
+        </button>
+      </div>
+
       <Canvas camera={{ position: [0, 1.4, 2.5], fov: 40 }}>
         <ambientLight intensity={1.2} color="#ffffff" />
         <directionalLight position={[2, 5, 2]} intensity={1.5} color="#fff1e6" castShadow />
@@ -162,6 +240,13 @@ function App() {
         color: 'white',
         fontFamily: 'system-ui, -apple-system, sans-serif'
       }}>
+
+        {errorMsg && (
+          <div className="error-message">
+            <strong>Warning:</strong> {errorMsg}
+          </div>
+        )}
+
         <div style={{
           height: '30vh',
           maxHeight: '300px',
