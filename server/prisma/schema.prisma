@@ -1,0 +1,24 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model UserSettings {
+  id                  Int      @id @default(autoincrement())
+  currentAnimation    String   @default("idle")
+  openrouterApiKey    String?
+  elevenlabsApiKey    String?
+  elevenlabsVoiceId   String?
+  systemPrompt        String?
+  ttsPitch            Float    @default(1.2)
+  ttsRate             Float    @default(1.0)
+  ttsVoice            String?
+  chatHistory         String?  // Stored as JSON string
+  updatedAt           DateTime @updatedAt
+}
