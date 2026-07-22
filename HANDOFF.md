@@ -25,16 +25,13 @@
 - **Dynamic Camera Perspectives**: Implemented Phase 13. Replaced `OrbitControls` with `@react-three/drei`'s `CameraControls`. Added UI presets (Full, Portrait, Close) to the dashboard that trigger smooth, programmatic `setLookAt` cinematic transitions.
 - **Interactive Environment**: Implemented Phase 14. Integrated pointer event handlers to the background GLTF scene (`room.glb`). Enabled an emissive material highlight that triggers when the user hovers over environment meshes, expanding immersion.
 - **Context-Aware Prompting**: Implemented Phase 15. Injected environmental awareness (room/stage details) into the default AI system prompt, allowing for deeper roleplay and immersion where the AI acknowledges its virtual surroundings.
-- **AI Environment Triggers**: Implemented Phase 16. Added parsing for `[lights:on]` and `[lights:off]` tags to the LLM streaming parser. When the AI uses these tags, it dynamically toggles the intensities of the 3D scene's lights.
-- **AI Particle Effect Triggers**: Implemented Phase 17. Integrated `@react-three/drei`'s `<Sparkles>` component. The AI can now emit `[effect:sparkle]` and `[effect:none]` tags to spawn and despawn particle effects in the 3D scene.
-- **Audio and Network Interruption**: Implemented Phase 18. Added `AbortController` logic to the main fetch request in `App.jsx` and created a `stopSpeakingAndAbort()` helper. This guarantees that if a user sends a new message or clears the chat, the active LLM stream cancels, the audio queue is emptied, and the currently playing TTS audio halts immediately.
-- **Native TTS Queue Fix**: Implemented Phase 19. Corrected a state race condition where the native browser `SpeechSynthesisUtterance.onend` handler would disable the `isSpeaking` boolean prematurely, freezing the character's face. The app now waits for the entire `speechSynthesis` queue to clear.
-- **Persistence Layer Abstraction**: Implemented Phase 20. Replaced all raw `localStorage` calls in `App.jsx` with a new `StorageService` utility. This sets the foundation for seamlessly swapping browser cache with cloud-based persistent user profiles.
-- **Backend Database Initialization**: Implemented Phase 21. Installed Prisma and initialized a local SQLite database (`dev.db`). Defined a `UserSettings` schema mirroring the frontend's `StorageService` properties, preparing the project for cloud synchronization and multi-user support.
+- **Environment Lighting Triggers**: Implemented Phase 16. Added `lightsOn` state to `App.jsx` and updated the tag parser regex to handle `[lights:on]` and `[lights:off]`. The AI is now instructed via system prompt that it can control the room lights using these tags. Passed this state down to `Environment.jsx` to dynamically swap the DreiEnvironment preset between 'city' and 'night' and conditionally render the Sky component. The main ambient, directional, and point lights in the scene are also dimmed when off.
+- **Multi-User Backend Persistence**: Implemented Phases 18, 19, 20, & 21. Abstracted local storage into `StorageService.js`. Set up a relational Prisma SQLite database in the backend (`User` and `UserSettings` schema) and exposed `/api/settings` REST endpoints capable of partitioning data by `userId`. `App.jsx` now mounts by fetching state asynchronously and uses a debounced effect to synchronize user config and chat memory back to the API.
+- **Particle Effects**: Implemented Phase 17. Integrated `@react-three/drei`'s `<Sparkles>` component, parsing `[effect:sparkle]` and `[effect:none]` tags to allow the AI to spawn/despawn visual particles mid-sentence.
 - Ran all required Playwright verifications to ensure the character renders correctly and chat UI displays appropriately.
 
 ## Known Issues / Next Steps
-- Implement REST API endpoints in `server/index.js` to handle saving and fetching data from the Prisma `UserSettings` model, and link them to `client/src/StorageService.js`.
+
 
 ## Structural Notes
 - Mixamo -> VRM retargeting logic is encapsulated entirely inside `client/src/MixamoVRMRetargeting.js`.
@@ -43,3 +40,13 @@
 
 ## Git State
 Code has been tested, verified via Playwright, and is ready for submission.
+### Phase 22-25 (v0.15.1) Auth, Environments, and TTS refinement
+- Implemented basic JWT authentication layer with auto-refresh mechanism.
+- Added dynamic 3D environment switching and persisted the config to Prisma DB.
+- Added AbortControllers to prevent streaming audio/TTS overlapping during interruptions.
+### Phase 26 (v0.16.0) Data Validation & Backend Resilience
+- Added a new `test_validation.js` suite in `server/` to deliberately test edge cases and invalid payloads against the Express REST APIs.
+- Updated the Express routes in `server/index.js` to strictly validate `typeof` strings, `Array.isArray`, and whitelist `req.body` keys before interacting with Prisma or OpenAI, preventing 500 crashes.
+
+### Session Conclusion
+- All requested work completed successfully. Final sign off.

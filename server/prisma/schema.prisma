@@ -1,24 +1,33 @@
-// This is your Prisma schema file.
-// Learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id
+  createdAt    DateTime      @default(now())
+  userSettings UserSettings?
 }
 
 model UserSettings {
-  id                  Int      @id @default(autoincrement())
-  currentAnimation    String   @default("idle")
-  openrouterApiKey    String?
-  elevenlabsApiKey    String?
-  elevenlabsVoiceId   String?
-  systemPrompt        String?
-  ttsPitch            Float    @default(1.2)
-  ttsRate             Float    @default(1.0)
-  ttsVoice            String?
-  chatHistory         String?  // Stored as JSON string
-  updatedAt           DateTime @updatedAt
+  id                    Int      @id @default(autoincrement())
+  systemPrompt          String?
+  openRouterApiKey      String?
+  elevenLabsApiKey      String?
+  elevenLabsVoiceId     String?
+  ttsPitch              Float?
+  ttsRate               Float?
+  ttsVoice              String?
+  environmentFile       String?  // The path to the active .glb environment
+  currentAnimation      String?  // The currently active manual animation state
+  chatHistory           String?  // JSON stringified history
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

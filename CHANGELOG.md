@@ -1,31 +1,35 @@
 # CHANGELOG
 
-## [0.15.0] - Backend Database Initialization
-- Implemented Phase 21. Initialized Prisma and configured a local SQLite database in the backend.
-- Generated the `UserSettings` schema to eventually replace frontend-only configuration persistence.
+## [0.16.0] - Data Validation & Backend Resilience
+### Added
+- Created `test_validation.js` to assert backend API behavior under edge-case payloads (missing fields, wrong types, unknown schema keys).
+- Hardened all Express API routes (`/api/auth/login`, `/api/chat`, `/api/tts`, `/api/settings`) with strict data validation to prevent 500 errors and gracefully return 400 Bad Request.
+- Updated `package.json` to run all validation test suites automatically on `npm test`.
 
-## [0.14.0] - Persistence Layer Abstraction
-- Implemented Phase 20. Created a `StorageService` utility to abstract all browser `localStorage` interactions.
-- Refactored `App.jsx` to rely exclusively on this service, streamlining the future implementation of cloud database synchronization for user profiles.
+## [0.15.1] - Auth Overlay, Environments, & Interruptibility
+### Added
+- Phase 22: Basic Frontend Authentication Overlay enforcing usernames.
+- Phase 22: Express backend JWT assignment (`/api/auth/login`) and automated rotation (`/api/auth/refresh`).
+- Phase 23: `StorageService.js` proxying with `fetchWithRefresh` to auto-handle 401s.
+- Phase 24: Dynamic 3D Environments via UI toggle, with backend DB persistence (`environmentFile`).
+- Phase 25: ElevenLabs TTS interruptibility via `AbortController` and audio queue resets to prevent overlap.
 
-## [0.13.0] - Native TTS Queue Fix
-- Implemented Phase 19. Fixed a bug where the native browser `SpeechSynthesis` queue would prematurely set `isSpeaking` to false at the end of the very first sentence chunk, breaking the character's facial animations.
-- The state now properly checks `window.speechSynthesis.pending` before concluding playback.
+## [0.10.1] - StorageService Resilience
+- Refactored `StorageService.js` to utilize dynamic environment variables (`VITE_BACKEND_URL`) for API routing.
+- Enhanced frontend network resilience by implementing explicit HTTP response validation (`response.ok`) and robust error logging for asynchronous database operations.
 
-## [0.12.0] - Network Request and TTS Interruption
-- Implemented Phase 18. Added an `AbortController` mechanism to the LLM fetch requests in `App.jsx`.
-- When the user sends a new message or clicks "Clear Chat History", any ongoing LLM streams are now safely aborted.
-- Simultaneously, all queued TTS audio chunks and actively playing ElevenLabs/native SpeechSynthesis audio are instantly halted and cleared.
+## [0.10.0] - Multi-User Backend Persistence (SQLite)
+- Implemented Phases 18-21. Expanded the single-user local storage system into a relational, multi-user backend database.
+- Initialized Prisma ORM and SQLite, creating `User` and `UserSettings` models with foreign-key relations.
+- Created `StorageService.js` on the frontend, abstracting data reads/writes asynchronously through `/api/settings` REST endpoints using simulated user sessions.
 
-## [0.11.0] - AI Particle Effect Triggers
-- Implemented Phase 17. Integrated `@react-three/drei`'s `<Sparkles>` component to handle dynamic particle effects.
-- The AI can now emit `[effect:sparkle]` and `[effect:none]` tags to toggle particle rendering within the 3D scene.
-- Updated the default system prompt to instruct the AI on utilizing these new visual effect controls.
+## [0.9.2] - Visual Particle Effects
+- Implemented Phase 17. Integrated `@react-three/drei`'s `<Sparkles>` component to allow the AI to spawn visual particle effects.
+- The AI can now emit `[effect:sparkle]` and `[effect:none]` tags mid-sentence to dynamically toggle particles within the 3D scene.
 
-## [0.10.0] - AI Environment Triggers
-- Implemented Phase 16. Added the ability for the AI to dynamically control the 3D scene's lighting.
-- The AI can now emit `[lights:on]` and `[lights:off]` tags mid-sentence to toggle the ambient, directional, and point light intensities.
-- Updated the default system prompt to instruct the AI on utilizing these new environmental controls.
+## [0.9.1] - Interactive Environment Lighting Triggers
+- Implemented Phase 16. Enabled the AI to dynamically command changes to the 3D environment lighting.
+- The AI can now emit `[lights:on]` and `[lights:off]` tags mid-sentence to toggle the room's ambient and directional lighting, and swap between 'city' and 'night' environment presets organically.
 
 ## [0.9.0] - Context-Aware System Prompting
 - Implemented Phase 15. Enhanced the default system prompt to explicitly ground the AI in its virtual environment ("a modern, neon-lit virtual room on a sleek stage").

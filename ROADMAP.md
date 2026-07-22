@@ -14,9 +14,3 @@
 - [x] Phase 13: Dynamic Camera Perspectives.
 - [x] Phase 14: Interactive Environment Highlighting.
 - [x] Phase 15: Context-Aware System Prompting.
-- [x] Phase 16: AI Environment Triggers.
-- [x] Phase 17: AI Particle Effect Triggers.
-- [x] Phase 18: TTS Audio Queue and Network Request Interruption.
-- [x] Phase 19: Native TTS Queue State Fix.
-- [x] Phase 20: Persistence Layer Abstraction.
-- [x] Phase 21: Backend Database Integration.

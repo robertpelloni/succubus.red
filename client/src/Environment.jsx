@@ -4,20 +4,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import { fetchAndCache } from './CacheUtils';
 
-export default function Environment() {
+export default function Environment({ lightsOn = true, file = 'room.glb' }) {
   const [modelUrl, setModelUrl] = useState(null);
 
   useEffect(() => {
+    if (!file || file === 'none') {
+        setModelUrl(null);
+        return;
+    }
+
     const loadEnvironment = async () => {
       try {
-        const cachedUrl = await fetchAndCache('/room.glb');
+        const cachedUrl = await fetchAndCache(`/${file}`);
         setModelUrl(cachedUrl);
       } catch (err) {
         console.error("Failed to load environment from cache:", err);
       }
     };
     loadEnvironment();
-  }, []);
+  }, [file]);
 
   const [gltfScene, setGltfScene] = useState(null);
   const [, setHoveredMesh] = useState(null);
@@ -70,8 +75,8 @@ export default function Environment() {
 
   return (
     <group>
-      <Sky distance={450000} sunPosition={[5, 1, 8]} inclination={0} azimuth={0.25} />
-      <DreiEnvironment preset="city" />
+      {lightsOn && <Sky distance={450000} sunPosition={[5, 1, 8]} inclination={0} azimuth={0.25} />}
+      <DreiEnvironment preset={lightsOn ? "city" : "night"} background={false} />
 
       {gltfScene && (
         <primitive

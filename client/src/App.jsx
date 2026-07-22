@@ -6,42 +6,53 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
+import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
-  // Dashboard State & Persistence initialization
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('');
+
+  // Dashboard State & LocalStorage initialization
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [currentAnimation, setCurrentAnimation] = useState(() => StorageService.getItem('current_animation', 'idle'));
-  const [apiKey, setApiKey] = useState(() => StorageService.getItem('openrouter_api_key', ''));
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+
+  const [currentAnimation, setCurrentAnimation] = useState('idle');
+  const [apiKey, setApiKey] = useState('');
+  const [environmentFile, setEnvironmentFile] = useState('room.glb');
 
   const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
-You are currently standing in a modern, neon-lit virtual room on a sleek stage. You should occasionally reference your surroundings and your digital nature to enhance immersion.
 You have a distinct personality: you are confident, slightly mischievous, deeply attentive, and highly expressive.
 Keep your responses relatively brief and conversational, as if we are speaking face-to-face.
 
 You must output your response as plain text. Do NOT use JSON formatting.
 Crucially, you must physically act out your responses. Embed actions and emotions using bracket tags like [animation:wave] or [emotion:joy] within your sentences.
-You also have the ability to control the environment. For example, use [lights:off] to turn off the room lights, and [lights:on] to turn them back on. Use [effect:sparkle] to create magical particles, and [effect:none] to clear them.
 Always use these tags naturally to react to the user.
 Available animations: idle, wave, sitting, thinking.
-Available emotions: joy, angry, sorrow, fun, surprised.`;
+Available emotions: joy, angry, sorrow, fun, surprised.
+You are standing in a modern, neon-lit virtual room on a sleek stage.
+You can control the room lights using [lights:on] or [lights:off] tags.
+You can spawn visual particles using [effect:sparkle] and clear them with [effect:none].`;
 
-  const [systemPrompt, setSystemPrompt] = useState(() => StorageService.getItem('system_prompt', defaultSystemPrompt));
+  const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt);
 
-  const [ttsPitch, setTtsPitch] = useState(() => parseFloat(StorageService.getItem('tts_pitch', 1.2)) || 1.2);
-  const [ttsRate, setTtsRate] = useState(() => parseFloat(StorageService.getItem('tts_rate', 1.0)) || 1.0);
-  const [ttsVoice, setTtsVoice] = useState(() => StorageService.getItem('tts_voice', ''));
+  const [ttsPitch, setTtsPitch] = useState(1.2);
+  const [ttsRate, setTtsRate] = useState(1.0);
+  const [ttsVoice, setTtsVoice] = useState('');
   const [availableVoices, setAvailableVoices] = useState([]);
 
-  const [elevenLabsApiKey, setElevenLabsApiKey] = useState(() => StorageService.getItem('elevenlabs_api_key', ''));
-  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState(() => StorageService.getItem('elevenlabs_voice_id', ''));
+  const [elevenLabsApiKey, setElevenLabsApiKey] = useState('');
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('');
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const endOfMessagesRef = useRef(null);
   const [emotion, setEmotion] = useState(null);
+  const [lightsOn, setLightsOn] = useState(true);
+  const [particleEffect, setParticleEffect] = useState('none');
 
   // Audio & Speech Recognition state
   const [visemes, setVisemes] = useState({ a: 0, i: 0, u: 0 });
@@ -55,24 +66,126 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
   const audioQueueRef = useRef([]);
   const isPlayingRef = useRef(false);
 
-  // Interruption/Abort logic
-  const abortControllerRef = useRef(null);
+  // Kokoro TTS State
+  const [kokoroTts, setKokoroTts] = useState(null);
 
-  // Environment State
-  const [lightsOn, setLightsOn] = useState(true);
-  const [sparklesOn, setSparklesOn] = useState(false);
+  // Utility to encode Float32Array to WAV format
+  const encodeWAV = (samples, sampleRate) => {
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
 
-  // Sync state to persistent storage
+    // RIFF identifier
+    writeString(view, 0, 'RIFF');
+    // RIFF chunk length
+    view.setUint32(4, 36 + samples.length * 2, true);
+    // RIFF type
+    writeString(view, 8, 'WAVE');
+    // format chunk identifier
+    writeString(view, 12, 'fmt ');
+    // format chunk length
+    view.setUint32(16, 16, true);
+    // sample format (raw)
+    view.setUint16(20, 1, true);
+    // channel count (1)
+    view.setUint16(22, 1, true);
+    // sample rate
+    view.setUint32(24, sampleRate, true);
+    // byte rate (sample rate * block align)
+    view.setUint32(28, sampleRate * 2, true);
+    // block align (channel count * bytes per sample)
+    view.setUint16(32, 2, true);
+    // bits per sample
+    view.setUint16(34, 16, true);
+    // data chunk identifier
+    writeString(view, 36, 'data');
+    // data chunk length
+    view.setUint32(40, samples.length * 2, true);
+
+    floatTo16BitPCM(view, 44, samples);
+    return buffer;
+  };
+
+  const writeString = (view, offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  const floatTo16BitPCM = (output, offset, input) => {
+    for (let i = 0; i < input.length; i++, offset += 2) {
+      const s = Math.max(-1, Math.min(1, input[i]));
+      output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+  };
+
+  // Initialize Kokoro
   useEffect(() => {
-    StorageService.setItem('current_animation', currentAnimation);
-    StorageService.setItem('openrouter_api_key', apiKey);
-    StorageService.setItem('system_prompt', systemPrompt);
-    StorageService.setItem('tts_pitch', ttsPitch);
-    StorageService.setItem('tts_rate', ttsRate);
-    StorageService.setItem('tts_voice', ttsVoice);
-    StorageService.setItem('elevenlabs_api_key', elevenLabsApiKey);
-    StorageService.setItem('elevenlabs_voice_id', elevenLabsVoiceId);
-  }, [currentAnimation, apiKey, systemPrompt, ttsPitch, ttsRate, ttsVoice, elevenLabsApiKey, elevenLabsVoiceId]);
+    const initKokoro = async () => {
+      try {
+        const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
+        const tts = await KokoroTTS.from_pretrained(model_id, {
+          dtype: "fp32",
+          device: "wasm",
+        });
+        setKokoroTts(tts);
+      } catch (err) {
+        console.error("Failed to load Kokoro TTS:", err);
+      }
+    };
+    initKokoro();
+  }, []);
+
+  // Fetch settings from DB on mount
+  useEffect(() => {
+    const initSettings = async () => {
+      if (!isAuthenticated) return;
+
+      const dbSettings = await StorageService.fetchSettings();
+      if (dbSettings) {
+        if (dbSettings.openRouterApiKey) setApiKey(dbSettings.openRouterApiKey);
+        if (dbSettings.systemPrompt) setSystemPrompt(dbSettings.systemPrompt);
+        if (dbSettings.ttsPitch) setTtsPitch(dbSettings.ttsPitch);
+        if (dbSettings.ttsRate) setTtsRate(dbSettings.ttsRate);
+        if (dbSettings.ttsVoice) setTtsVoice(dbSettings.ttsVoice);
+        if (dbSettings.elevenLabsApiKey) setElevenLabsApiKey(dbSettings.elevenLabsApiKey);
+        if (dbSettings.elevenLabsVoiceId) setElevenLabsVoiceId(dbSettings.elevenLabsVoiceId);
+        if (dbSettings.currentAnimation) setCurrentAnimation(dbSettings.currentAnimation);
+        if (dbSettings.environmentFile) setEnvironmentFile(dbSettings.environmentFile);
+
+        if (dbSettings.chatHistory) {
+          try {
+             setMessages(JSON.parse(dbSettings.chatHistory));
+          } catch { console.warn("Failed to parse chat history"); }
+        }
+      }
+      setIsSettingsLoaded(true);
+    };
+    initSettings();
+  }, [isAuthenticated]);
+
+  // Debounced save to DB
+  useEffect(() => {
+    if (!isSettingsLoaded) return;
+
+    const settingsData = {
+      openRouterApiKey: apiKey,
+      systemPrompt,
+      ttsPitch,
+      ttsRate,
+      ttsVoice,
+      elevenLabsApiKey,
+      elevenLabsVoiceId,
+      environmentFile,
+      currentAnimation,
+      chatHistory: JSON.stringify(messages)
+    };
+
+    const timeoutId = setTimeout(() => {
+      StorageService.saveSettings(settingsData);
+    }, 1000); // 1s debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [apiKey, systemPrompt, ttsPitch, ttsRate, ttsVoice, elevenLabsApiKey, elevenLabsVoiceId, environmentFile, currentAnimation, messages, isSettingsLoaded]);
 
   // Ensure voices are loaded for the dashboard dropdown
   useEffect(() => {
@@ -88,32 +201,6 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }, [ttsVoice]);
-
-  const stopSpeakingAndAbort = () => {
-    // Abort pending fetch requests
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Clear audio queue
-    audioQueueRef.current = [];
-    isPlayingRef.current = false;
-
-    // Stop currently playing native TTS
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-
-    // Stop currently playing ElevenLabs audio
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      currentAudioRef.current = null;
-    }
-
-    setIsSpeaking(false);
-    setVisemes({ a: 0, i: 0, u: 0 });
-  };
 
   const playNextAudio = async () => {
     if (audioQueueRef.current.length === 0) {
@@ -172,6 +259,27 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
       } catch (e) {
         console.error("ElevenLabs TTS Error:", e);
       }
+    } else if (kokoroTts) {
+      try {
+        setIsSpeaking(true);
+        const audioData = await kokoroTts.generate(text, {
+          voice: "af_heart", // Using default voice as placeholder
+        });
+
+        // kokoro-js outputs a Float32Array on audioData.audio. We must encode it to a standard WAV.
+        // Assuming a standard sample rate of 24000 for Kokoro models (adjust if different).
+        const wavBuffer = encodeWAV(audioData.audio, 24000);
+        const blob = new Blob([wavBuffer], { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        audioQueueRef.current.push({ url });
+
+        if (!isPlayingRef.current) {
+          playNextAudio();
+        }
+      } catch (e) {
+        console.error("Kokoro TTS Error:", e);
+        setIsSpeaking(false);
+      }
     } else if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
 
@@ -186,10 +294,7 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => {
-        // Only set isSpeaking to false if there are no more pending utterances in the queue
-        if (!window.speechSynthesis.pending) {
-          setIsSpeaking(false);
-        }
+        setIsSpeaking(false);
       };
 
       window.speechSynthesis.speak(utterance);
@@ -252,29 +357,15 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
     recognition.start();
   };
 
-  useEffect(() => {
-    // Load from persistent storage
-    const saved = StorageService.getItem('chat_history', null);
-    if (saved) {
-      setMessages(Array.isArray(saved) ? saved : []);
-    }
-  }, []);
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
-    // Halt any current playback or streaming before starting a new request
-    stopSpeakingAndAbort();
-
-    // Create new abort controller for this request
-    abortControllerRef.current = new AbortController();
-
     const newMessages = [...messages, { role: 'user', content: input }];
     setMessages(newMessages);
     setInput('');
 
-    // Save to persistent storage
-    StorageService.setItem('chat_history', newMessages);
+    // Save locally
+    localStorage.setItem('chat_history', JSON.stringify(newMessages));
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
@@ -285,7 +376,6 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
       const response = await fetch(`${backendUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
           userMessages: slidingWindowMessages.map(m => ({ role: m.role, content: m.content })),
           characterSystemPrompt: systemPrompt,
@@ -314,7 +404,7 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
         const chunkValue = decoder.decode(value, { stream: !done });
         textBuffer += chunkValue;
 
-        // Regex to find and process tags like [animation:wave], [emotion:joy], [lights:off], and [effect:sparkle] only in unparsed text
+        // Regex to find and process tags like [animation:wave], [emotion:joy], [lights:on], and [effect:sparkle]
         const tagRegex = /\[(animation|emotion|lights|effect):([a-zA-Z]+)\]/g;
 
         // Update the last message content in UI, stripping out tags
@@ -336,10 +426,13 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
             setEmotion({ name: val, value: 1.0 });
             setTimeout(() => setEmotion(null), 3000); // Reset emotion after 3s
           } else if (type === 'lights') {
-            setLightsOn(val === 'on');
+            if (val === 'on') {
+              setLightsOn(true);
+            } else if (val === 'off') {
+              setLightsOn(false);
+            }
           } else if (type === 'effect') {
-            if (val === 'sparkle') setSparklesOn(true);
-            else if (val === 'none') setSparklesOn(false);
+            setParticleEffect(val);
           }
         }
 
@@ -383,8 +476,9 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
          speak(remainingText);
       }
 
-      // Save final message state to persistent storage
-      StorageService.setItem('chat_history', finalMessages.map((msg, index) => {
+      // The debounced useEffect handles saving messages array automatically.
+      // But we update the final messages locally with tags stripped.
+      setMessages(finalMessages.map((msg, index) => {
         if (index === finalMessages.length - 1) {
           return { ...msg, content: textBuffer.replace(/\[(animation|emotion|lights|effect):([a-zA-Z]+)\]/g, '') };
         }
@@ -392,17 +486,54 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
       }));
 
     } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log('Fetch aborted due to new message or clear chat.');
-      } else {
-        console.error("Error fetching from API:", error);
-      }
+      console.error("Error fetching from API:", error);
     }
   };
 
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleLogin = async () => {
+    if (!loginUsername.trim()) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUsername })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        StorageService.setToken(data.token);
+        setIsAuthenticated(true);
+      } else {
+        console.error("Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-panel">
+          <h2 className="auth-title">Welcome to Succubus.red</h2>
+          <input
+            type="text"
+            placeholder="Enter Username"
+            value={loginUsername}
+            onChange={(e) => setLoginUsername(e.target.value)}
+            className="auth-input"
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+          />
+          <button onClick={handleLogin} className="auth-button">Enter</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#222', overflow: 'hidden' }}>
@@ -601,14 +732,30 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
             </select>
           </div>
 
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              3D Environment
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Change the background 3D scene. Requires a brief loading pause.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={environmentFile}
+              onChange={(e) => setEnvironmentFile(e.target.value)}
+            >
+              <option value="none">Void (Empty)</option>
+              <option value="room.glb">Default Room</option>
+              <option value="room2.glb">Sci-Fi Deck</option>
+            </select>
+          </div>
+
           <div className="dashboard-section" style={{ borderBottom: 'none', paddingBottom: '0' }}>
             <button
               className="send-button"
               style={{ width: '100%', background: '#f44336', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => {
-                stopSpeakingAndAbort();
                 setMessages([]);
-                StorageService.removeItem('chat_history');
               }}
             >
               Clear Chat History
@@ -621,15 +768,17 @@ Available emotions: joy, angry, sorrow, fun, surprised.`;
       </div>
 
       <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
-        <ambientLight intensity={lightsOn ? 0.8 : 0.1} />
-        <directionalLight castShadow position={[5, 5, 5]} intensity={lightsOn ? 2.0 : 0.2} color="#ffffff" shadow-mapSize={[1024, 1024]} />
-        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.1} color="#aaccff" />
+        <ambientLight intensity={lightsOn ? 0.8 : 0.05} />
+        <directionalLight castShadow position={[5, 5, 5]} intensity={lightsOn ? 2.0 : 0.1} color="#ffffff" shadow-mapSize={[1024, 1024]} />
+        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>
-          <Environment />
-          {sparklesOn && (
-            <Sparkles count={200} scale={5} size={6} speed={0.4} opacity={0.5} color="#ff4081" position={[0, 1, 0]} />
+          {environmentFile !== 'none' && <Environment lightsOn={lightsOn} file={environmentFile} />}
+
+          {particleEffect === 'sparkle' && (
+             <Sparkles count={100} scale={2.5} size={6} speed={0.4} opacity={0.8} color="#ffffaa" position={[0, 1, 0]} />
           )}
+
           <Character
             url="/avatar.vrm"
             currentAnimation={currentAnimation}
