@@ -7,20 +7,23 @@ import * as THREE from 'three';
 import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 import { fetchAndCache } from './CacheUtils';
 
-export default function Character({ currentAnimation = 'idle', emotion = null, isSpeaking = false, visemes = null }) {
+export default function Character({ url = '/avatar.vrm', currentAnimation = 'idle', emotion = null, isSpeaking = false, visemes = null }) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
   const [mixer, setMixer] = useState(null);
   const [actions, setActions] = useState({});
   const lookAtTargetRef = useRef(new THREE.Object3D());
 
-  // Keep track of the initial animation to prevent re-running the loader
+  // Keep track of the initial animation
   const initialAnimationRef = useRef(currentAnimation);
 
   useEffect(() => {
+    let isCancelled = false;
+
     const loadAssets = async () => {
       try {
-        const vrmUrl = await fetchAndCache('/avatar.vrm');
+        // If it's a blob: or data: URL, use it directly; otherwise fetchAndCache
+        const vrmUrl = url.startsWith('blob:') || url.startsWith('data:') ? url : await fetchAndCache(url);
 
         const loader = new GLTFLoader();
         loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -28,6 +31,7 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
         loader.load(
           vrmUrl,
           (gltf) => {
+            if (isCancelled) return;
             const loadedVrm = gltf.userData.vrm;
             VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
@@ -78,7 +82,11 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
     };
 
     loadAssets();
-  }, []);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [url]);
 
   const currentActionRef = useRef(null);
   const previousAnimationRef = useRef(null);

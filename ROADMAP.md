@@ -22,5 +22,6 @@
 - [x] Phase 27: System Tray & Server Control Management (`tray_app.py`).
 - [x] Phase 28: Kokoro WebGPU local TTS integration.
 - [x] Phase 29: Consolidated High-Value Dashboard Studio UI & Tooltips.
-- [ ] Phase 30: Multimodal Vision (Camera screenshot upload & character awareness).
-- [ ] Phase 31: Advanced Motion Physics & Dynamic VRM Accessories.
+- [x] Phase 30: Custom VRM Avatar Upload & IndexedDB Management.
+- [ ] Phase 31: Multimodal Vision (Camera screenshot upload & character awareness).
+- [ ] Phase 32: Advanced Motion Physics & Dynamic VRM Accessories.

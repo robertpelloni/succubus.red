@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.18.0] - Custom VRM Avatar Upload & IndexedDB Storage
+### Added
+- Added custom VRM avatar upload feature in `Companion Studio` allowing users to upload `.vrm` character files.
+- Integrated browser-side IndexedDB persistence for user-uploaded models via `CacheUtils.js` (`saveCustomAvatar`, `getCustomAvatar`, `clearCustomAvatar`).
+- Updated `Character.jsx` to dynamically reload avatars when switching between Default and Custom VRM models with proper cleanup and animation retargeting.
+- Added visual avatar mode switcher chips and reset buttons with informative tooltips in `App.jsx`.
+
 ## [0.17.0] - Dashboard Consolidation & System Tray Control
 ### Added
 - Consolidated and redesigned the settings dashboard in `client/src/App.jsx` into a singular, cohesive Companion Studio panel categorized by value hierarchy:

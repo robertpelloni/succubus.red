@@ -65,3 +65,33 @@ export async function fetchAndCache(url) {
 
   return URL.createObjectURL(blob);
 }
+
+export const CUSTOM_AVATAR_KEY = 'custom_avatar.vrm';
+
+export async function saveCustomAvatar(blob) {
+  await saveToCache(CUSTOM_AVATAR_KEY, blob);
+  return URL.createObjectURL(blob);
+}
+
+export async function getCustomAvatar() {
+  try {
+    const cachedBlob = await getFromCache(CUSTOM_AVATAR_KEY);
+    if (cachedBlob) {
+      return URL.createObjectURL(cachedBlob);
+    }
+  } catch (err) {
+    console.warn("Failed to load custom avatar from IndexedDB:", err);
+  }
+  return null;
+}
+
+export async function clearCustomAvatar() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(CUSTOM_AVATAR_KEY);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}

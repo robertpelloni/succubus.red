@@ -18,4 +18,5 @@
 - [x] Create system tray and server management application (`tray_app.py`).
 - [x] Consolidate dashboard settings into single-page Companion Studio with tooltips.
 - [x] Add root `package.json` task runner.
+- [x] Add custom VRM avatar upload & IndexedDB persistence.
 - [ ] Implement image file drop / multimodal input for vision models.

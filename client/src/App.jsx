@@ -6,6 +6,7 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
+import { getCustomAvatar, saveCustomAvatar, clearCustomAvatar } from './CacheUtils';
 import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
@@ -29,6 +30,11 @@ function App() {
   const [environmentFile, setEnvironmentFile] = useState('room.glb');
   const [lightsOn, setLightsOn] = useState(true);
   const [particleEffect, setParticleEffect] = useState('none');
+
+  // Custom Avatar state
+  const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
+  const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
 
   const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
 You have a distinct personality: you are confident, slightly mischievous, deeply attentive, and highly expressive.
@@ -108,6 +114,60 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       const s = Math.max(-1, Math.min(1, input[i]));
       output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
     }
+  };
+
+  // Initialize Custom Avatar from IndexedDB
+  useEffect(() => {
+    const initAvatar = async () => {
+      try {
+        const customUrl = await getCustomAvatar();
+        if (customUrl) {
+          setHasCustomAvatar(true);
+        }
+      } catch (e) {
+        console.warn("Error checking custom avatar:", e);
+      }
+    };
+    initAvatar();
+  }, []);
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.vrm')) {
+      alert("Please select a valid .vrm file!");
+      return;
+    }
+
+    try {
+      const customUrl = await saveCustomAvatar(file);
+      setAvatarUrl(customUrl);
+      setHasCustomAvatar(true);
+      setAvatarMode('custom');
+    } catch (err) {
+      console.error("Failed to save custom avatar:", err);
+      alert("Failed to save avatar to IndexedDB.");
+    }
+  };
+
+  const handleSwitchAvatarMode = async (mode) => {
+    setAvatarMode(mode);
+    if (mode === 'default') {
+      setAvatarUrl('/avatar.vrm');
+    } else {
+      const customUrl = await getCustomAvatar();
+      if (customUrl) {
+        setAvatarUrl(customUrl);
+      }
+    }
+  };
+
+  const handleResetAvatar = async () => {
+    await clearCustomAvatar();
+    setHasCustomAvatar(false);
+    setAvatarMode('default');
+    setAvatarUrl('/avatar.vrm');
   };
 
   // Initialize Kokoro
@@ -543,6 +603,61 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           <button className="dashboard-close-btn" onClick={() => setIsDashboardOpen(false)}>✕</button>
         </div>
 
+        {/* Category 0: 3D Avatar & Model Management */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">3D Avatar Model</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Active Avatar Model
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Switch between the default Succubus anime character and your custom uploaded VRoid/VRM model.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${avatarMode === 'default' ? 'active' : ''}`}
+                onClick={() => handleSwitchAvatarMode('default')}
+              >
+                Default Avatar
+              </button>
+              {hasCustomAvatar && (
+                <button
+                  className={`chip-button ${avatarMode === 'custom' ? 'active' : ''}`}
+                  onClick={() => handleSwitchAvatarMode('custom')}
+                >
+                  Custom VRM Avatar
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Upload Custom VRM (.vrm)
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Upload any VRoid Studio or standard VRM 0.0/1.0 avatar. Cached locally in your browser's IndexedDB.</span>
+              </div>
+            </label>
+            <input
+              type="file"
+              accept=".vrm"
+              onChange={handleAvatarUpload}
+              className="dashboard-input"
+              style={{ fontSize: '11px', padding: '6px' }}
+            />
+            {hasCustomAvatar && (
+              <button
+                className="action-button danger"
+                style={{ marginTop: '5px' }}
+                onClick={handleResetAvatar}
+              >
+                Remove Custom Avatar
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Category 1: AI Persona & Real-time Expressiveness */}
         <div className="dashboard-category">
           <h3 className="dashboard-category-title">AI Persona & Interaction</h3>
@@ -883,7 +998,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           )}
 
           <Character
-            url="/avatar.vrm"
+            url={avatarUrl}
             currentAnimation={currentAnimation}
             emotion={emotion}
             isSpeaking={isSpeaking}
