@@ -1,0 +1,26 @@
+# TODO
+- [x] Set up Vite + React project.
+- [x] Install three, @react-three/fiber, @react-three/drei, @pixiv/three-vrm.
+- [x] Add submodules for webwaifu3 and talkinghead.
+- [x] Build 3D viewport canvas.
+- [x] Load a basic VRM model.
+- [x] Implement procedural look-at animations.
+- [x] Implement Web Audio lip sync to drive VRM blendshapes.
+- [x] Create simple backend or proxy for LLM API (OpenRouter).
+- [x] Implement skeletal animation mixer and transitions (idle, talking, waving).
+- [x] Implement TTS engine (SpeechSynthesis).
+- [x] Implement chat UI overlay.
+- [x] Parse chunked text stream and bracket tags from backend for faster emotional/animation mapping and TTS.
+- [x] Add local storage for settings and chat history.
+- [x] Implement additional Mixamo animations (Sitting, Thinking).
+- [x] Enhance UI/UX and MToon shading.
+- [x] Reorganize scripts nondestructively into `scripts/` with `archive/`.
+- [x] Create system tray and server management application (`tray_app.py`).
+- [x] Consolidate dashboard settings into single-page Companion Studio with tooltips.
+- [x] Add root `package.json` task runner.
+- [x] Add custom VRM avatar upload & IndexedDB persistence.
+- [x] Implement image file drop / multimodal input for vision models.
+- [x] Add drag-and-drop file overlay for avatar and image uploads.
+- [x] Implement custom voice audio sample recording / local mic test widget.
+- [ ] Advanced VRM spring bones physics tweaking via dashboard slider controls.
+- [ ] Export / import configuration and chat transcripts as JSON backup.

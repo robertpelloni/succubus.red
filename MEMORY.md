@@ -1,0 +1,12 @@
+# MEMORY
+- Project initiated based on succubus.red design specification.
+- Architecture: Client-Heavy, Server-Light paradigm utilizing React + Three.js + @pixiv/three-vrm.
+- VRM 1.0 specifications require root translation locks (dx=0, dz=0) and neutral scene rotation.
+- Settings dashboard consolidated into a single panel (`Companion Studio`) without fragmented subpages, structured by value hierarchy.
+- Audio synthesis supports fallback gracefully: ElevenLabs -> Kokoro WebGPU -> Native SpeechSynthesis.
+- Native speech synthesis requires guarding `isSpeaking` reset using `!window.speechSynthesis.pending` in multi-sentence utterance flows.
+- System tray management implemented in `tray_app.py` supporting both pystray GUI and headless CLI execution with IPv4/IPv6 port detection.
+- Custom VRM avatar models can be dynamically uploaded and persisted directly in browser IndexedDB via `CacheUtils.js` without server payload overhead.
+- Multimodal vision requests dynamically format user content as OpenAI-compatible message arrays (`[{ type: 'text', text }, { type: 'image_url', image_url: { url } }]`). The Express `/api/chat` router detects array content containing image URLs and intelligently swaps the model parameter to `meta-llama/llama-3.2-11b-vision-instruct`, while preserving standard roleplay models for pure text.
+- Full-viewport drag-and-drop listener is implemented in `client/src/App.jsx` with window `dragenter`/`dragleave`/`drop` handlers and a visual HUD overlay (`.drop-overlay`), seamlessly routing `.vrm` files to IndexedDB and image files to multimodal vision chat with animated toast feedback.
+- Real-time microphone input testing widget in Companion Studio uses browser `navigator.mediaDevices.getUserMedia` and Web Audio API `AudioContext.createAnalyser()` to calculate instantaneous RMS volume levels, rendered as a responsive VU meter bar.

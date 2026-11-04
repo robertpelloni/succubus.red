@@ -1,0 +1,15 @@
+{
+  "name": "succubus-red-root",
+  "version": "0.20.0",
+  "private": true,
+  "description": "Root orchestration scripts for Succubus.red 3D AI companion",
+  "scripts": {
+    "dev": "npm run start:servers",
+    "start:servers": "node scripts/start_all.js",
+    "build": "cd client && npm run build",
+    "lint": "cd client && npm run lint",
+    "test": "cd server && npm test",
+    "tray": "python3 tray_app.py",
+    "verify": "python3 scripts/verify_all.py"
+  }
+}
