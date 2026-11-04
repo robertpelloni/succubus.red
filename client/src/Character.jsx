@@ -7,7 +7,15 @@ import * as THREE from 'three';
 import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 import { fetchAndCache } from './CacheUtils';
 
-export default function Character({ url = '/avatar.vrm', currentAnimation = 'idle', emotion = null, isSpeaking = false, visemes = null }) {
+export default function Character({
+  url = '/avatar.vrm',
+  currentAnimation = 'idle',
+  emotion = null,
+  isSpeaking = false,
+  visemes = null,
+  springBoneStiffness = 1.0,
+  springBoneDragForce = 0.4
+}) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
   const [mixer, setMixer] = useState(null);
@@ -109,6 +117,21 @@ export default function Character({ url = '/avatar.vrm', currentAnimation = 'idl
       previousAnimationRef.current = currentAnimation;
     }
   }, [currentAnimation, actions, vrm]);
+
+  // Update spring bone physics dynamically when sliders change
+  useEffect(() => {
+    if (vrm && vrm.springBoneManager) {
+      const joints = vrm.springBoneManager.joints;
+      if (joints) {
+        joints.forEach(joint => {
+          if (joint.settings) {
+            joint.settings.stiffness = springBoneStiffness;
+            joint.settings.dragForce = springBoneDragForce;
+          }
+        });
+      }
+    }
+  }, [vrm, springBoneStiffness, springBoneDragForce]);
 
   useFrame((state, delta) => {
     if (mixer) mixer.update(delta);

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.21.0] - VRM Spring Bone Physics & Backup Export/Import
+### Added
+- Dynamic VRM Spring Bone secondary animation physics controls (stiffness and damping/drag force sliders) directly in `Companion Studio` under 3D Avatar Model.
+- Dynamic spring physics joint traversal in `Character.jsx` updating `vrm.springBoneManager.joints` settings in real-time.
+- Settings and chat transcript JSON backup export and import features under Account & Session in `Companion Studio`, with validation and toast notifications.
+
 ## [0.20.0] - Viewport Drag-and-Drop, Mic Audio Tester & Script Consolidation
 ### Added
 - Implemented full viewport drag-and-drop listener in `client/src/App.jsx` with an interactive, animated visual HUD overlay.

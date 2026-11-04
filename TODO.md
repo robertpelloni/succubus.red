@@ -22,5 +22,6 @@
 - [x] Implement image file drop / multimodal input for vision models.
 - [x] Add drag-and-drop file overlay for avatar and image uploads.
 - [x] Implement custom voice audio sample recording / local mic test widget.
-- [ ] Advanced VRM spring bones physics tweaking via dashboard slider controls.
-- [ ] Export / import configuration and chat transcripts as JSON backup.
+- [x] Advanced VRM spring bones physics tweaking via dashboard slider controls.
+- [x] Export / import configuration and chat transcripts as JSON backup.
+- [ ] Global shortcut hotkey triggers via system tray app.

@@ -20,6 +20,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginUsername, setLoginUsername] = useState('');
   const [activeUser, setActiveUser] = useState('');
+  const backupFileInputRef = useRef(null);
 
   // Dashboard State & LocalStorage initialization
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
@@ -37,6 +38,8 @@ function App() {
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
+  const [springStiffness, setSpringStiffness] = useState(1.0);
+  const [springDragForce, setSpringDragForce] = useState(0.4);
 
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -851,6 +854,38 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               </button>
             )}
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Spring Bone Stiffness: {springStiffness.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls how rigid hair, clothing, and accessory spring physics behave (0.1 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.1" max="3" step="0.1"
+              value={springStiffness}
+              onChange={(e) => setSpringStiffness(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Spring Bone Damping: {springDragForce.toFixed(2)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls motion air resistance/drag force on VRM secondary animation physics (0.05 to 1.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.05" max="1" step="0.05"
+              value={springDragForce}
+              onChange={(e) => setSpringDragForce(parseFloat(e.target.value))}
+            />
+          </div>
         </div>
 
         {/* Category 1: AI Persona & Real-time Expressiveness */}
@@ -1186,7 +1221,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             <div style={{ fontSize: '13px', color: '#aaccff', marginBottom: '8px' }}>
               Logged in as: <strong>{activeUser || 'Studio User'}</strong>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
               <button
                 className="action-button danger"
                 style={{ flex: 1 }}
@@ -1200,6 +1235,90 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 onClick={handleLogout}
               >
                 Switch User
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  const backup = {
+                    version: "0.21.0",
+                    exportedAt: new Date().toISOString(),
+                    user: activeUser,
+                    settings: {
+                      systemPrompt,
+                      openRouterApiKey: apiKey,
+                      elevenLabsApiKey,
+                      elevenLabsVoiceId,
+                      ttsPitch,
+                      ttsRate,
+                      ttsVoice,
+                      ttsProvider,
+                      environmentFile,
+                      currentAnimation,
+                      lightsOn,
+                      particleEffect
+                    },
+                    messages
+                  };
+                  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `succubus_backup_${activeUser || 'user'}_${Date.now()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showToast("💾 Backup exported successfully!");
+                }}
+              >
+                Export Backup 📤
+              </button>
+              <input
+                type="file"
+                ref={backupFileInputRef}
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    try {
+                      const data = JSON.parse(event.target.result);
+                      if (data.settings) {
+                        if (data.settings.systemPrompt) setSystemPrompt(data.settings.systemPrompt);
+                        if (data.settings.openRouterApiKey !== undefined) setApiKey(data.settings.openRouterApiKey);
+                        if (data.settings.elevenLabsApiKey !== undefined) setElevenLabsApiKey(data.settings.elevenLabsApiKey);
+                        if (data.settings.elevenLabsVoiceId !== undefined) setElevenLabsVoiceId(data.settings.elevenLabsVoiceId);
+                        if (data.settings.ttsPitch !== undefined) setTtsPitch(data.settings.ttsPitch);
+                        if (data.settings.ttsRate !== undefined) setTtsRate(data.settings.ttsRate);
+                        if (data.settings.ttsVoice) setTtsVoice(data.settings.ttsVoice);
+                        if (data.settings.ttsProvider) setTtsProvider(data.settings.ttsProvider);
+                        if (data.settings.environmentFile) setEnvironmentFile(data.settings.environmentFile);
+                        if (data.settings.currentAnimation) setCurrentAnimation(data.settings.currentAnimation);
+                        if (data.settings.lightsOn !== undefined) setLightsOn(data.settings.lightsOn);
+                        if (data.settings.particleEffect !== undefined) setParticleEffect(data.settings.particleEffect);
+                      }
+                      if (Array.isArray(data.messages)) {
+                        setMessages(data.messages);
+                      }
+                      showToast("📥 Backup imported successfully!");
+                    } catch (err) {
+                      console.error("Failed to parse backup:", err);
+                      showToast("❌ Invalid backup JSON file.");
+                    }
+                  };
+                  reader.readAsText(file);
+                }}
+              />
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={() => backupFileInputRef.current?.click()}
+              >
+                Import Backup 📥
               </button>
             </div>
           </div>
@@ -1226,6 +1345,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             emotion={emotion}
             isSpeaking={isSpeaking}
             visemes={visemes}
+            springBoneStiffness={springStiffness}
+            springBoneDragForce={springDragForce}
           />
           <EffectComposer>
             <Bloom intensity={1.0} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
