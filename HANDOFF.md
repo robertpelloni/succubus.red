@@ -1,6 +1,9 @@
-# Session Handoff - v0.21.0
+# Session Handoff - v0.22.0
 
 ## Completed Work in this Session
+- **Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing**:
+  - Implemented procedural linear interpolation (lerp) for VRM expression blendshapes in `client/src/Character.jsx`.
+  - Replaced abrupt blendshape resets with delta-timed exponential smoothing (`THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0))`) across joy, anger, sorrow, relaxed, and surprised expressions.
 - **Phase 33: VRM Spring Bone Physics & Backup Export/Import**:
   - Implemented dynamic VRM Spring Bone physics sliders (stiffness and damping/drag force) in `Companion Studio` under 3D Avatar Model.
   - Wired real-time spring bone joint adjustments in `client/src/Character.jsx` via `vrm.springBoneManager.joints`, enabling dynamic hair and clothing elasticity tuning without animation interruption.
@@ -20,9 +23,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.21.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.22.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
 - Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
-- Emotion intensity / blendshape animation smoothing curves.
+- Automatic idle blink procedural animation generator for VRM models lacking dedicated eye blink clips.

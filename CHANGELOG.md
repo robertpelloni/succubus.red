@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.22.0] - Facial Emotion Blendshape Easing & Transition Smoothing
+### Added
+- Smooth procedural exponential easing for VRM facial expression blendshapes in `Character.jsx` using `THREE.MathUtils.lerp`.
+- Multi-emotion blendshape target tracking preventing snapping or visual jumping between emotional states.
+
 ## [0.21.0] - VRM Spring Bone Physics & Backup Export/Import
 ### Added
 - Dynamic VRM Spring Bone secondary animation physics controls (stiffness and damping/drag force sliders) directly in `Companion Studio` under 3D Avatar Model.

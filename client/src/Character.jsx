@@ -22,6 +22,15 @@ export default function Character({
   const [actions, setActions] = useState({});
   const lookAtTargetRef = useRef(new THREE.Object3D());
 
+  // Current smoothed emotion blendshape weights
+  const emotionWeightsRef = useRef({
+    happy: 0,
+    angry: 0,
+    sad: 0,
+    relaxed: 0,
+    surprised: 0
+  });
+
   // Keep track of the initial animation
   const initialAnimationRef = useRef(currentAnimation);
 
@@ -166,33 +175,37 @@ export default function Character({
           vrm.expressionManager.setValue('ou', 0);
         }
 
-        // Handle emotions
+        // Handle emotions with smooth exponential easing
         const emotions = ['happy', 'angry', 'sad', 'relaxed', 'surprised'];
+        const validEmotionMap = {
+          'joy': 'happy',
+          'happy': 'happy',
+          'angry': 'angry',
+          'sorrow': 'sad',
+          'sad': 'sad',
+          'fun': 'relaxed',
+          'relaxed': 'relaxed',
+          'surprised': 'surprised',
+          'excited': 'happy'
+        };
+
+        const activeTarget = emotion && emotion.name
+          ? (validEmotionMap[emotion.name.toLowerCase()] || emotion.name.toLowerCase())
+          : null;
+        const targetValue = emotion && emotion.value ? emotion.value : 1.0;
+
         emotions.forEach(emo => {
-          vrm.expressionManager.setValue(emo, 0);
-        });
-
-        if (emotion && emotion.name) {
-          const validEmotionMap = {
-            'joy': 'happy',
-            'happy': 'happy',
-            'angry': 'angry',
-            'sorrow': 'sad',
-            'sad': 'sad',
-            'fun': 'relaxed',
-            'relaxed': 'relaxed',
-            'surprised': 'surprised',
-            'excited': 'happy'
-          };
-
-          const targetEmo = validEmotionMap[emotion.name.toLowerCase()] || emotion.name.toLowerCase();
+          const targetWeight = (emo === activeTarget) ? targetValue : 0;
+          const currentWeight = emotionWeightsRef.current[emo] || 0;
+          const smoothed = THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0));
+          emotionWeightsRef.current[emo] = smoothed;
 
           try {
-            vrm.expressionManager.setValue(targetEmo, emotion.value || 1);
+            vrm.expressionManager.setValue(emo, smoothed);
           } catch {
-            console.warn(`Blendshape missing for emotion: ${targetEmo}`);
+            console.warn(`Blendshape missing for emotion: ${emo}`);
           }
-        }
+        });
       }
     }
   });

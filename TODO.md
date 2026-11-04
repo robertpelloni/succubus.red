@@ -24,4 +24,5 @@
 - [x] Implement custom voice audio sample recording / local mic test widget.
 - [x] Advanced VRM spring bones physics tweaking via dashboard slider controls.
 - [x] Export / import configuration and chat transcripts as JSON backup.
+- [x] Implement smooth facial emotion blendshape easing and decay curves.
 - [ ] Global shortcut hotkey triggers via system tray app.

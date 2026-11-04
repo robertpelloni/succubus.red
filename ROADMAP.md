@@ -26,4 +26,5 @@
 - [x] Phase 31: Multimodal Vision (Camera screenshot upload & character awareness with dynamic vision routing).
 - [x] Phase 32: Full Viewport Drag-and-Drop, Mic Audio Tester & System Tray Polish.
 - [x] Phase 33: Advanced Motion Physics & Dynamic VRM Accessories (Spring bone stiffness & damping controls, backup JSON export/import).
-- [ ] Phase 34: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing.
+- [ ] Phase 35: Desktop Global Hotkeys & Native Speech Activation.
