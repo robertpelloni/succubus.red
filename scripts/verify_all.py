@@ -41,6 +41,11 @@ async def verify_app():
         await mic_btn.click()
         print("  ✓ Mic toggle verified")
 
+        # Test Image Attachment button presence
+        img_btn = await page.wait_for_selector('button.action-icon-button')
+        assert img_btn is not None
+        print("  ✓ Image attachment button verified")
+
         # Test Camera preset
         close_btn = await page.query_selector('button:has-text("Close")')
         if close_btn:

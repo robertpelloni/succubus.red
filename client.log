@@ -10,3 +10,12 @@ Port 5175 is in use, trying another one...
 
   ➜  Local:   http://localhost:5176/
   ➜  Network: use --host to expose
+
+> client@0.0.0 dev
+> vite
+
+
+  VITE v8.1.0  ready in 466 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose

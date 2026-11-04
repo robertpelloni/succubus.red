@@ -13,6 +13,8 @@ import './App.css';
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [attachedImage, setAttachedImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -417,21 +419,56 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     recognition.start();
   };
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file (PNG, JPEG, WebP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedImage(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSend = async () => {
-    if (!input.trim()) return;
-    const newMessages = [...messages, { role: 'user', content: input }];
+    if (!input.trim() && !attachedImage) return;
+
+    // Create message content (multimodal structure if image attached)
+    let userContent;
+    if (attachedImage) {
+      userContent = [
+        { type: 'text', text: input.trim() || 'Please look at this image.' },
+        { type: 'image_url', image_url: { url: attachedImage } }
+      ];
+    } else {
+      userContent = input.trim();
+    }
+
+    const newMessages = [...messages, { role: 'user', content: userContent }];
     setMessages(newMessages);
     setInput('');
+    setAttachedImage(null);
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
       const slidingWindowMessages = newMessages.slice(-20);
 
+      // Prepare payload: format messages for OpenRouter
+      const payloadMessages = slidingWindowMessages.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
       const response = await fetch(`${backendUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userMessages: slidingWindowMessages.map(m => ({ role: m.role, content: m.content })),
+          userMessages: payloadMessages,
           characterSystemPrompt: systemPrompt,
           apiKey: apiKey
         })
@@ -1045,24 +1082,95 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           gap: '12px',
           paddingRight: '5px'
         }}>
-          {messages.map((msg, idx) => (
-            <div key={idx} style={{
-              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              background: msg.role === 'user' ? 'linear-gradient(135deg, #007bff, #0056b3)' : 'linear-gradient(135deg, #444, #333)',
-              padding: '10px 14px',
-              borderRadius: '20px',
-              borderBottomRightRadius: msg.role === 'user' ? '4px' : '20px',
-              borderBottomLeftRadius: msg.role === 'user' ? '20px' : '4px',
-              maxWidth: '80%',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-              lineHeight: '1.4'
-            }}>
-              {msg.content}
-            </div>
-          ))}
+          {messages.map((msg, idx) => {
+            const isMultimodal = Array.isArray(msg.content);
+            const textPart = isMultimodal
+              ? msg.content.find(p => p.type === 'text')?.text || ''
+              : msg.content;
+            const imgPart = isMultimodal
+              ? msg.content.find(p => p.type === 'image_url')?.image_url?.url
+              : null;
+
+            return (
+              <div key={idx} style={{
+                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                background: msg.role === 'user' ? 'linear-gradient(135deg, #007bff, #0056b3)' : 'linear-gradient(135deg, #444, #333)',
+                padding: '10px 14px',
+                borderRadius: '20px',
+                borderBottomRightRadius: msg.role === 'user' ? '4px' : '20px',
+                borderBottomLeftRadius: msg.role === 'user' ? '20px' : '4px',
+                maxWidth: '80%',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                lineHeight: '1.4'
+              }}>
+                {imgPart && (
+                  <img
+                    src={imgPart}
+                    alt="attachment"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '160px',
+                      borderRadius: '8px',
+                      marginBottom: textPart ? '8px' : '0',
+                      display: 'block'
+                    }}
+                  />
+                )}
+                {textPart}
+              </div>
+            );
+          })}
           <div ref={endOfMessagesRef} />
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '8px',
+            background: 'rgba(0,0,0,0.4)',
+            padding: '6px 10px',
+            borderRadius: '10px'
+          }}>
+            <img
+              src={attachedImage}
+              alt="preview"
+              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+            />
+            <span style={{ fontSize: '12px', flex: 1, color: '#aaccff' }}>Image Attached</span>
+            <button
+              onClick={() => setAttachedImage(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#ff4081',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleImageSelect}
+          />
+          <button
+            className="action-icon-button"
+            onClick={() => fileInputRef.current?.click()}
+            title="Attach Image"
+          >
+            📷
+          </button>
           <button
             className={`mic-button ${isRecording ? 'recording' : ''}`}
             onClick={handleMicToggle}
@@ -1075,7 +1183,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Type a message to Succubus..."
+            placeholder="Type a message or share an image..."
             style={{
               flex: 1,
               padding: '12px 16px',

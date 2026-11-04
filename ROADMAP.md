@@ -23,5 +23,5 @@
 - [x] Phase 28: Kokoro WebGPU local TTS integration.
 - [x] Phase 29: Consolidated High-Value Dashboard Studio UI & Tooltips.
 - [x] Phase 30: Custom VRM Avatar Upload & IndexedDB Management.
-- [ ] Phase 31: Multimodal Vision (Camera screenshot upload & character awareness).
+- [x] Phase 31: Multimodal Vision (Camera screenshot upload & character awareness with dynamic vision routing).
 - [ ] Phase 32: Advanced Motion Physics & Dynamic VRM Accessories.

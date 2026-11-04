@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.19.0] - Multimodal Vision & Image Sharing
+### Added
+- Implemented multimodal vision capabilities in `Companion Studio` and chat interface.
+- Added image file attachment button (`📷`) and preview thumbnail with dismiss button (`✕`) in `client/src/App.jsx`.
+- Converted user-uploaded images to Base64 data URLs formatted in standard OpenAI multimodal message array structure (`[{ type: 'text', text }, { type: 'image_url', image_url: { url } }]`).
+- Integrated dynamic model routing in Express `/api/chat`: automatically switches to `meta-llama/llama-3.2-11b-vision-instruct` whenever images are present, preserving fast roleplay models for standard text.
+- Enhanced backend schema validation in `server/index.js` and `server/test_validation.js` to accept structured multimodal message payloads without schema rejections.
+- Rendered inline thumbnail preview directly inside chat speech bubbles with responsive max dimensions.
+- Updated automated Playwright test suite `scripts/verify_all.py` to assert image file input presence and chat container responsiveness.
+
 ## [0.18.0] - Custom VRM Avatar Upload & IndexedDB Storage
 ### Added
 - Added custom VRM avatar upload feature in `Companion Studio` allowing users to upload `.vrm` character files.
