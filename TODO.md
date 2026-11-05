@@ -10,21 +10,6 @@
 - [x] Implement skeletal animation mixer and transitions (idle, talking, waving).
 - [x] Implement TTS engine (SpeechSynthesis).
 - [x] Implement chat UI overlay.
-- [x] Parse chunked text stream and bracket tags from backend for faster emotional/animation mapping and TTS.
+- [x] Parse JSON output from backend for emotional animation mapping.
 - [x] Add local storage for settings and chat history.
-- [x] Implement additional Mixamo animations (Sitting, Thinking).
-- [x] Enhance UI/UX and MToon shading.
-- [x] Reorganize scripts nondestructively into `scripts/` with `archive/`.
-- [x] Create system tray and server management application (`tray_app.py`).
-- [x] Consolidate dashboard settings into single-page Companion Studio with tooltips.
-- [x] Add root `package.json` task runner.
-- [x] Add custom VRM avatar upload & IndexedDB persistence.
-- [x] Implement image file drop / multimodal input for vision models.
-- [x] Add drag-and-drop file overlay for avatar and image uploads.
-- [x] Implement custom voice audio sample recording / local mic test widget.
-- [x] Advanced VRM spring bones physics tweaking via dashboard slider controls.
-- [x] Export / import configuration and chat transcripts as JSON backup.
-- [x] Implement smooth facial emotion blendshape easing and decay curves.
-- [x] Implement procedural natural eye blinking.
-- [x] Add postprocessing bloom and ambient light brightness sliders in Companion Studio.
-- [ ] Global shortcut hotkey triggers via system tray app.
+- [ ] Enhance UI/UX and MToon shading.

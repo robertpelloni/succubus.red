@@ -1,32 +1,7 @@
 # ROADMAP
-- [x] Phase 1: Core Viewport & Skeletal Rendering (Three.js, VRM).
-- [x] Phase 2: Animation & Logic State Machine (Mixamo animations).
-- [x] Phase 3: Uncensored Backend Streaming Proxy (OpenRouter API).
-- [x] Phase 4: Basic Browser SpeechSynthesis and Emotion Mapping.
-- [x] Phase 5: Progressive Text Chunking for Realtime TTS Response.
-- [x] Phase 6: Immersive 3D Environments & Lighting (Beyond simple gradients).
-- [x] Phase 7: Advanced Viseme Lip-Syncing (FFT Analysis).
-- [x] Phase 8: MToon shading enhancements & overall polish.
-- [x] Phase 9: Voice Input / Speech Recognition integration.
-- [x] Phase 10: Conversational Memory & Persona Enhancements.
-- [x] Phase 11: Interactive LookAt / Mouse Tracking.
-- [x] Phase 12: Dashboard UI Redesign.
-- [x] Phase 13: Dynamic Camera Perspectives.
-- [x] Phase 14: Interactive Environment Highlighting.
-- [x] Phase 15: Context-Aware System Prompting.
-- [x] Phase 16: Environment Lighting Triggers.
-- [x] Phase 17: Visual Particle Effects.
-- [x] Phase 18-21: Multi-User Backend Persistence (SQLite/Prisma).
-- [x] Phase 22-25: Auth Overlay, Dynamic Environments, TTS Interruptibility.
-- [x] Phase 26: Data Validation & Backend Resilience.
-- [x] Phase 27: System Tray & Server Control Management (`tray_app.py`).
-- [x] Phase 28: Kokoro WebGPU local TTS integration.
-- [x] Phase 29: Consolidated High-Value Dashboard Studio UI & Tooltips.
-- [x] Phase 30: Custom VRM Avatar Upload & IndexedDB Management.
-- [x] Phase 31: Multimodal Vision (Camera screenshot upload & character awareness with dynamic vision routing).
-- [x] Phase 32: Full Viewport Drag-and-Drop, Mic Audio Tester & System Tray Polish.
-- [x] Phase 33: Advanced Motion Physics & Dynamic VRM Accessories (Spring bone stiffness & damping controls, backup JSON export/import).
-- [x] Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing.
-- [x] Phase 35: Procedural Natural Eye Blinking.
-- [x] Phase 36: Postprocessing Bloom & Ambient Lighting Controls.
-- [ ] Phase 37: Desktop Global Hotkeys & Native Speech Activation.
+- Step 1: Barebones Viewport (Three.js, basic VRM)
+- Step 2: Skeletal Loading (Mixamo animations, slerp)
+- Step 3: Lip-Sync (Web Audio, Analyser)
+- Step 4: TTS Integration (Speech synthesis)
+- Step 5: LLM API Proxy (OpenRouter, secure CORS)
+- Step 6: UI & Polish (MToon, responsive styling)
