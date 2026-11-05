@@ -15,3 +15,4 @@
 - Facial emotion blendshapes (`happy`, `angry`, `sad`, `relaxed`, `surprised`) in `Character.jsx` use procedural exponential easing via `THREE.MathUtils.lerp` in `useFrame` to ensure smooth transitions between emotional states and prevent visual blendshape snapping.
 - Procedural eye blinking in `Character.jsx` uses `@pixiv/three-vrm`'s preset expression `blink` with dynamic interval randomized scheduling (2.5 to 5.5 seconds) and half-sine easing without interrupting spoken visemes or active facial emotion blendshapes.
 - Postprocessing bloom glow intensity and ambient light brightness can be dynamically adjusted via sliders in the Companion Studio and are serialized in the full JSON studio backup files.
+- Directional key light color and shadow map resolution buffer sizes (512, 1024, 2048) are dynamically configurable in Companion Studio and serialized across JSON configuration exports.

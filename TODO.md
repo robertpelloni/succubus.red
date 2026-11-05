@@ -27,4 +27,5 @@
 - [x] Implement smooth facial emotion blendshape easing and decay curves.
 - [x] Implement procedural natural eye blinking.
 - [x] Add postprocessing bloom and ambient light brightness sliders in Companion Studio.
+- [x] Add key light color picker and shadow quality resolution dropdown in Companion Studio.
 - [ ] Global shortcut hotkey triggers via system tray app.

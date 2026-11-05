@@ -29,4 +29,5 @@
 - [x] Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing.
 - [x] Phase 35: Procedural Natural Eye Blinking.
 - [x] Phase 36: Postprocessing Bloom & Ambient Lighting Controls.
-- [ ] Phase 37: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 37: Key Light Color & Shadow Map Resolution Controls.
+- [ ] Phase 38: Desktop Global Hotkeys & Native Speech Activation.

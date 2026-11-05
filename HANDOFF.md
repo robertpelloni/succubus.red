@@ -1,6 +1,10 @@
-# Session Handoff - v0.24.0
+# Session Handoff - v0.25.0
 
 ## Completed Work in this Session
+- **Phase 37: Key Light Color & Shadow Map Resolution Controls**:
+  - Implemented Key Light Color picker and Shadow Quality dropdown (512, 1024, 2048) under 3D Stage & Environment in `Companion Studio`.
+  - Wired directly to Three.js `<directionalLight>` color and shadow map resolution array props in `client/src/App.jsx`.
+  - Integrated settings into JSON configuration backup export/import routines.
 - **Phase 36: Postprocessing Bloom & Ambient Lighting Controls**:
   - Added interactive sliders in `Companion Studio` under 3D Stage & Environment for Bloom Glow Intensity (0.0 to 3.0) and Ambient Light Brightness (0.2x to 2.0x).
   - Wired values directly to the `@react-three/postprocessing` `<Bloom>` effect and Three.js `<ambientLight>` in `client/src/App.jsx`.
@@ -30,9 +34,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.24.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.25.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
 - Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
-- Dynamic shadow map resolution and directional light angle controls in Companion Studio.
+- Directional light orbital pitch and yaw position controls in Companion Studio.

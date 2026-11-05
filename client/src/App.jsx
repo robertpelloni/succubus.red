@@ -35,6 +35,8 @@ function App() {
   const [particleEffect, setParticleEffect] = useState('none');
   const [bloomIntensity, setBloomIntensity] = useState(1.0);
   const [ambientLightScale, setAmbientLightScale] = useState(1.0);
+  const [lightColor, setLightColor] = useState('#ffffff');
+  const [shadowMapResolution, setShadowMapResolution] = useState(1024);
 
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
@@ -1263,7 +1265,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                       lightsOn,
                       particleEffect,
                       bloomIntensity,
-                      ambientLightScale
+                      ambientLightScale,
+                      lightColor,
+                      shadowMapResolution
                     },
                     messages
                   };
@@ -1306,6 +1310,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                         if (data.settings.particleEffect !== undefined) setParticleEffect(data.settings.particleEffect);
                         if (data.settings.bloomIntensity !== undefined) setBloomIntensity(data.settings.bloomIntensity);
                         if (data.settings.ambientLightScale !== undefined) setAmbientLightScale(data.settings.ambientLightScale);
+                        if (data.settings.lightColor) setLightColor(data.settings.lightColor);
+                        if (data.settings.shadowMapResolution !== undefined) setShadowMapResolution(data.settings.shadowMapResolution);
                       }
                       if (Array.isArray(data.messages)) {
                         setMessages(data.messages);
@@ -1360,6 +1366,40 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
             />
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Key Light Color
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Sets directional key light hue and atmosphere tint.</span>
+              </div>
+            </label>
+            <input
+              type="color"
+              className="dashboard-input"
+              style={{ height: '36px', padding: '2px', cursor: 'pointer' }}
+              value={lightColor}
+              onChange={(e) => setLightColor(e.target.value)}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Shadow Quality
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Resolution buffer size for real-time dynamic directional shadows.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={shadowMapResolution}
+              onChange={(e) => setShadowMapResolution(parseInt(e.target.value, 10))}
+            >
+              <option value={512}>Low (512x512)</option>
+              <option value={1024}>Medium (1024x1024)</option>
+              <option value={2048}>High (2048x2048)</option>
+            </select>
+          </div>
         </div>
 
       </div>
@@ -1367,7 +1407,13 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       {/* 3D Canvas Viewport */}
       <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
         <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
-        <directionalLight castShadow position={[5, 5, 5]} intensity={lightsOn ? 2.0 : 0.1} color="#ffffff" shadow-mapSize={[1024, 1024]} />
+        <directionalLight
+          castShadow
+          position={[5, 5, 5]}
+          intensity={lightsOn ? 2.0 : 0.1}
+          color={lightColor}
+          shadow-mapSize={[shadowMapResolution, shadowMapResolution]}
+        />
         <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>

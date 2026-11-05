@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.25.0] - Key Light Color & Shadow Map Resolution Controls
+### Added
+- Key Light Color picker and Shadow Quality dropdown (Low 512, Medium 1024, High 2048) under 3D Stage & Environment in Companion Studio.
+- Dynamic binding to `<directionalLight color={...} shadow-mapSize={[...]} />` in `client/src/App.jsx`.
+- JSON studio backup integration for directional light color and shadow resolution.
+
 ## [0.24.0] - Postprocessing Bloom & Ambient Lighting Controls
 ### Added
 - Interactive sliders for Bloom Glow Intensity (0.0 to 3.0) and Ambient Light Brightness (0.2x to 2.0x) under 3D Stage & Environment in Companion Studio.
