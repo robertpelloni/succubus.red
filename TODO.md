@@ -20,5 +20,11 @@
 - [x] Add root `package.json` task runner.
 - [x] Add custom VRM avatar upload & IndexedDB persistence.
 - [x] Implement image file drop / multimodal input for vision models.
-- [ ] Add drag-and-drop file overlay for avatar and image uploads.
-- [ ] Implement custom voice audio sample recording / local mic test widget.
+- [x] Add drag-and-drop file overlay for avatar and image uploads.
+- [x] Implement custom voice audio sample recording / local mic test widget.
+- [x] Advanced VRM spring bones physics tweaking via dashboard slider controls.
+- [x] Export / import configuration and chat transcripts as JSON backup.
+- [x] Implement smooth facial emotion blendshape easing and decay curves.
+- [x] Implement procedural natural eye blinking.
+- [x] Add postprocessing bloom and ambient light brightness sliders in Companion Studio.
+- [ ] Global shortcut hotkey triggers via system tray app.

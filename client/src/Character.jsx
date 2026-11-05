@@ -7,12 +7,37 @@ import * as THREE from 'three';
 import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 import { fetchAndCache } from './CacheUtils';
 
-export default function Character({ url = '/avatar.vrm', currentAnimation = 'idle', emotion = null, isSpeaking = false, visemes = null }) {
+export default function Character({
+  url = '/avatar.vrm',
+  currentAnimation = 'idle',
+  emotion = null,
+  isSpeaking = false,
+  visemes = null,
+  springBoneStiffness = 1.0,
+  springBoneDragForce = 0.4
+}) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
   const [mixer, setMixer] = useState(null);
   const [actions, setActions] = useState({});
   const lookAtTargetRef = useRef(new THREE.Object3D());
+
+  // Current smoothed emotion blendshape weights
+  const emotionWeightsRef = useRef({
+    happy: 0,
+    angry: 0,
+    sad: 0,
+    relaxed: 0,
+    surprised: 0
+  });
+
+  // Procedural natural eye blinking state
+  const blinkStateRef = useRef({
+    nextBlinkTime: 3.0,
+    blinkDuration: 0.18,
+    timer: 0.0,
+    isBlinking: false
+  });
 
   // Keep track of the initial animation
   const initialAnimationRef = useRef(currentAnimation);
@@ -110,6 +135,21 @@ export default function Character({ url = '/avatar.vrm', currentAnimation = 'idl
     }
   }, [currentAnimation, actions, vrm]);
 
+  // Update spring bone physics dynamically when sliders change
+  useEffect(() => {
+    if (vrm && vrm.springBoneManager) {
+      const joints = vrm.springBoneManager.joints;
+      if (joints) {
+        joints.forEach(joint => {
+          if (joint.settings) {
+            joint.settings.stiffness = springBoneStiffness;
+            joint.settings.dragForce = springBoneDragForce;
+          }
+        });
+      }
+    }
+  }, [vrm, springBoneStiffness, springBoneDragForce]);
+
   useFrame((state, delta) => {
     if (mixer) mixer.update(delta);
     if (vrm) {
@@ -143,32 +183,66 @@ export default function Character({ url = '/avatar.vrm', currentAnimation = 'idl
           vrm.expressionManager.setValue('ou', 0);
         }
 
-        // Handle emotions
+        // Handle emotions with smooth exponential easing
         const emotions = ['happy', 'angry', 'sad', 'relaxed', 'surprised'];
+        const validEmotionMap = {
+          'joy': 'happy',
+          'happy': 'happy',
+          'angry': 'angry',
+          'sorrow': 'sad',
+          'sad': 'sad',
+          'fun': 'relaxed',
+          'relaxed': 'relaxed',
+          'surprised': 'surprised',
+          'excited': 'happy'
+        };
+
+        const activeTarget = emotion && emotion.name
+          ? (validEmotionMap[emotion.name.toLowerCase()] || emotion.name.toLowerCase())
+          : null;
+        const targetValue = emotion && emotion.value ? emotion.value : 1.0;
+
         emotions.forEach(emo => {
-          vrm.expressionManager.setValue(emo, 0);
-        });
-
-        if (emotion && emotion.name) {
-          const validEmotionMap = {
-            'joy': 'happy',
-            'happy': 'happy',
-            'angry': 'angry',
-            'sorrow': 'sad',
-            'sad': 'sad',
-            'fun': 'relaxed',
-            'relaxed': 'relaxed',
-            'surprised': 'surprised',
-            'excited': 'happy'
-          };
-
-          const targetEmo = validEmotionMap[emotion.name.toLowerCase()] || emotion.name.toLowerCase();
+          const targetWeight = (emo === activeTarget) ? targetValue : 0;
+          const currentWeight = emotionWeightsRef.current[emo] || 0;
+          const smoothed = THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0));
+          emotionWeightsRef.current[emo] = smoothed;
 
           try {
-            vrm.expressionManager.setValue(targetEmo, emotion.value || 1);
+            vrm.expressionManager.setValue(emo, smoothed);
           } catch {
-            console.warn(`Blendshape missing for emotion: ${targetEmo}`);
+            console.warn(`Blendshape missing for emotion: ${emo}`);
           }
+        });
+
+        // Procedural natural eye blinking
+        const b = blinkStateRef.current;
+        b.timer += delta;
+
+        let blinkWeight = 0;
+        if (!b.isBlinking) {
+          if (b.timer >= b.nextBlinkTime) {
+            b.isBlinking = true;
+            b.timer = 0;
+          }
+        } else {
+          // In the middle of a blink
+          if (b.timer < b.blinkDuration) {
+            // Half-sine curve for smooth close and open: sin(pi * progress)
+            const progress = b.timer / b.blinkDuration;
+            blinkWeight = Math.sin(Math.PI * progress);
+          } else {
+            // Blink finished, schedule next blink (between 2.5 and 5.5 seconds)
+            b.isBlinking = false;
+            b.timer = 0;
+            b.nextBlinkTime = 2.5 + Math.random() * 3.0;
+          }
+        }
+
+        try {
+          vrm.expressionManager.setValue('blink', blinkWeight);
+        } catch {
+          // Model might not expose standard blink preset
         }
       }
     }

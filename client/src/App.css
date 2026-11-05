@@ -17,6 +17,44 @@
   transform: scale(0.95);
 }
 
+/* Live Microphone Tester */
+.mic-test-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mic-meter-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.mic-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336);
+  border-radius: 4px;
+  transition: width 0.08s ease;
+}
+
+.mic-test-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mic-status-text {
+  font-size: 11px;
+  color: #aaccff;
+}
+
 /* Tooltip styling */
 .tooltip-container {
   position: relative;
@@ -387,6 +425,85 @@
 .action-icon-button:hover {
   background: rgba(255, 255, 255, 0.35);
   transform: scale(1.05);
+}
+
+/* Full Viewport Drag and Drop Overlay */
+.drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 4px dashed #ff4081;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.drop-overlay-box {
+  background: rgba(25, 25, 35, 0.9);
+  padding: 30px 45px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 64, 129, 0.5);
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.drop-overlay-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.drop-overlay-title {
+  color: #ff4081;
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.drop-overlay-desc {
+  color: #aaccff;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Toast Notification */
+.toast-notification {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 25, 40, 0.92);
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: 20px;
+  border: 1px solid #ff4081;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .mic-button:hover {

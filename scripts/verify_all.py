@@ -34,7 +34,24 @@ async def verify_app():
         await page.screenshot(path='dashboard_consolidated.png')
         print("  ✓ Screenshot captured: dashboard_consolidated.png")
 
-        # Test Mic button
+        # Test Microphone Input Tester in Companion Studio
+        mic_test_btn = page.locator('button', has_text='Test Mic').first
+        await mic_test_btn.scroll_into_view_if_needed()
+        await mic_test_btn.click()
+        await asyncio.sleep(1)
+        # Check active status
+        status_span = await page.query_selector('.mic-status-text')
+        status_text = await status_span.inner_text() if status_span else ""
+        assert "Level:" in status_text or "Microphone" in status_text
+        print(f"  ✓ Mic test widget active: {status_text}")
+        await mic_test_btn.click()
+        print("  ✓ Mic test widget toggle verified")
+
+        # Capture Studio with Mic Tester Screenshot
+        await page.screenshot(path='dashboard_consolidated.png')
+        print("  ✓ Screenshot captured: dashboard_consolidated.png")
+
+        # Test Mic toggle button in chat input
         mic_btn = await page.wait_for_selector('button.mic-button')
         await mic_btn.click()
         await asyncio.sleep(0.5)

@@ -20,6 +20,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginUsername, setLoginUsername] = useState('');
   const [activeUser, setActiveUser] = useState('');
+  const backupFileInputRef = useRef(null);
 
   // Dashboard State & LocalStorage initialization
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
@@ -32,11 +33,27 @@ function App() {
   const [environmentFile, setEnvironmentFile] = useState('room.glb');
   const [lightsOn, setLightsOn] = useState(true);
   const [particleEffect, setParticleEffect] = useState('none');
+  const [bloomIntensity, setBloomIntensity] = useState(1.0);
+  const [ambientLightScale, setAmbientLightScale] = useState(1.0);
 
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
+  const [springStiffness, setSpringStiffness] = useState(1.0);
+  const [springDragForce, setSpringDragForce] = useState(0.4);
+
+  // Drag-and-Drop and Toast State
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+  const dragCounterRef = useRef(0);
+
+  const showToast = (msg, duration = 3000) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, duration);
+  };
 
   const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
 You have a distinct personality: you are confident, slightly mischievous, deeply attentive, and highly expressive.
@@ -72,6 +89,10 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef(null);
   const analyserRef = useRef(null);
+  const micAnalyserRef = useRef(null);
+  const micStreamRef = useRef(null);
+  const [isTestingMic, setIsTestingMic] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
   const currentAudioRef = useRef(null);
   const cameraControlRef = useRef(null);
 
@@ -419,6 +440,52 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     recognition.start();
   };
 
+  // Mic Testing & VU Meter
+  const handleToggleMicTest = async () => {
+    if (isTestingMic) {
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+      }
+      setIsTestingMic(false);
+      setMicLevel(0);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      micAnalyserRef.current = analyser;
+      setIsTestingMic(true);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const checkMic = () => {
+        if (!micStreamRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / bufferLength;
+        const normalized = Math.min(100, Math.round((avg / 128) * 100));
+        setMicLevel(normalized);
+        requestAnimationFrame(checkMic);
+      };
+      requestAnimationFrame(checkMic);
+    } catch (err) {
+      console.error("Mic test error:", err);
+      alert("Unable to access microphone. Please ensure microphone permissions are granted.");
+    }
+  };
+
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -431,9 +498,87 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     const reader = new FileReader();
     reader.onload = (event) => {
       setAttachedImage(event.target.result);
+      showToast("📷 Image attached! Ask a question about it.");
     };
     reader.readAsDataURL(file);
   };
+
+  // Viewport Drag-and-Drop Handler
+  const handleFileDrop = async (file) => {
+    if (!file) return;
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith('.vrm')) {
+      try {
+        const customUrl = await saveCustomAvatar(file);
+        setAvatarUrl(customUrl);
+        setHasCustomAvatar(true);
+        setAvatarMode('custom');
+        showToast(`✨ Custom avatar "${file.name}" loaded successfully!`);
+      } catch (err) {
+        console.error("Drop VRM error:", err);
+        showToast("❌ Failed to load VRM file.");
+      }
+    } else if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachedImage(event.target.result);
+        showToast("📷 Image attached! Type a prompt or hit send.");
+      };
+      reader.readAsDataURL(file);
+    } else {
+      showToast("⚠️ Unsupported file format. Drop a .vrm avatar or image file.");
+    }
+  };
+
+  useEffect(() => {
+    const handleDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current += 1;
+      if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
+        setIsDraggingFile(true);
+      }
+    };
+
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current -= 1;
+      if (dragCounterRef.current <= 0) {
+        dragCounterRef.current = 0;
+        setIsDraggingFile(false);
+      }
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current = 0;
+      setIsDraggingFile(false);
+
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        handleFileDrop(e.dataTransfer.files[0]);
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() && !attachedImage) return;
@@ -624,6 +769,24 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#222', overflow: 'hidden' }}>
 
+      {/* Drag & Drop Visual HUD Overlay */}
+      {isDraggingFile && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-box">
+            <div className="drop-overlay-icon">📥</div>
+            <h2 className="drop-overlay-title">Drop File Here</h2>
+            <p className="drop-overlay-desc">Drop a .vrm file to change avatar, or an image to share in chat</p>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="toast-notification">
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Settings Toggle Button */}
       <button
         className="dashboard-toggle-btn"
@@ -692,6 +855,38 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 Remove Custom Avatar
               </button>
             )}
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Spring Bone Stiffness: {springStiffness.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls how rigid hair, clothing, and accessory spring physics behave (0.1 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.1" max="3" step="0.1"
+              value={springStiffness}
+              onChange={(e) => setSpringStiffness(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Spring Bone Damping: {springDragForce.toFixed(2)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls motion air resistance/drag force on VRM secondary animation physics (0.05 to 1.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.05" max="1" step="0.05"
+              value={springDragForce}
+              onChange={(e) => setSpringDragForce(parseFloat(e.target.value))}
+            />
           </div>
         </div>
 
@@ -873,6 +1068,34 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               Preview Voice Sample 🔊
             </button>
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Microphone Input Tester
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Test your microphone input gain in real-time with Web Audio API VU meter before voice chatting.</span>
+              </div>
+            </label>
+            <div className="mic-test-container">
+              <div className="mic-test-controls">
+                <span className="mic-status-text">
+                  {isTestingMic ? `Level: ${micLevel}%` : 'Microphone Inactive'}
+                </span>
+                <button
+                  className={`chip-button ${isTestingMic ? 'active' : ''}`}
+                  onClick={handleToggleMicTest}
+                >
+                  {isTestingMic ? 'Stop Test' : 'Test Mic 🎙️'}
+                </button>
+              </div>
+              <div className="mic-meter-bar">
+                <div
+                  className="mic-meter-fill"
+                  style={{ width: `${isTestingMic ? micLevel : 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Category 3: 3D Stage & Environment Controls */}
@@ -1000,7 +1223,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             <div style={{ fontSize: '13px', color: '#aaccff', marginBottom: '8px' }}>
               Logged in as: <strong>{activeUser || 'Studio User'}</strong>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
               <button
                 className="action-button danger"
                 style={{ flex: 1 }}
@@ -1016,6 +1239,126 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 Switch User
               </button>
             </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  const backup = {
+                    version: "0.21.0",
+                    exportedAt: new Date().toISOString(),
+                    user: activeUser,
+                    settings: {
+                      systemPrompt,
+                      openRouterApiKey: apiKey,
+                      elevenLabsApiKey,
+                      elevenLabsVoiceId,
+                      ttsPitch,
+                      ttsRate,
+                      ttsVoice,
+                      ttsProvider,
+                      environmentFile,
+                      currentAnimation,
+                      lightsOn,
+                      particleEffect,
+                      bloomIntensity,
+                      ambientLightScale
+                    },
+                    messages
+                  };
+                  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `succubus_backup_${activeUser || 'user'}_${Date.now()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showToast("💾 Backup exported successfully!");
+                }}
+              >
+                Export Backup 📤
+              </button>
+              <input
+                type="file"
+                ref={backupFileInputRef}
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    try {
+                      const data = JSON.parse(event.target.result);
+                      if (data.settings) {
+                        if (data.settings.systemPrompt) setSystemPrompt(data.settings.systemPrompt);
+                        if (data.settings.openRouterApiKey !== undefined) setApiKey(data.settings.openRouterApiKey);
+                        if (data.settings.elevenLabsApiKey !== undefined) setElevenLabsApiKey(data.settings.elevenLabsApiKey);
+                        if (data.settings.elevenLabsVoiceId !== undefined) setElevenLabsVoiceId(data.settings.elevenLabsVoiceId);
+                        if (data.settings.ttsPitch !== undefined) setTtsPitch(data.settings.ttsPitch);
+                        if (data.settings.ttsRate !== undefined) setTtsRate(data.settings.ttsRate);
+                        if (data.settings.ttsVoice) setTtsVoice(data.settings.ttsVoice);
+                        if (data.settings.ttsProvider) setTtsProvider(data.settings.ttsProvider);
+                        if (data.settings.environmentFile) setEnvironmentFile(data.settings.environmentFile);
+                        if (data.settings.currentAnimation) setCurrentAnimation(data.settings.currentAnimation);
+                        if (data.settings.lightsOn !== undefined) setLightsOn(data.settings.lightsOn);
+                        if (data.settings.particleEffect !== undefined) setParticleEffect(data.settings.particleEffect);
+                        if (data.settings.bloomIntensity !== undefined) setBloomIntensity(data.settings.bloomIntensity);
+                        if (data.settings.ambientLightScale !== undefined) setAmbientLightScale(data.settings.ambientLightScale);
+                      }
+                      if (Array.isArray(data.messages)) {
+                        setMessages(data.messages);
+                      }
+                      showToast("📥 Backup imported successfully!");
+                    } catch (err) {
+                      console.error("Failed to parse backup:", err);
+                      showToast("❌ Invalid backup JSON file.");
+                    }
+                  };
+                  reader.readAsText(file);
+                }}
+              />
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={() => backupFileInputRef.current?.click()}
+              >
+                Import Backup 📥
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0" max="3" step="0.1"
+              value={bloomIntensity}
+              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.2" max="2" step="0.1"
+              value={ambientLightScale}
+              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
+            />
           </div>
         </div>
 
@@ -1023,7 +1366,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
       {/* 3D Canvas Viewport */}
       <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
-        <ambientLight intensity={lightsOn ? 0.8 : 0.05} />
+        <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
         <directionalLight castShadow position={[5, 5, 5]} intensity={lightsOn ? 2.0 : 0.1} color="#ffffff" shadow-mapSize={[1024, 1024]} />
         <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
@@ -1040,9 +1383,11 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             emotion={emotion}
             isSpeaking={isSpeaking}
             visemes={visemes}
+            springBoneStiffness={springStiffness}
+            springBoneDragForce={springDragForce}
           />
           <EffectComposer>
-            <Bloom intensity={1.0} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
+            <Bloom intensity={bloomIntensity} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
           </EffectComposer>
         </Suspense>
 

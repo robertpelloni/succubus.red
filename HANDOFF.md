@@ -1,22 +1,38 @@
-# Session Handoff - v0.19.0
+# Session Handoff - v0.24.0
 
 ## Completed Work in this Session
-- **Phase 31: Multimodal Vision & Image Sharing**:
-  - Implemented image file attachment button (`📷`) and preview thumbnail with cancel button (`✕`) in `client/src/App.jsx`.
-  - Converted user-uploaded images to Base64 data URLs in OpenAI multimodal message array structure (`[{ type: 'text', text }, { type: 'image_url', image_url: { url } }]`).
-  - Added smart vision model routing in Express backend (`/api/chat`): when image URLs are present in the conversation history, dynamically routes to `meta-llama/llama-3.2-11b-vision-instruct`, while preserving the text-optimized `Gryphe/Mythalion-13b` model for text-only messages.
-  - Enhanced backend schema validation in `server/index.js` and `server/test_validation.js` to accept structured multimodal message payloads without schema rejections.
-  - Rendered inline thumbnail preview directly inside chat speech bubbles with responsive max dimensions.
-  - Updated automated Playwright test suite `scripts/verify_all.py` to assert image file input presence and chat container responsiveness.
+- **Phase 36: Postprocessing Bloom & Ambient Lighting Controls**:
+  - Added interactive sliders in `Companion Studio` under 3D Stage & Environment for Bloom Glow Intensity (0.0 to 3.0) and Ambient Light Brightness (0.2x to 2.0x).
+  - Wired values directly to the `@react-three/postprocessing` `<Bloom>` effect and Three.js `<ambientLight>` in `client/src/App.jsx`.
+  - Serialized lighting and postprocessing settings into client backup export/import JSON routines.
+- **Phase 35: Procedural Natural Eye Blinking**:
+  - Implemented procedural natural eye blinking in `client/src/Character.jsx` utilizing `@pixiv/three-vrm`'s standard preset expression `blink`.
+  - Added randomized scheduling (2.5 to 5.5 seconds) with half-sine smooth open/close curves (~180ms), coexisting harmoniously with active facial emotions and spoken visemes.
+- **Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing**:
+  - Implemented procedural linear interpolation (lerp) for VRM expression blendshapes in `client/src/Character.jsx`.
+  - Replaced abrupt blendshape resets with delta-timed exponential smoothing (`THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0))`) across joy, anger, sorrow, relaxed, and surprised expressions.
+- **Phase 33: VRM Spring Bone Physics & Backup Export/Import**:
+  - Implemented dynamic VRM Spring Bone physics sliders (stiffness and damping/drag force) in `Companion Studio` under 3D Avatar Model.
+  - Wired real-time spring bone joint adjustments in `client/src/Character.jsx` via `vrm.springBoneManager.joints`, enabling dynamic hair and clothing elasticity tuning without animation interruption.
+  - Added JSON backup export and import functionality under Account & Session in `client/src/App.jsx`, allowing users to download and restore their entire studio configuration, API keys, TTS settings, and conversation transcripts.
+- **Phase 32: Viewport Drag-and-Drop, Mic Audio Tester & System Tray Polish**:
+  - Implemented full viewport drag-and-drop file detection in `client/src/App.jsx` with an interactive, animated visual HUD overlay (`.drop-overlay`).
+  - Automatic mime/extension routing:
+    - `.vrm` files: seamlessly saved to IndexedDB (`saveCustomAvatar`) and reloads custom 3D avatar.
+    - Image files: converts to Base64 for instant multimodal vision chat prompts.
+  - Animated toast notification component (`.toast-notification`) for real-time operation confirmation and warnings.
+  - Built Live Microphone Input Tester widget with real-time Web Audio API frequency analysis and responsive VU volume meter in `Companion Studio`.
+  - Verified daemon lifecycle operations (`status`, `start`, `stop`, `restart`, `logs`) via `tray_app.py`.
+  - Cleaned up duplicated root scripts, moving to `scripts/archive/` and ensuring `.log` files are ignored in `.gitignore`.
 - **Testing & Verification**:
   - Backend Mocha/Supertest validation & integration tests: 14/14 passing.
-  - Frontend static lint: 0 warnings, 0 errors.
-  - Production build: `vite build` completed successfully.
-  - Playwright verification: confirmed camera button, input layout, and visual rendering via `/home/jules/verification/vision_input.png`.
+  - Frontend static lint (oxlint): 0 warnings, 0 errors.
+  - Production build (`vite build`): completed successfully.
+  - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.19.0`.
-  - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, and `HANDOFF.md`.
+  - Bumped `VERSION.md` and `package.json` to `0.24.0`.
+  - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
-- Drag-and-drop file overlay directly on the 3D viewport canvas for seamless avatar (`.vrm`) and image drop.
-- Local voice audio sample recording / microphone test widget in Voice & Audio Studio.
+- Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
+- Dynamic shadow map resolution and directional light angle controls in Companion Studio.

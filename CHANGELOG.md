@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## [0.24.0] - Postprocessing Bloom & Ambient Lighting Controls
+### Added
+- Interactive sliders for Bloom Glow Intensity (0.0 to 3.0) and Ambient Light Brightness (0.2x to 2.0x) under 3D Stage & Environment in Companion Studio.
+- Dynamic wiring in `client/src/App.jsx` to `<Bloom intensity={...} />` and `<ambientLight intensity={...} />`.
+- Full state persistence and integration into JSON backup export and import routines.
+
+## [0.23.0] - Procedural Natural Eye Blinking
+### Added
+- Procedural natural eye blinking in `Character.jsx` using `@pixiv/three-vrm` preset expression `blink`.
+- Implemented randomized blink interval scheduling (2.5 to 5.5 seconds) with half-sine smooth open/close curves (~180ms).
+
+## [0.22.0] - Facial Emotion Blendshape Easing & Transition Smoothing
+### Added
+- Smooth procedural exponential easing for VRM facial expression blendshapes in `Character.jsx` using `THREE.MathUtils.lerp`.
+- Multi-emotion blendshape target tracking preventing snapping or visual jumping between emotional states.
+
+## [0.21.0] - VRM Spring Bone Physics & Backup Export/Import
+### Added
+- Dynamic VRM Spring Bone secondary animation physics controls (stiffness and damping/drag force sliders) directly in `Companion Studio` under 3D Avatar Model.
+- Dynamic spring physics joint traversal in `Character.jsx` updating `vrm.springBoneManager.joints` settings in real-time.
+- Settings and chat transcript JSON backup export and import features under Account & Session in `Companion Studio`, with validation and toast notifications.
+
+## [0.20.0] - Viewport Drag-and-Drop, Mic Audio Tester & Script Consolidation
+### Added
+- Implemented full viewport drag-and-drop listener in `client/src/App.jsx` with an interactive, animated visual HUD overlay.
+- Automatically handles `.vrm` files by parsing and saving into IndexedDB (`saveCustomAvatar`) and dynamically hot-reloading the active avatar.
+- Automatically handles dropped images (`image/*`, PNG, JPEG, WebP) by converting to Base64 data URLs for immediate multimodal vision chat inquiries.
+- Animated non-intrusive toast notification component (`.toast-notification`) delivering real-time user feedback on file processing and actions.
+- Added real-time Web Audio API frequency analyser and dynamic VU audio volume level meter in the Voice & Audio Studio category in `Companion Studio`.
+- Enhanced Playwright automated verification suite `scripts/verify_all.py` covering microphone testing widget, drag-and-drop overlay HUD, camera presets, and auth workflows.
+- Cleaned up duplicated root-level scripts, consolidating into `scripts/archive/` and ensuring `tray_app.py` runs with headless and GUI lifecycle management.
+
 ## [0.19.0] - Multimodal Vision & Image Sharing
 ### Added
 - Implemented multimodal vision capabilities in `Companion Studio` and chat interface.

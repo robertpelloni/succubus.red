@@ -1,7 +1,7 @@
 # DEPLOYMENT INSTRUCTIONS
 ## Architecture
 Three-tier architecture:
-- Frontend: Vite (React 19, React Three Fiber, Pixiv VRM, Kokoro WebGPU)
+- Frontend: Vite (React 19, React Three Fiber, Pixiv VRM, Kokoro WebGPU, Drag-and-Drop HUD)
 - Backend: Express (Node.js) acting as an API key proxy, authentication provider, and settings persistence layer with Prisma and SQLite.
 - Desktop Control: `tray_app.py` for system tray and CLI lifecycle management.
 

@@ -24,4 +24,9 @@
 - [x] Phase 29: Consolidated High-Value Dashboard Studio UI & Tooltips.
 - [x] Phase 30: Custom VRM Avatar Upload & IndexedDB Management.
 - [x] Phase 31: Multimodal Vision (Camera screenshot upload & character awareness with dynamic vision routing).
-- [ ] Phase 32: Advanced Motion Physics & Dynamic VRM Accessories.
+- [x] Phase 32: Full Viewport Drag-and-Drop, Mic Audio Tester & System Tray Polish.
+- [x] Phase 33: Advanced Motion Physics & Dynamic VRM Accessories (Spring bone stiffness & damping controls, backup JSON export/import).
+- [x] Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing.
+- [x] Phase 35: Procedural Natural Eye Blinking.
+- [x] Phase 36: Postprocessing Bloom & Ambient Lighting Controls.
+- [ ] Phase 37: Desktop Global Hotkeys & Native Speech Activation.
