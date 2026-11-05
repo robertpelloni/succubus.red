@@ -27,4 +27,5 @@
 - [x] Phase 32: Full Viewport Drag-and-Drop, Mic Audio Tester & System Tray Polish.
 - [x] Phase 33: Advanced Motion Physics & Dynamic VRM Accessories (Spring bone stiffness & damping controls, backup JSON export/import).
 - [x] Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing.
-- [ ] Phase 35: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 35: Procedural Natural Eye Blinking.
+- [ ] Phase 36: Desktop Global Hotkeys & Native Speech Activation.

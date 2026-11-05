@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.23.0] - Procedural Natural Eye Blinking
+### Added
+- Procedural natural eye blinking in `Character.jsx` using `@pixiv/three-vrm` preset expression `blink`.
+- Implemented randomized blink interval scheduling (2.5 to 5.5 seconds) with half-sine smooth open/close curves (~180ms).
+
 ## [0.22.0] - Facial Emotion Blendshape Easing & Transition Smoothing
 ### Added
 - Smooth procedural exponential easing for VRM facial expression blendshapes in `Character.jsx` using `THREE.MathUtils.lerp`.

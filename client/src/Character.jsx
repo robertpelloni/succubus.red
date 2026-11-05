@@ -31,6 +31,14 @@ export default function Character({
     surprised: 0
   });
 
+  // Procedural natural eye blinking state
+  const blinkStateRef = useRef({
+    nextBlinkTime: 3.0,
+    blinkDuration: 0.18,
+    timer: 0.0,
+    isBlinking: false
+  });
+
   // Keep track of the initial animation
   const initialAnimationRef = useRef(currentAnimation);
 
@@ -206,6 +214,36 @@ export default function Character({
             console.warn(`Blendshape missing for emotion: ${emo}`);
           }
         });
+
+        // Procedural natural eye blinking
+        const b = blinkStateRef.current;
+        b.timer += delta;
+
+        let blinkWeight = 0;
+        if (!b.isBlinking) {
+          if (b.timer >= b.nextBlinkTime) {
+            b.isBlinking = true;
+            b.timer = 0;
+          }
+        } else {
+          // In the middle of a blink
+          if (b.timer < b.blinkDuration) {
+            // Half-sine curve for smooth close and open: sin(pi * progress)
+            const progress = b.timer / b.blinkDuration;
+            blinkWeight = Math.sin(Math.PI * progress);
+          } else {
+            // Blink finished, schedule next blink (between 2.5 and 5.5 seconds)
+            b.isBlinking = false;
+            b.timer = 0;
+            b.nextBlinkTime = 2.5 + Math.random() * 3.0;
+          }
+        }
+
+        try {
+          vrm.expressionManager.setValue('blink', blinkWeight);
+        } catch {
+          // Model might not expose standard blink preset
+        }
       }
     }
   });

@@ -12,3 +12,5 @@
 - Real-time microphone input testing widget in Companion Studio uses browser `navigator.mediaDevices.getUserMedia` and Web Audio API `AudioContext.createAnalyser()` to calculate instantaneous RMS volume levels, rendered as a responsive VU meter bar.
 - VRM Spring Bone physics parameters (`stiffness` and `dragForce`) can be dynamically updated in real-time by traversing `vrm.springBoneManager.joints` without resetting bone positions or restarting animations.
 - Full studio configuration and conversation transcript backups can be exported and imported as structured JSON files directly from the Companion Studio Account & Session section.
+- Facial emotion blendshapes (`happy`, `angry`, `sad`, `relaxed`, `surprised`) in `Character.jsx` use procedural exponential easing via `THREE.MathUtils.lerp` in `useFrame` to ensure smooth transitions between emotional states and prevent visual blendshape snapping.
+- Procedural eye blinking in `Character.jsx` uses `@pixiv/three-vrm`'s preset expression `blink` with dynamic interval randomized scheduling (2.5 to 5.5 seconds) and half-sine easing without interrupting spoken visemes or active facial emotion blendshapes.

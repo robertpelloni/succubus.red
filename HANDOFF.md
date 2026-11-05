@@ -1,6 +1,9 @@
-# Session Handoff - v0.22.0
+# Session Handoff - v0.23.0
 
 ## Completed Work in this Session
+- **Phase 35: Procedural Natural Eye Blinking**:
+  - Implemented procedural natural eye blinking in `client/src/Character.jsx` utilizing `@pixiv/three-vrm`'s standard preset expression `blink`.
+  - Added randomized scheduling (2.5 to 5.5 seconds) with half-sine smooth open/close curves (~180ms), coexisting harmoniously with active facial emotions and spoken visemes.
 - **Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing**:
   - Implemented procedural linear interpolation (lerp) for VRM expression blendshapes in `client/src/Character.jsx`.
   - Replaced abrupt blendshape resets with delta-timed exponential smoothing (`THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0))`) across joy, anger, sorrow, relaxed, and surprised expressions.
@@ -23,9 +26,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.22.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.23.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
 - Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
-- Automatic idle blink procedural animation generator for VRM models lacking dedicated eye blink clips.
+- Dynamic scene shadow softness and postprocessing bloom threshold slider controls in Companion Studio.
