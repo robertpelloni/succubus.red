@@ -1,0 +1,16 @@
+# ROADMAP
+- [x] Phase 1: Core Viewport & Skeletal Rendering (Three.js, VRM).
+- [x] Phase 2: Animation & Logic State Machine (Mixamo animations).
+- [x] Phase 3: Uncensored Backend Streaming Proxy (OpenRouter API).
+- [x] Phase 4: Basic Browser SpeechSynthesis and Emotion Mapping.
+- [x] Phase 5: Progressive Text Chunking for Realtime TTS Response.
+- [x] Phase 6: Immersive 3D Environments & Lighting (Beyond simple gradients).
+- [x] Phase 7: Advanced Viseme Lip-Syncing (FFT Analysis).
+- [x] Phase 8: MToon shading enhancements & overall polish.
+- [x] Phase 9: Voice Input / Speech Recognition integration.
+- [x] Phase 10: Conversational Memory & Persona Enhancements.
+- [x] Phase 11: Interactive LookAt / Mouse Tracking.
+- [x] Phase 12: Dashboard UI Redesign.
+- [x] Phase 13: Dynamic Camera Perspectives.
+- [x] Phase 14: Interactive Environment Highlighting.
+- [x] Phase 15: Context-Aware System Prompting.

@@ -1,0 +1,5 @@
+
+> server@1.0.0 start
+> node index.js
+
+Server listening on port 3001
