@@ -1,4 +1,10 @@
 # MEMORY
-- Project initiated.
-- Decided to use React + Vite + Three.js + @pixiv/three-vrm based on the specification.
-- A Client-Heavy, Server-Light paradigm.
+- Project initiated based on succubus.red design specification.
+- Architecture: Client-Heavy, Server-Light paradigm utilizing React + Three.js + @pixiv/three-vrm.
+- VRM 1.0 specifications require root translation locks (dx=0, dz=0) and neutral scene rotation.
+- Settings dashboard consolidated into a single panel (`Companion Studio`) without fragmented subpages, structured by value hierarchy.
+- Audio synthesis supports fallback gracefully: ElevenLabs -> Kokoro WebGPU -> Native SpeechSynthesis.
+- Native speech synthesis requires guarding `isSpeaking` reset using `!window.speechSynthesis.pending` in multi-sentence utterance flows.
+- System tray management implemented in `tray_app.py` supporting both pystray GUI and headless CLI execution with IPv4/IPv6 port detection.
+- Custom VRM avatar models can be dynamically uploaded and persisted directly in browser IndexedDB via `CacheUtils.js` without server payload overhead.
+- Multimodal vision requests dynamically format user content as OpenAI-compatible message arrays (`[{ type: 'text', text }, { type: 'image_url', image_url: { url } }]`). The Express `/api/chat` router detects array content containing image URLs and intelligently swaps the model parameter to `meta-llama/llama-3.2-11b-vision-instruct`, while preserving standard roleplay models for pure text.

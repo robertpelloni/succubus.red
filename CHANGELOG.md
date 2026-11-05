@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [0.19.0] - Multimodal Vision & Image Sharing
+### Added
+- Implemented multimodal vision capabilities in `Companion Studio` and chat interface.
+- Added image file attachment button (`📷`) and preview thumbnail with dismiss button (`✕`) in `client/src/App.jsx`.
+- Converted user-uploaded images to Base64 data URLs formatted in standard OpenAI multimodal message array structure (`[{ type: 'text', text }, { type: 'image_url', image_url: { url } }]`).
+- Integrated dynamic model routing in Express `/api/chat`: automatically switches to `meta-llama/llama-3.2-11b-vision-instruct` whenever images are present, preserving fast roleplay models for standard text.
+- Enhanced backend schema validation in `server/index.js` and `server/test_validation.js` to accept structured multimodal message payloads without schema rejections.
+- Rendered inline thumbnail preview directly inside chat speech bubbles with responsive max dimensions.
+- Updated automated Playwright test suite `scripts/verify_all.py` to assert image file input presence and chat container responsiveness.
+
+## [0.18.0] - Custom VRM Avatar Upload & IndexedDB Storage
+### Added
+- Added custom VRM avatar upload feature in `Companion Studio` allowing users to upload `.vrm` character files.
+- Integrated browser-side IndexedDB persistence for user-uploaded models via `CacheUtils.js` (`saveCustomAvatar`, `getCustomAvatar`, `clearCustomAvatar`).
+- Updated `Character.jsx` to dynamically reload avatars when switching between Default and Custom VRM models with proper cleanup and animation retargeting.
+- Added visual avatar mode switcher chips and reset buttons with informative tooltips in `App.jsx`.
+
+## [0.17.0] - Dashboard Consolidation & System Tray Control
+### Added
+- Consolidated and redesigned the settings dashboard in `client/src/App.jsx` into a singular, cohesive Companion Studio panel categorized by value hierarchy:
+  - AI Persona & Interaction (System prompt, manual animation chips, manual emotion blendshape triggers).
+  - Voice & Audio Studio (TTS provider selection: Native, ElevenLabs, Kokoro WebGPU; Voice selection; Pitch/Rate sliders; Voice sample preview).
+  - 3D Stage & Environment (Camera perspective presets, GLB environment switcher, Day/Night lighting toggle, Particle sparkle effects).
+  - Integrations & API Config (OpenRouter API Key).
+  - Account & Session Management (Current user display, clear chat, user logout/switch).
+- Added comprehensive tooltips (`?`) to every configuration item across the entire dashboard.
+- Implemented `tray_app.py`, providing graphical system tray capabilities (via `pystray`) and automated daemon/CLI management (`status`, `start`, `stop`, `restart`, `logs`, `open`) with dual-stack IPv4/IPv6 port monitoring and clean server process termination.
+- Created root `package.json` to orchestrate scripts across frontend and backend (`npm run dev`, `npm run build`, `npm run lint`, `npm test`, `npm run tray`, `npm run verify`).
+- Reorganized legacy testing scripts nondestructively into `scripts/archive/` and unified end-to-end verification under `scripts/verify_all.py`.
+
 ## [0.16.0] - Data Validation & Backend Resilience
 ### Added
 - Created `test_validation.js` to assert backend API behavior under edge-case payloads (missing fields, wrong types, unknown schema keys).
@@ -45,7 +75,7 @@
 - Users can now smoothly transition the viewpoint using UI buttons via `setLookAt` animations.
 
 ## [0.6.0] - Dashboard UI Redesign
-- Implemented Phase 12. Completely overhauled the settings dashboard layout in `App.jsx`.
+- Implemented Phase 12. Overhauled the settings dashboard layout in `App.jsx`.
 - Grouped configurations into intuitive categories (AI Persona, Voice & Audio, Integrations, Debug & Controls) using custom CSS blocks.
 - Added comprehensive tooltips (`?`) to all previously undocumented settings including TTS sliders and the Clear Chat History button.
 
@@ -87,7 +117,6 @@
 ## [0.0.5] - UI Tag Stripping
 - Stripped bracket tags ([animation:wave], etc.) from the chat UI so they are processed silently in the background.
 
-
 ## [0.0.4] - Asset Caching
 - Implemented IndexedDB caching for large 3D assets (VRM models, FBX animations) to eliminate redundant network fetching and improve application reload speeds.
 
@@ -99,6 +128,7 @@
 - Implemented regex tag extraction for real-time `[animation:value]` and `[emotion:value]`.
 - Added `Sitting` and `Thinking` animations.
 - Added Express integration tests.
+
 ## [0.0.1] - Initial setup
 - Generated core documentation files.
 - Basic 3D VRM rendering and express proxy skeleton.

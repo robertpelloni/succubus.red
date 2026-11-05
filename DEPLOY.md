@@ -1,20 +1,47 @@
 # DEPLOYMENT INSTRUCTIONS
 ## Architecture
 Three-tier architecture:
-- Frontend: Vite (React, React Three Fiber, Pixiv VRM)
-- Backend: Express (Node.js) acting as an API key proxy.
+- Frontend: Vite (React 19, React Three Fiber, Pixiv VRM, Kokoro WebGPU)
+- Backend: Express (Node.js) acting as an API key proxy, authentication provider, and settings persistence layer with Prisma and SQLite.
+- Desktop Control: `tray_app.py` for system tray and CLI lifecycle management.
 
-## Development Setup
-### Frontend
-1. `cd client`
-2. `npm install`
-3. `npm run dev` (Runs on http://localhost:5173)
-### Backend
-1. `cd server`
-2. `npm install`
-3. Create a `.env` file with `OPENROUTER_API_KEY=your_key`
-4. `npm start` (Runs on http://localhost:3001)
+## Environment Setup
+### Prerequisites
+- Node.js >= 18
+- Python >= 3.10
+- SQLite3
+
+### Automated Startup
+Run all services from the root directory:
+```bash
+npm run dev
+```
+Or manage via system tray / CLI:
+```bash
+npm run tray -- status
+npm run tray -- start
+npm run tray -- logs
+npm run tray -- stop
+```
+
+### Manual Development Setup
+#### 1. Backend
+```bash
+cd server
+npm install
+echo 'DATABASE_URL="file:./dev.db"' > .env
+npx prisma db push
+npm start # Runs on http://localhost:3001
+```
+
+#### 2. Frontend
+```bash
+cd client
+npm install
+npm run dev # Runs on http://localhost:5173
+```
 
 ## Production Build
-1. In `client/`, run `npm run build`. Serve `client/dist/` via a static hosting provider (e.g. Nginx, Vercel).
-2. Host the `server/` process via PM2 or Docker, ensuring `VITE_BACKEND_URL` is set appropriately during the frontend build step.
+1. In root: `npm run build` (builds `client/dist/`).
+2. Serve static files from `client/dist/` via Nginx or CDN.
+3. Run backend with PM2 or Docker: `node server/index.js`.

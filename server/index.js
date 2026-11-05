@@ -33,6 +33,23 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ error: "userMessages array is required" });
   }
 
+  // Validate message contents: each message must have role and either string content or array content (multimodal)
+  for (const msg of userMessages) {
+    if (!msg || typeof msg !== 'object') {
+      return res.status(400).json({ error: "Each message must be a valid object" });
+    }
+    if (!msg.role || typeof msg.role !== 'string') {
+      return res.status(400).json({ error: "Each message must have a string role" });
+    }
+    if (typeof msg.content !== 'string' && !Array.isArray(msg.content)) {
+      return res.status(400).json({ error: "Message content must be a string or array" });
+    }
+  }
+
+  // Detect if any message contains an image for multimodal routing
+  const hasImage = userMessages.some(m => Array.isArray(m.content) && m.content.some(part => part.type === 'image_url'));
+  const selectedModel = hasImage ? "meta-llama/llama-3.2-11b-vision-instruct" : "Gryphe/Mythalion-13b";
+
   const openai = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: apiKey || process.env.OPENROUTER_API_KEY || "dummy_key",
@@ -40,7 +57,7 @@ app.post("/api/chat", async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "Gryphe/Mythalion-13b",
+      model: selectedModel,
       messages: [
         { role: "system", content: characterSystemPrompt || "" },
         ...userMessages

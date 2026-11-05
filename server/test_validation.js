@@ -70,5 +70,22 @@ describe('Backend Edge-Case & Validation Tests', () => {
       const res = await request.post('/api/chat').send({ userMessages: "just a string", characterSystemPrompt: "Hello" });
       expect(res.status).to.equal(400);
     });
+
+    it('should accept multimodal array messages in userMessages', async () => {
+      const res = await request.post('/api/chat').send({
+        userMessages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "What is this image?" },
+              { type: "image_url", image_url: { url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" } }
+            ]
+          }
+        ],
+        characterSystemPrompt: "You are a vision tester."
+      });
+      // Will attempt to call OpenRouter and return 200/401/500, not 400 validation error
+      expect(res.status).to.be.oneOf([200, 401, 500]);
+    });
   });
 });

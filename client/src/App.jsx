@@ -6,24 +6,37 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
+import { getCustomAvatar, saveCustomAvatar, clearCustomAvatar } from './CacheUtils';
 import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [attachedImage, setAttachedImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginUsername, setLoginUsername] = useState('');
+  const [activeUser, setActiveUser] = useState('');
 
   // Dashboard State & LocalStorage initialization
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
+  // High-Value Controls & 3D Avatar State
   const [currentAnimation, setCurrentAnimation] = useState('idle');
+  const [manualEmotion, setManualEmotion] = useState('none');
   const [apiKey, setApiKey] = useState('');
   const [environmentFile, setEnvironmentFile] = useState('room.glb');
+  const [lightsOn, setLightsOn] = useState(true);
+  const [particleEffect, setParticleEffect] = useState('none');
+
+  // Custom Avatar state
+  const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
+  const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
 
   const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
 You have a distinct personality: you are confident, slightly mischievous, deeply attentive, and highly expressive.
@@ -40,6 +53,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
   const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt);
 
+  // Audio & TTS Engine configuration
+  const [ttsProvider, setTtsProvider] = useState('native'); // 'native', 'elevenlabs', 'kokoro'
   const [ttsPitch, setTtsPitch] = useState(1.2);
   const [ttsRate, setTtsRate] = useState(1.0);
   const [ttsVoice, setTtsVoice] = useState('');
@@ -51,8 +66,6 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   const [isSpeaking, setIsSpeaking] = useState(false);
   const endOfMessagesRef = useRef(null);
   const [emotion, setEmotion] = useState(null);
-  const [lightsOn, setLightsOn] = useState(true);
-  const [particleEffect, setParticleEffect] = useState('none');
 
   // Audio & Speech Recognition state
   const [visemes, setVisemes] = useState({ a: 0, i: 0, u: 0 });
@@ -69,36 +82,23 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   // Kokoro TTS State
   const [kokoroTts, setKokoroTts] = useState(null);
 
-  // Utility to encode Float32Array to WAV format
+  // Encode Float32Array to WAV format
   const encodeWAV = (samples, sampleRate) => {
     const buffer = new ArrayBuffer(44 + samples.length * 2);
     const view = new DataView(buffer);
 
-    // RIFF identifier
     writeString(view, 0, 'RIFF');
-    // RIFF chunk length
     view.setUint32(4, 36 + samples.length * 2, true);
-    // RIFF type
     writeString(view, 8, 'WAVE');
-    // format chunk identifier
     writeString(view, 12, 'fmt ');
-    // format chunk length
     view.setUint32(16, 16, true);
-    // sample format (raw)
     view.setUint16(20, 1, true);
-    // channel count (1)
     view.setUint16(22, 1, true);
-    // sample rate
     view.setUint32(24, sampleRate, true);
-    // byte rate (sample rate * block align)
     view.setUint32(28, sampleRate * 2, true);
-    // block align (channel count * bytes per sample)
     view.setUint16(32, 2, true);
-    // bits per sample
     view.setUint16(34, 16, true);
-    // data chunk identifier
     writeString(view, 36, 'data');
-    // data chunk length
     view.setUint32(40, samples.length * 2, true);
 
     floatTo16BitPCM(view, 44, samples);
@@ -118,6 +118,60 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     }
   };
 
+  // Initialize Custom Avatar from IndexedDB
+  useEffect(() => {
+    const initAvatar = async () => {
+      try {
+        const customUrl = await getCustomAvatar();
+        if (customUrl) {
+          setHasCustomAvatar(true);
+        }
+      } catch (e) {
+        console.warn("Error checking custom avatar:", e);
+      }
+    };
+    initAvatar();
+  }, []);
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.vrm')) {
+      alert("Please select a valid .vrm file!");
+      return;
+    }
+
+    try {
+      const customUrl = await saveCustomAvatar(file);
+      setAvatarUrl(customUrl);
+      setHasCustomAvatar(true);
+      setAvatarMode('custom');
+    } catch (err) {
+      console.error("Failed to save custom avatar:", err);
+      alert("Failed to save avatar to IndexedDB.");
+    }
+  };
+
+  const handleSwitchAvatarMode = async (mode) => {
+    setAvatarMode(mode);
+    if (mode === 'default') {
+      setAvatarUrl('/avatar.vrm');
+    } else {
+      const customUrl = await getCustomAvatar();
+      if (customUrl) {
+        setAvatarUrl(customUrl);
+      }
+    }
+  };
+
+  const handleResetAvatar = async () => {
+    await clearCustomAvatar();
+    setHasCustomAvatar(false);
+    setAvatarMode('default');
+    setAvatarUrl('/avatar.vrm');
+  };
+
   // Initialize Kokoro
   useEffect(() => {
     const initKokoro = async () => {
@@ -129,7 +183,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         });
         setKokoroTts(tts);
       } catch (err) {
-        console.error("Failed to load Kokoro TTS:", err);
+        console.warn("Kokoro TTS not loaded on startup:", err);
       }
     };
     initKokoro();
@@ -144,10 +198,13 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       if (dbSettings) {
         if (dbSettings.openRouterApiKey) setApiKey(dbSettings.openRouterApiKey);
         if (dbSettings.systemPrompt) setSystemPrompt(dbSettings.systemPrompt);
-        if (dbSettings.ttsPitch) setTtsPitch(dbSettings.ttsPitch);
-        if (dbSettings.ttsRate) setTtsRate(dbSettings.ttsRate);
+        if (dbSettings.ttsPitch !== null && dbSettings.ttsPitch !== undefined) setTtsPitch(dbSettings.ttsPitch);
+        if (dbSettings.ttsRate !== null && dbSettings.ttsRate !== undefined) setTtsRate(dbSettings.ttsRate);
         if (dbSettings.ttsVoice) setTtsVoice(dbSettings.ttsVoice);
-        if (dbSettings.elevenLabsApiKey) setElevenLabsApiKey(dbSettings.elevenLabsApiKey);
+        if (dbSettings.elevenLabsApiKey) {
+          setElevenLabsApiKey(dbSettings.elevenLabsApiKey);
+          setTtsProvider('elevenlabs');
+        }
         if (dbSettings.elevenLabsVoiceId) setElevenLabsVoiceId(dbSettings.elevenLabsVoiceId);
         if (dbSettings.currentAnimation) setCurrentAnimation(dbSettings.currentAnimation);
         if (dbSettings.environmentFile) setEnvironmentFile(dbSettings.environmentFile);
@@ -187,9 +244,19 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     return () => clearTimeout(timeoutId);
   }, [apiKey, systemPrompt, ttsPitch, ttsRate, ttsVoice, elevenLabsApiKey, elevenLabsVoiceId, environmentFile, currentAnimation, messages, isSettingsLoaded]);
 
-  // Ensure voices are loaded for the dashboard dropdown
+  // Handle manual emotion change
+  useEffect(() => {
+    if (manualEmotion === 'none') {
+      setEmotion(null);
+    } else {
+      setEmotion({ name: manualEmotion, value: 1.0 });
+    }
+  }, [manualEmotion]);
+
+  // Load voices for native browser speech synthesis
   useEffect(() => {
     const loadVoices = () => {
+      if (!('speechSynthesis' in window)) return;
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
       if (!ttsVoice && voices.length > 0) {
@@ -199,14 +266,16 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     };
 
     loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
   }, [ttsVoice]);
 
   const playNextAudio = async () => {
     if (audioQueueRef.current.length === 0) {
       isPlayingRef.current = false;
       setIsSpeaking(false);
-      setVisemes({ a: 0, i: 0, u: 0 }); // reset visemes
+      setVisemes({ a: 0, i: 0, u: 0 });
       return;
     }
 
@@ -218,11 +287,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     setIsSpeaking(true);
 
     audio.onended = () => {
-      // Play the next audio in the queue
       playNextAudio();
     };
 
-    // Initialize FFT analyser
     if (!analyserRef.current) {
       analyserRef.current = new LipSyncAnalyser(audio);
     } else {
@@ -234,7 +301,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   };
 
   const speak = async (text) => {
-    if (elevenLabsApiKey && elevenLabsVoiceId) {
+    if (ttsProvider === 'elevenlabs' && elevenLabsApiKey && elevenLabsVoiceId) {
       try {
         const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
         const response = await fetch(`${backendUrl}/api/tts`, {
@@ -247,27 +314,21 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-
-        // Push onto queue
         audioQueueRef.current.push({ url });
 
-        // If not currently playing anything, start playback loop
         if (!isPlayingRef.current) {
           playNextAudio();
         }
-
       } catch (e) {
         console.error("ElevenLabs TTS Error:", e);
       }
-    } else if (kokoroTts) {
+    } else if (ttsProvider === 'kokoro' && kokoroTts) {
       try {
         setIsSpeaking(true);
         const audioData = await kokoroTts.generate(text, {
-          voice: "af_heart", // Using default voice as placeholder
+          voice: "af_heart",
         });
 
-        // kokoro-js outputs a Float32Array on audioData.audio. We must encode it to a standard WAV.
-        // Assuming a standard sample rate of 24000 for Kokoro models (adjust if different).
         const wavBuffer = encodeWAV(audioData.audio, 24000);
         const blob = new Blob([wavBuffer], { type: "audio/wav" });
         const url = URL.createObjectURL(blob);
@@ -282,7 +343,6 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       }
     } else if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-
       const voices = window.speechSynthesis.getVoices();
       const selectedVoice = voices.find(v => v.name === ttsVoice);
       if (selectedVoice) {
@@ -294,7 +354,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => {
-        setIsSpeaking(false);
+        if (!window.speechSynthesis.pending) {
+          setIsSpeaking(false);
+        }
       };
 
       window.speechSynthesis.speak(utterance);
@@ -357,27 +419,56 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     recognition.start();
   };
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file (PNG, JPEG, WebP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedImage(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-    const newMessages = [...messages, { role: 'user', content: input }];
+    if (!input.trim() && !attachedImage) return;
+
+    // Create message content (multimodal structure if image attached)
+    let userContent;
+    if (attachedImage) {
+      userContent = [
+        { type: 'text', text: input.trim() || 'Please look at this image.' },
+        { type: 'image_url', image_url: { url: attachedImage } }
+      ];
+    } else {
+      userContent = input.trim();
+    }
+
+    const newMessages = [...messages, { role: 'user', content: userContent }];
     setMessages(newMessages);
     setInput('');
-
-    // Save locally
-    localStorage.setItem('chat_history', JSON.stringify(newMessages));
+    setAttachedImage(null);
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-
-      // Limit memory to the last 20 messages to prevent token exhaustion
       const slidingWindowMessages = newMessages.slice(-20);
+
+      // Prepare payload: format messages for OpenRouter
+      const payloadMessages = slidingWindowMessages.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
 
       const response = await fetch(`${backendUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userMessages: slidingWindowMessages.map(m => ({ role: m.role, content: m.content })),
+          userMessages: payloadMessages,
           characterSystemPrompt: systemPrompt,
           apiKey: apiKey
         })
@@ -394,7 +485,6 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       let spokenText = '';
       let parsedTagIndex = 0;
 
-      // Update UI with partial messages
       const finalMessages = [...newMessages, { role: 'assistant', content: '' }];
       setMessages(finalMessages);
 
@@ -404,10 +494,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         const chunkValue = decoder.decode(value, { stream: !done });
         textBuffer += chunkValue;
 
-        // Regex to find and process tags like [animation:wave], [emotion:joy], [lights:on], and [effect:sparkle]
         const tagRegex = /\[(animation|emotion|lights|effect):([a-zA-Z]+)\]/g;
 
-        // Update the last message content in UI, stripping out tags
         setMessages(prev => {
           const updated = [...prev];
           updated[updated.length - 1].content = textBuffer.replace(tagRegex, '');
@@ -424,33 +512,25 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             setCurrentAnimation(val);
           } else if (type === 'emotion') {
             setEmotion({ name: val, value: 1.0 });
-            setTimeout(() => setEmotion(null), 3000); // Reset emotion after 3s
+            setTimeout(() => setEmotion(null), 3000);
           } else if (type === 'lights') {
-            if (val === 'on') {
-              setLightsOn(true);
-            } else if (val === 'off') {
-              setLightsOn(false);
-            }
+            if (val === 'on') setLightsOn(true);
+            else if (val === 'off') setLightsOn(false);
           } else if (type === 'effect') {
             setParticleEffect(val);
           }
         }
 
-        // Update parsedTagIndex based on fully parsed tags, but if there's a '[' without a ']' near the end, wait
         const lastBracketOpen = unparsedText.lastIndexOf('[');
         const lastBracketClose = unparsedText.lastIndexOf(']');
 
         if (lastBracketOpen > lastBracketClose) {
-           // We have a partial tag, only advance up to the last bracket
            parsedTagIndex += lastBracketOpen;
         } else {
            parsedTagIndex = textBuffer.length;
         }
 
-        // Remove tags from text for speaking and sentence boundary detection
         const cleanText = textBuffer.replace(tagRegex, '');
-
-        // Look for new sentence boundaries to speak incrementally
         const unSpoken = cleanText.substring(spokenText.length);
         const sentenceBoundaryRegex = /([.?!]+)(\s|$)/g;
 
@@ -469,18 +549,15 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         }
       }
 
-      // Speak any remaining text that didn't end with a punctuation mark
       const finalCleanText = textBuffer.replace(/\[(animation|emotion|lights|effect):([a-zA-Z]+)\]/g, '');
       const remainingText = finalCleanText.substring(spokenText.length).trim();
       if (remainingText) {
          speak(remainingText);
       }
 
-      // The debounced useEffect handles saving messages array automatically.
-      // But we update the final messages locally with tags stripped.
       setMessages(finalMessages.map((msg, index) => {
         if (index === finalMessages.length - 1) {
-          return { ...msg, content: textBuffer.replace(/\[(animation|emotion|lights|effect):([a-zA-Z]+)\]/g, '') };
+          return { ...msg, content: finalCleanText };
         }
         return msg;
       }));
@@ -501,12 +578,13 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: loginUsername })
+        body: JSON.stringify({ username: loginUsername.trim() })
       });
 
       if (response.ok) {
         const data = await response.json();
         StorageService.setToken(data.token);
+        setActiveUser(data.userId);
         setIsAuthenticated(true);
       } else {
         console.error("Login failed");
@@ -516,11 +594,19 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     }
   };
 
+  const handleLogout = () => {
+    StorageService.clearToken();
+    setIsAuthenticated(false);
+    setActiveUser('');
+    setIsSettingsLoaded(false);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="auth-overlay">
         <div className="auth-panel">
           <h2 className="auth-title">Welcome to Succubus.red</h2>
+          <p className="auth-subtitle">Interactive 3D Virtual AI Companion Studio</p>
           <input
             type="text"
             placeholder="Enter Username"
@@ -529,7 +615,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             className="auth-input"
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           />
-          <button onClick={handleLogin} className="auth-button">Enter</button>
+          <button onClick={handleLogin} className="auth-button">Enter Studio</button>
         </div>
       </div>
     );
@@ -542,99 +628,222 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       <button
         className="dashboard-toggle-btn"
         onClick={() => setIsDashboardOpen(!isDashboardOpen)}
-        title="Settings"
+        title="Settings & Studio Control"
       >
         ⚙️
       </button>
 
-      {/* Dashboard Panel */}
+      {/* Consolidated Master Dashboard Panel */}
       <div className={`dashboard-panel ${isDashboardOpen ? 'open' : ''}`}>
-        <h2 style={{ margin: '0 0 10px 0', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '10px' }}>Settings</h2>
+        <div className="dashboard-header">
+          <h2 className="dashboard-title">Companion Studio</h2>
+          <button className="dashboard-close-btn" onClick={() => setIsDashboardOpen(false)}>✕</button>
+        </div>
 
-        {/* Category 1: AI Persona & Behavior */}
+        {/* Category 0: 3D Avatar & Model Management */}
         <div className="dashboard-category">
-          <h3 className="dashboard-category-title">AI Persona</h3>
+          <h3 className="dashboard-category-title">3D Avatar Model</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Active Avatar Model
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Switch between the default Succubus anime character and your custom uploaded VRoid/VRM model.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${avatarMode === 'default' ? 'active' : ''}`}
+                onClick={() => handleSwitchAvatarMode('default')}
+              >
+                Default Avatar
+              </button>
+              {hasCustomAvatar && (
+                <button
+                  className={`chip-button ${avatarMode === 'custom' ? 'active' : ''}`}
+                  onClick={() => handleSwitchAvatarMode('custom')}
+                >
+                  Custom VRM Avatar
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Upload Custom VRM (.vrm)
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Upload any VRoid Studio or standard VRM 0.0/1.0 avatar. Cached locally in your browser's IndexedDB.</span>
+              </div>
+            </label>
+            <input
+              type="file"
+              accept=".vrm"
+              onChange={handleAvatarUpload}
+              className="dashboard-input"
+              style={{ fontSize: '11px', padding: '6px' }}
+            />
+            {hasCustomAvatar && (
+              <button
+                className="action-button danger"
+                style={{ marginTop: '5px' }}
+                onClick={handleResetAvatar}
+              >
+                Remove Custom Avatar
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category 1: AI Persona & Real-time Expressiveness */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">AI Persona & Interaction</h3>
+
           <div className="dashboard-section">
             <label className="dashboard-label">
               System Prompt
               <div className="tooltip-container">?
-                <span className="tooltip-text">Defines the AI's core personality, behavior, and formatting rules. Use [animation:name] tags to trigger 3D actions.</span>
+                <span className="tooltip-text">Defines the AI's core persona, conversation style, and autonomous reaction tags (e.g. [animation:wave], [emotion:joy]).</span>
               </div>
             </label>
             <textarea
               className="dashboard-input"
-              style={{ height: '100px', resize: 'vertical' }}
+              style={{ height: '90px', resize: 'vertical' }}
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
             />
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Manual Animation Trigger
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Force the 3D character into a specific skeletal animation pose instantly.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              {['idle', 'wave', 'sitting', 'thinking'].map((anim) => (
+                <button
+                  key={anim}
+                  className={`chip-button ${currentAnimation === anim ? 'active' : ''}`}
+                  onClick={() => setCurrentAnimation(anim)}
+                >
+                  {anim.charAt(0).toUpperCase() + anim.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Facial Emotion Blendshape
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Trigger facial blendshapes on the VRM avatar directly (joy, angry, sorrow, fun, surprised).</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              {['none', 'joy', 'angry', 'sorrow', 'fun', 'surprised'].map((emo) => (
+                <button
+                  key={emo}
+                  className={`chip-button ${manualEmotion === emo ? 'active' : ''}`}
+                  onClick={() => setManualEmotion(emo)}
+                >
+                  {emo.charAt(0).toUpperCase() + emo.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Category 2: Voice & Audio */}
+        {/* Category 2: Voice & Audio Studio */}
         <div className="dashboard-category">
-          <h3 className="dashboard-category-title">Voice & Audio</h3>
+          <h3 className="dashboard-category-title">Voice & Audio Studio</h3>
 
           <div className="dashboard-section">
             <label className="dashboard-label">
-              ElevenLabs API Key
+              TTS Voice Engine
               <div className="tooltip-container">?
-                <span className="tooltip-text">Required for premium AI voices and accurate FFT lip sync. If empty, the system falls back to native browser TTS.</span>
-              </div>
-            </label>
-            <input
-              type="password"
-              className="dashboard-input"
-              value={elevenLabsApiKey}
-              onChange={(e) => setElevenLabsApiKey(e.target.value)}
-              placeholder="sk_..."
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              ElevenLabs Voice ID
-              <div className="tooltip-container">?
-                <span className="tooltip-text">The specific Voice ID string from your ElevenLabs dashboard (e.g. EXAVITQu4vr4xnSDxMaL).</span>
-              </div>
-            </label>
-            <input
-              type="text"
-              className="dashboard-input"
-              value={elevenLabsVoiceId}
-              onChange={(e) => setElevenLabsVoiceId(e.target.value)}
-              placeholder="EXAVITQu4vr4xnSDxMaL"
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Native TTS Voice
-              <div className="tooltip-container">?
-                <span className="tooltip-text">The fallback local voice used if ElevenLabs is not configured. Relies on voices installed on your OS/Browser.</span>
+                <span className="tooltip-text">Choose between Native Browser SpeechSynthesis, ElevenLabs neural voice, or Kokoro WebGPU/WASM local neural synthesis.</span>
               </div>
             </label>
             <select
               className="dashboard-input"
-              value={ttsVoice}
-              onChange={(e) => setTtsVoice(e.target.value)}
+              value={ttsProvider}
+              onChange={(e) => setTtsProvider(e.target.value)}
             >
-              {availableVoices.map((v, i) => (
-                <option key={i} value={v.name}>{v.name}</option>
-              ))}
+              <option value="native">Native Browser SpeechSynthesis</option>
+              <option value="elevenlabs">ElevenLabs Neural API</option>
+              <option value="kokoro">Kokoro WebGPU Local Neural</option>
             </select>
           </div>
+
+          {ttsProvider === 'elevenlabs' && (
+            <>
+              <div className="dashboard-section">
+                <label className="dashboard-label">
+                  ElevenLabs API Key
+                  <div className="tooltip-container">?
+                    <span className="tooltip-text">Required for ElevenLabs neural TTS. Streams high-fidelity audio with FFT viseme lip-sync.</span>
+                  </div>
+                </label>
+                <input
+                  type="password"
+                  className="dashboard-input"
+                  value={elevenLabsApiKey}
+                  onChange={(e) => setElevenLabsApiKey(e.target.value)}
+                  placeholder="sk_..."
+                />
+              </div>
+
+              <div className="dashboard-section">
+                <label className="dashboard-label">
+                  ElevenLabs Voice ID
+                  <div className="tooltip-container">?
+                    <span className="tooltip-text">Target Voice ID string from ElevenLabs dashboard (e.g. EXAVITQu4vr4xnSDxMaL).</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  className="dashboard-input"
+                  value={elevenLabsVoiceId}
+                  onChange={(e) => setElevenLabsVoiceId(e.target.value)}
+                  placeholder="EXAVITQu4vr4xnSDxMaL"
+                />
+              </div>
+            </>
+          )}
+
+          {ttsProvider === 'native' && (
+            <div className="dashboard-section">
+              <label className="dashboard-label">
+                Browser Voice
+                <div className="tooltip-container">?
+                  <span className="tooltip-text">Select one of your system's installed text-to-speech voices.</span>
+                </div>
+              </label>
+              <select
+                className="dashboard-input"
+                value={ttsVoice}
+                onChange={(e) => setTtsVoice(e.target.value)}
+              >
+                {availableVoices.map((v, i) => (
+                  <option key={i} value={v.name}>{v.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="dashboard-section">
             <label className="dashboard-label">
               TTS Pitch: {ttsPitch.toFixed(1)}
               <div className="tooltip-container">?
-                <span className="tooltip-text">Adjusts the pitch/tone of the native fallback TTS voice.</span>
+                <span className="tooltip-text">Controls vocal pitch frequency modifier (0.5 to 2.0).</span>
               </div>
             </label>
             <input
               type="range"
               className="dashboard-slider"
-              min="0" max="2" step="0.1"
+              min="0.5" max="2" step="0.1"
               value={ttsPitch}
               onChange={(e) => setTtsPitch(parseFloat(e.target.value))}
             />
@@ -644,7 +853,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             <label className="dashboard-label">
               TTS Rate: {ttsRate.toFixed(1)}
               <div className="tooltip-container">?
-                <span className="tooltip-text">Adjusts the speaking speed of the native fallback TTS voice.</span>
+                <span className="tooltip-text">Controls vocal speech tempo and rate multiplier (0.5 to 2.0).</span>
               </div>
             </label>
             <input
@@ -655,16 +864,123 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               onChange={(e) => setTtsRate(parseFloat(e.target.value))}
             />
           </div>
+
+          <div className="dashboard-section">
+            <button
+              className="action-button secondary"
+              onClick={() => speak("Hello! I am Succubus, your 3D interactive AI companion.")}
+            >
+              Preview Voice Sample 🔊
+            </button>
+          </div>
         </div>
 
-        {/* Category 3: Integrations */}
+        {/* Category 3: 3D Stage & Environment Controls */}
         <div className="dashboard-category">
-          <h3 className="dashboard-category-title">Integrations</h3>
+          <h3 className="dashboard-category-title">3D Stage & Environment</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Camera Perspective Presets
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Smooth programmatic camera transitions powered by CameraControls setLookAt.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0, 1.5, 3, 0, 1.2, 0, true)}
+              >
+                Full Body
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0, 1.3, 1.8, 0, 1.2, 0, true)}
+              >
+                Portrait
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0, 1.45, 0.8, 0, 1.45, 0, true)}
+              >
+                Close-up
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              3D Environment Asset
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Switch active GLB virtual stage model, cached automatically in IndexedDB.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={environmentFile}
+              onChange={(e) => setEnvironmentFile(e.target.value)}
+            >
+              <option value="none">Void (Empty Space)</option>
+              <option value="room.glb">Modern Neon Room</option>
+              <option value="room2.glb">Sci-Fi Deck</option>
+            </select>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Stage Lighting Mode
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Toggles active scene illumination between bright Day and moody Night modes. Can also be triggered by AI via [lights:on]/[lights:off].</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${lightsOn ? 'active' : ''}`}
+                onClick={() => setLightsOn(true)}
+              >
+                ☀️ Lights On
+              </button>
+              <button
+                className={`chip-button ${!lightsOn ? 'active' : ''}`}
+                onClick={() => setLightsOn(false)}
+              >
+                🌙 Night Lights
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Visual Particle Effects
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Toggles ambient sparkles and visual particle simulations. Can also be triggered by AI via [effect:sparkle].</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${particleEffect === 'none' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('none')}
+              >
+                None
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'sparkle' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('sparkle')}
+              >
+                ✨ Sparkles
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Category 4: Integrations & API Config */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">Integrations & API</h3>
           <div className="dashboard-section">
             <label className="dashboard-label">
               OpenRouter API Key
               <div className="tooltip-container">?
-                <span className="tooltip-text">Required to talk to the AI model. Obtain your key from openrouter.ai.</span>
+                <span className="tooltip-text">Your personal OpenRouter API key. If left blank, falls back to server environment key.</span>
               </div>
             </label>
             <input
@@ -677,96 +993,35 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           </div>
         </div>
 
-        {/* Category 4: Debug & Controls */}
+        {/* Category 5: Account & Session Management */}
         <div className="dashboard-category">
-          <h3 className="dashboard-category-title">Debug & Controls</h3>
-
+          <h3 className="dashboard-category-title">Account & Session</h3>
           <div className="dashboard-section">
-            <label className="dashboard-label">
-              Camera Preset
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Smoothly transitions the 3D camera to predefined viewpoints.</span>
-              </div>
-            </label>
-            <div style={{ display: 'flex', gap: '5px' }}>
+            <div style={{ fontSize: '13px', color: '#aaccff', marginBottom: '8px' }}>
+              Logged in as: <strong>{activeUser || 'Studio User'}</strong>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                className="dashboard-input"
-                style={{ flex: 1, cursor: 'pointer' }}
-                onClick={() => cameraControlRef.current?.setLookAt(0, 1.5, 3, 0, 1.2, 0, true)}
+                className="action-button danger"
+                style={{ flex: 1 }}
+                onClick={() => setMessages([])}
               >
-                Full
+                Clear Chat
               </button>
               <button
-                className="dashboard-input"
-                style={{ flex: 1, cursor: 'pointer' }}
-                onClick={() => cameraControlRef.current?.setLookAt(0, 1.3, 1.8, 0, 1.2, 0, true)}
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={handleLogout}
               >
-                Portrait
-              </button>
-              <button
-                className="dashboard-input"
-                style={{ flex: 1, cursor: 'pointer' }}
-                onClick={() => cameraControlRef.current?.setLookAt(0, 1.45, 0.8, 0, 1.45, 0, true)}
-              >
-                Close
+                Switch User
               </button>
             </div>
           </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Manual Animation
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Force the 3D character into a specific animation state immediately, bypassing the LLM response.</span>
-              </div>
-            </label>
-            <select
-              className="dashboard-input"
-              value={currentAnimation}
-              onChange={(e) => setCurrentAnimation(e.target.value)}
-            >
-              <option value="idle">Idle</option>
-              <option value="sitting">Sitting</option>
-              <option value="thinking">Thinking</option>
-              <option value="wave">Wave</option>
-            </select>
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              3D Environment
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Change the background 3D scene. Requires a brief loading pause.</span>
-              </div>
-            </label>
-            <select
-              className="dashboard-input"
-              value={environmentFile}
-              onChange={(e) => setEnvironmentFile(e.target.value)}
-            >
-              <option value="none">Void (Empty)</option>
-              <option value="room.glb">Default Room</option>
-              <option value="room2.glb">Sci-Fi Deck</option>
-            </select>
-          </div>
-
-          <div className="dashboard-section" style={{ borderBottom: 'none', paddingBottom: '0' }}>
-            <button
-              className="send-button"
-              style={{ width: '100%', background: '#f44336', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onClick={() => {
-                setMessages([]);
-              }}
-            >
-              Clear Chat History
-              <div className="tooltip-container" style={{ marginLeft: '10px' }}>?
-                <span className="tooltip-text">Instantly wipes the current conversation and resets the chat memory sliding window.</span>
-              </div>
-            </button>
-          </div>
         </div>
+
       </div>
 
+      {/* 3D Canvas Viewport */}
       <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
         <ambientLight intensity={lightsOn ? 0.8 : 0.05} />
         <directionalLight castShadow position={[5, 5, 5]} intensity={lightsOn ? 2.0 : 0.1} color="#ffffff" shadow-mapSize={[1024, 1024]} />
@@ -780,7 +1035,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           )}
 
           <Character
-            url="/avatar.vrm"
+            url={avatarUrl}
             currentAnimation={currentAnimation}
             emotion={emotion}
             isSpeaking={isSpeaking}
@@ -815,10 +1070,11 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         borderTopRightRadius: '20px',
         color: 'white',
         fontFamily: 'sans-serif',
-        boxShadow: '0 -5px 15px rgba(0,0,0,0.3)'
+        boxShadow: '0 -5px 15px rgba(0,0,0,0.3)',
+        zIndex: 40
       }}>
         <div className="chat-messages" style={{
-          height: '250px',
+          height: '220px',
           overflowY: 'auto',
           marginBottom: '15px',
           display: 'flex',
@@ -826,24 +1082,95 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           gap: '12px',
           paddingRight: '5px'
         }}>
-          {messages.map((msg, idx) => (
-            <div key={idx} style={{
-              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              background: msg.role === 'user' ? 'linear-gradient(135deg, #007bff, #0056b3)' : 'linear-gradient(135deg, #444, #333)',
-              padding: '10px 14px',
-              borderRadius: '20px',
-              borderBottomRightRadius: msg.role === 'user' ? '4px' : '20px',
-              borderBottomLeftRadius: msg.role === 'user' ? '20px' : '4px',
-              maxWidth: '80%',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-              lineHeight: '1.4'
-            }}>
-              {msg.content}
-            </div>
-          ))}
+          {messages.map((msg, idx) => {
+            const isMultimodal = Array.isArray(msg.content);
+            const textPart = isMultimodal
+              ? msg.content.find(p => p.type === 'text')?.text || ''
+              : msg.content;
+            const imgPart = isMultimodal
+              ? msg.content.find(p => p.type === 'image_url')?.image_url?.url
+              : null;
+
+            return (
+              <div key={idx} style={{
+                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                background: msg.role === 'user' ? 'linear-gradient(135deg, #007bff, #0056b3)' : 'linear-gradient(135deg, #444, #333)',
+                padding: '10px 14px',
+                borderRadius: '20px',
+                borderBottomRightRadius: msg.role === 'user' ? '4px' : '20px',
+                borderBottomLeftRadius: msg.role === 'user' ? '20px' : '4px',
+                maxWidth: '80%',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                lineHeight: '1.4'
+              }}>
+                {imgPart && (
+                  <img
+                    src={imgPart}
+                    alt="attachment"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '160px',
+                      borderRadius: '8px',
+                      marginBottom: textPart ? '8px' : '0',
+                      display: 'block'
+                    }}
+                  />
+                )}
+                {textPart}
+              </div>
+            );
+          })}
           <div ref={endOfMessagesRef} />
         </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '8px',
+            background: 'rgba(0,0,0,0.4)',
+            padding: '6px 10px',
+            borderRadius: '10px'
+          }}>
+            <img
+              src={attachedImage}
+              alt="preview"
+              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+            />
+            <span style={{ fontSize: '12px', flex: 1, color: '#aaccff' }}>Image Attached</span>
+            <button
+              onClick={() => setAttachedImage(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#ff4081',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleImageSelect}
+          />
+          <button
+            className="action-icon-button"
+            onClick={() => fileInputRef.current?.click()}
+            title="Attach Image"
+          >
+            📷
+          </button>
           <button
             className={`mic-button ${isRecording ? 'recording' : ''}`}
             onClick={handleMicToggle}
@@ -856,7 +1183,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Type a message..."
+            placeholder="Type a message or share an image..."
             style={{
               flex: 1,
               padding: '12px 16px',
@@ -864,6 +1191,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               border: 'none',
               outline: 'none',
               background: 'rgba(255,255,255,0.9)',
+              color: '#111',
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
             }}
           />

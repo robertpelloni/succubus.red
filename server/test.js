@@ -12,7 +12,8 @@ describe('Backend API Tests', () => {
     }
   });
 
-  it('should return a response for /api/chat', async () => {
+  it('should return a response for /api/chat', async function() {
+    this.timeout(10000);
     const res = await request
       .post('/api/chat')
       .send({

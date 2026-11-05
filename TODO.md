@@ -14,3 +14,11 @@
 - [x] Add local storage for settings and chat history.
 - [x] Implement additional Mixamo animations (Sitting, Thinking).
 - [x] Enhance UI/UX and MToon shading.
+- [x] Reorganize scripts nondestructively into `scripts/` with `archive/`.
+- [x] Create system tray and server management application (`tray_app.py`).
+- [x] Consolidate dashboard settings into single-page Companion Studio with tooltips.
+- [x] Add root `package.json` task runner.
+- [x] Add custom VRM avatar upload & IndexedDB persistence.
+- [x] Implement image file drop / multimodal input for vision models.
+- [ ] Add drag-and-drop file overlay for avatar and image uploads.
+- [ ] Implement custom voice audio sample recording / local mic test widget.
