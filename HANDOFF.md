@@ -1,6 +1,10 @@
-# Session Handoff - v0.23.0
+# Session Handoff - v0.24.0
 
 ## Completed Work in this Session
+- **Phase 36: Postprocessing Bloom & Ambient Lighting Controls**:
+  - Added interactive sliders in `Companion Studio` under 3D Stage & Environment for Bloom Glow Intensity (0.0 to 3.0) and Ambient Light Brightness (0.2x to 2.0x).
+  - Wired values directly to the `@react-three/postprocessing` `<Bloom>` effect and Three.js `<ambientLight>` in `client/src/App.jsx`.
+  - Serialized lighting and postprocessing settings into client backup export/import JSON routines.
 - **Phase 35: Procedural Natural Eye Blinking**:
   - Implemented procedural natural eye blinking in `client/src/Character.jsx` utilizing `@pixiv/three-vrm`'s standard preset expression `blink`.
   - Added randomized scheduling (2.5 to 5.5 seconds) with half-sine smooth open/close curves (~180ms), coexisting harmoniously with active facial emotions and spoken visemes.
@@ -26,9 +30,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.23.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.24.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
 - Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
-- Dynamic scene shadow softness and postprocessing bloom threshold slider controls in Companion Studio.
+- Dynamic shadow map resolution and directional light angle controls in Companion Studio.

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.24.0] - Postprocessing Bloom & Ambient Lighting Controls
+### Added
+- Interactive sliders for Bloom Glow Intensity (0.0 to 3.0) and Ambient Light Brightness (0.2x to 2.0x) under 3D Stage & Environment in Companion Studio.
+- Dynamic wiring in `client/src/App.jsx` to `<Bloom intensity={...} />` and `<ambientLight intensity={...} />`.
+- Full state persistence and integration into JSON backup export and import routines.
+
 ## [0.23.0] - Procedural Natural Eye Blinking
 ### Added
 - Procedural natural eye blinking in `Character.jsx` using `@pixiv/three-vrm` preset expression `blink`.

@@ -33,6 +33,8 @@ function App() {
   const [environmentFile, setEnvironmentFile] = useState('room.glb');
   const [lightsOn, setLightsOn] = useState(true);
   const [particleEffect, setParticleEffect] = useState('none');
+  const [bloomIntensity, setBloomIntensity] = useState(1.0);
+  const [ambientLightScale, setAmbientLightScale] = useState(1.0);
 
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
@@ -1259,7 +1261,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                       environmentFile,
                       currentAnimation,
                       lightsOn,
-                      particleEffect
+                      particleEffect,
+                      bloomIntensity,
+                      ambientLightScale
                     },
                     messages
                   };
@@ -1300,6 +1304,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                         if (data.settings.currentAnimation) setCurrentAnimation(data.settings.currentAnimation);
                         if (data.settings.lightsOn !== undefined) setLightsOn(data.settings.lightsOn);
                         if (data.settings.particleEffect !== undefined) setParticleEffect(data.settings.particleEffect);
+                        if (data.settings.bloomIntensity !== undefined) setBloomIntensity(data.settings.bloomIntensity);
+                        if (data.settings.ambientLightScale !== undefined) setAmbientLightScale(data.settings.ambientLightScale);
                       }
                       if (Array.isArray(data.messages)) {
                         setMessages(data.messages);
@@ -1322,13 +1328,45 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               </button>
             </div>
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0" max="3" step="0.1"
+              value={bloomIntensity}
+              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.2" max="2" step="0.1"
+              value={ambientLightScale}
+              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
+            />
+          </div>
         </div>
 
       </div>
 
       {/* 3D Canvas Viewport */}
       <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
-        <ambientLight intensity={lightsOn ? 0.8 : 0.05} />
+        <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
         <directionalLight castShadow position={[5, 5, 5]} intensity={lightsOn ? 2.0 : 0.1} color="#ffffff" shadow-mapSize={[1024, 1024]} />
         <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
@@ -1349,7 +1387,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             springBoneDragForce={springDragForce}
           />
           <EffectComposer>
-            <Bloom intensity={1.0} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
+            <Bloom intensity={bloomIntensity} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
           </EffectComposer>
         </Suspense>
 
