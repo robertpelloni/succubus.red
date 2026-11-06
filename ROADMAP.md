@@ -30,4 +30,5 @@
 - [x] Phase 35: Procedural Natural Eye Blinking.
 - [x] Phase 36: Postprocessing Bloom & Ambient Lighting Controls.
 - [x] Phase 37: Key Light Color & Shadow Map Resolution Controls.
-- [ ] Phase 38: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 38: WebGL Memory Disposal on Avatar Switching.
+- [ ] Phase 39: Desktop Global Hotkeys & Native Speech Activation.

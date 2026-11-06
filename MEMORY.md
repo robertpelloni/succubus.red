@@ -16,3 +16,4 @@
 - Procedural eye blinking in `Character.jsx` uses `@pixiv/three-vrm`'s preset expression `blink` with dynamic interval randomized scheduling (2.5 to 5.5 seconds) and half-sine easing without interrupting spoken visemes or active facial emotion blendshapes.
 - Postprocessing bloom glow intensity and ambient light brightness can be dynamically adjusted via sliders in the Companion Studio and are serialized in the full JSON studio backup files.
 - Directional key light color and shadow map resolution buffer sizes (512, 1024, 2048) are dynamically configurable in Companion Studio and serialized across JSON configuration exports.
+- Avatar switching in `Character.jsx` cleans up previous VRM models using `VRMUtils.deepDispose(activeVrmRef.current.scene)` and halts animations via `activeMixerRef.current.stopAllAction()` to prevent WebGL context memory leaks and VRAM fragmentation.

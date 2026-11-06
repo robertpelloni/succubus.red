@@ -18,6 +18,8 @@ export default function Character({
 }) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
+  const activeVrmRef = useRef(null);
+  const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
   const [actions, setActions] = useState({});
   const lookAtTargetRef = useRef(new THREE.Object3D());
@@ -69,9 +71,11 @@ export default function Character({
             }
 
             setVrm(loadedVrm);
+            activeVrmRef.current = loadedVrm;
 
             const newMixer = new THREE.AnimationMixer(loadedVrm.scene);
             setMixer(newMixer);
+            activeMixerRef.current = newMixer;
 
             const loadAnim = async (url, name) => {
               try {
@@ -110,6 +114,16 @@ export default function Character({
 
     return () => {
       isCancelled = true;
+      if (activeMixerRef.current) {
+        activeMixerRef.current.stopAllAction();
+      }
+      if (activeVrmRef.current && activeVrmRef.current.scene) {
+        try {
+          VRMUtils.deepDispose(activeVrmRef.current.scene);
+        } catch (e) {
+          console.warn("Error during VRM scene deepDispose:", e);
+        }
+      }
     };
   }, [url]);
 

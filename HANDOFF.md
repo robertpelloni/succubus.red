@@ -1,6 +1,9 @@
-# Session Handoff - v0.25.0
+# Session Handoff - v0.26.0
 
 ## Completed Work in this Session
+- **Phase 38: WebGL Memory Disposal on Avatar Switching**:
+  - Implemented explicit WebGL resource disposal in `client/src/Character.jsx` inside the avatar loading `useEffect` cleanup hook.
+  - Calls `VRMUtils.deepDispose(activeVrmRef.current.scene)` and `activeMixerRef.current.stopAllAction()` to completely purge geometry buffers, material programs, and GPU textures upon unmount or avatar swap.
 - **Phase 37: Key Light Color & Shadow Map Resolution Controls**:
   - Implemented Key Light Color picker and Shadow Quality dropdown (512, 1024, 2048) under 3D Stage & Environment in `Companion Studio`.
   - Wired directly to Three.js `<directionalLight>` color and shadow map resolution array props in `client/src/App.jsx`.
@@ -34,9 +37,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.25.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.26.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
 - Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
-- Directional light orbital pitch and yaw position controls in Companion Studio.
+- Directional light orbital pitch and yaw angle position controls in Companion Studio.

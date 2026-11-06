@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.26.0] - WebGL Memory Disposal on Avatar Switching
+### Added
+- Explicit WebGL memory disposal in `Character.jsx` unmount/update cleanup, calling `VRMUtils.deepDispose(scene)` and `mixer.stopAllAction()` to purge textures, geometries, and materials during avatar model switching.
+
 ## [0.25.0] - Key Light Color & Shadow Map Resolution Controls
 ### Added
 - Key Light Color picker and Shadow Quality dropdown (Low 512, Medium 1024, High 2048) under 3D Stage & Environment in Companion Studio.
