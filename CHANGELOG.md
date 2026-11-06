@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.28.0] - Viewport Drag-and-Drop 3D Environment Support
+### Added
+- Direct drag-and-drop ingestion of 3D environment models (`.glb` and `.gltf`) directly onto the 3D viewport canvas.
+- Updated `Environment.jsx` to dynamically detect and mount Blob and Data URLs alongside standard preset paths.
+- Updated HUD overlay copy and toast feedback for seamless environment switching.
+
 ## [0.27.0] - Healthcheck Diagnostic API & CLI Health Command
 ### Added
 - Added `/api/health` diagnostic endpoint in `server/index.js` reporting uptime, database status, memory usage, and health state.

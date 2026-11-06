@@ -521,6 +521,15 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         console.error("Drop VRM error:", err);
         showToast("❌ Failed to load VRM file.");
       }
+    } else if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+      try {
+        const envUrl = URL.createObjectURL(file);
+        setEnvironmentFile(envUrl);
+        showToast(`🌐 Custom 3D environment "${file.name}" loaded!`);
+      } catch (err) {
+        console.error("Drop GLB error:", err);
+        showToast("❌ Failed to load 3D environment model.");
+      }
     } else if (file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -529,7 +538,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       };
       reader.readAsDataURL(file);
     } else {
-      showToast("⚠️ Unsupported file format. Drop a .vrm avatar or image file.");
+      showToast("⚠️ Unsupported file format. Drop a .vrm avatar, .glb environment, or image file.");
     }
   };
 
@@ -777,7 +786,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
           <div className="drop-overlay-box">
             <div className="drop-overlay-icon">📥</div>
             <h2 className="drop-overlay-title">Drop File Here</h2>
-            <p className="drop-overlay-desc">Drop a .vrm file to change avatar, or an image to share in chat</p>
+            <p className="drop-overlay-desc">Drop a .vrm avatar, .glb 3D environment, or an image to share</p>
           </div>
         </div>
       )}

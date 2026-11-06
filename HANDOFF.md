@@ -1,6 +1,11 @@
-# Session Handoff - v0.27.0
+# Session Handoff - v0.28.0
 
 ## Completed Work in this Session
+- **Phase 40: Viewport Drag-and-Drop 3D Environment Support**:
+  - Enhanced window and canvas file drop listener in `client/src/App.jsx` to intercept `.glb` and `.gltf` 3D environment scenes.
+  - Generates dynamic Object URLs (`URL.createObjectURL(file)`) and updates `environmentFile`.
+  - Updated `client/src/Environment.jsx` to dynamically detect and load Blob and Data URLs directly without prepending server asset paths.
+  - Updated HUD overlay copy and toast feedback for seamless environment switching.
 - **Phase 39: Healthcheck Diagnostic API & CLI Health Command**:
   - Implemented `/api/health` diagnostic endpoint in `server/index.js` reporting database connection status via raw query (`SELECT 1`), process uptime, memory usage, and health state.
   - Added unit test in `server/test.js` validating healthy responses.
@@ -41,7 +46,7 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.27.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.28.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps

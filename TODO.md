@@ -30,4 +30,5 @@
 - [x] Add key light color picker and shadow quality resolution dropdown in Companion Studio.
 - [x] Implement WebGL memory disposal (VRMUtils.deepDispose) on avatar model changes.
 - [x] Implement /api/health endpoint and health command in tray_app.py.
+- [x] Implement viewport drag-and-drop for .glb and .gltf 3D environment models.
 - [ ] Global shortcut hotkey triggers via system tray app.

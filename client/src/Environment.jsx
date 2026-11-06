@@ -13,6 +13,11 @@ export default function Environment({ lightsOn = true, file = 'room.glb' }) {
         return;
     }
 
+    if (file.startsWith('blob:') || file.startsWith('data:')) {
+      setModelUrl(file);
+      return;
+    }
+
     const loadEnvironment = async () => {
       try {
         const cachedUrl = await fetchAndCache(`/${file}`);
