@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.27.0] - Healthcheck Diagnostic API & CLI Health Command
+### Added
+- Added `/api/health` diagnostic endpoint in `server/index.js` reporting uptime, database status, memory usage, and health state.
+- Added unit tests in `server/test.js` validating `/api/health` response schema.
+- Added `health` command in `tray_app.py` for comprehensive dual-service HTTP reachability and database connection verification.
+
 ## [0.26.0] - WebGL Memory Disposal on Avatar Switching
 ### Added
 - Explicit WebGL memory disposal in `Character.jsx` unmount/update cleanup, calling `VRMUtils.deepDispose(scene)` and `mixer.stopAllAction()` to purge textures, geometries, and materials during avatar model switching.

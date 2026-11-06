@@ -172,6 +172,36 @@ class ServerManager:
         except Exception as e:
             print(f"Could not open browser: {e}")
 
+    def check_health(self):
+        """Perform comprehensive HTTP health checks against frontend and backend."""
+        import urllib.request
+        import json
+
+        print("=============================================")
+        print("  Succubus.red Health Diagnostic Check")
+        print("=============================================")
+
+        backend_url = f"http://localhost:{self.server_port}/api/health"
+        frontend_url = f"http://localhost:{self.client_port}"
+
+        try:
+            req = urllib.request.Request(backend_url)
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                status_icon = "🟢" if data.get('status') == 'healthy' else "🟡"
+                print(f"  Backend API    : {status_icon} {data.get('status').upper()} (DB: {data.get('database')}, Uptime: {data.get('uptime')}s)")
+        except Exception as e:
+            print(f"  Backend API    : 🔴 UNREACHABLE ({e})")
+
+        try:
+            req = urllib.request.Request(frontend_url)
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                print(f"  Frontend Vite  : 🟢 REACHABLE (HTTP {resp.status})")
+        except Exception as e:
+            print(f"  Frontend Vite  : 🔴 UNREACHABLE ({e})")
+
+        print("=============================================")
+
     def tail_logs(self, lines=20):
         print("--- SERVER LOG (last 20 lines) ---")
         if SERVER_LOG.exists():
@@ -245,7 +275,7 @@ def run_interactive_cli(manager: ServerManager):
 def main():
     parser = argparse.ArgumentParser(description="Succubus.red System Tray & Server Control")
     parser.add_argument("command", nargs="?", default="status",
-                        choices=["status", "start", "stop", "restart", "tray", "logs", "open"],
+                        choices=["status", "start", "stop", "restart", "tray", "logs", "open", "health"],
                         help="Command to execute")
     args = parser.parse_args()
 
@@ -266,6 +296,8 @@ def main():
         manager.tail_logs()
     elif args.command == "open":
         manager.open_browser()
+    elif args.command == "health":
+        manager.check_health()
     elif args.command == "tray":
         run_tray_gui(manager)
 

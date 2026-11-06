@@ -29,4 +29,5 @@
 - [x] Add postprocessing bloom and ambient light brightness sliders in Companion Studio.
 - [x] Add key light color picker and shadow quality resolution dropdown in Companion Studio.
 - [x] Implement WebGL memory disposal (VRMUtils.deepDispose) on avatar model changes.
+- [x] Implement /api/health endpoint and health command in tray_app.py.
 - [ ] Global shortcut hotkey triggers via system tray app.

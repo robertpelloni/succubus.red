@@ -17,3 +17,4 @@
 - Postprocessing bloom glow intensity and ambient light brightness can be dynamically adjusted via sliders in the Companion Studio and are serialized in the full JSON studio backup files.
 - Directional key light color and shadow map resolution buffer sizes (512, 1024, 2048) are dynamically configurable in Companion Studio and serialized across JSON configuration exports.
 - Avatar switching in `Character.jsx` cleans up previous VRM models using `VRMUtils.deepDispose(activeVrmRef.current.scene)` and halts animations via `activeMixerRef.current.stopAllAction()` to prevent WebGL context memory leaks and VRAM fragmentation.
+- A lightweight diagnostic healthcheck is provided at `/api/health` and executable via `python3 tray_app.py health`, testing database connectivity and dual-service reachability.

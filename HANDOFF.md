@@ -1,6 +1,10 @@
-# Session Handoff - v0.26.0
+# Session Handoff - v0.27.0
 
 ## Completed Work in this Session
+- **Phase 39: Healthcheck Diagnostic API & CLI Health Command**:
+  - Implemented `/api/health` diagnostic endpoint in `server/index.js` reporting database connection status via raw query (`SELECT 1`), process uptime, memory usage, and health state.
+  - Added unit test in `server/test.js` validating healthy responses.
+  - Added `health` CLI subcommand in `tray_app.py` providing instant dual-service HTTP reachability status for both frontend Vite and backend Express servers.
 - **Phase 38: WebGL Memory Disposal on Avatar Switching**:
   - Implemented explicit WebGL resource disposal in `client/src/Character.jsx` inside the avatar loading `useEffect` cleanup hook.
   - Calls `VRMUtils.deepDispose(activeVrmRef.current.scene)` and `activeMixerRef.current.stopAllAction()` to completely purge geometry buffers, material programs, and GPU textures upon unmount or avatar swap.
@@ -37,7 +41,7 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.26.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.27.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps

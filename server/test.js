@@ -12,6 +12,14 @@ describe('Backend API Tests', () => {
     }
   });
 
+  it('should return healthy status for /api/health', async function() {
+    const res = await request.get('/api/health');
+    expect(res.status).to.equal(200);
+    expect(res.body).to.have.property('status', 'healthy');
+    expect(res.body).to.have.property('database', 'connected');
+    expect(res.body).to.have.property('uptime');
+  });
+
   it('should return a response for /api/chat', async function() {
     this.timeout(10000);
     const res = await request

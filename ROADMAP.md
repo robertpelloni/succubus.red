@@ -31,4 +31,5 @@
 - [x] Phase 36: Postprocessing Bloom & Ambient Lighting Controls.
 - [x] Phase 37: Key Light Color & Shadow Map Resolution Controls.
 - [x] Phase 38: WebGL Memory Disposal on Avatar Switching.
-- [ ] Phase 39: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 39: Healthcheck Diagnostic API & CLI Health Command.
+- [ ] Phase 40: Desktop Global Hotkeys & Native Speech Activation.
