@@ -9,6 +9,8 @@ import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 export default function Character({ currentAnimation = 'idle', emotion = null, isSpeaking = false }) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
+  const activeVrmRef = useRef(null);
+  const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
   const [actions, setActions] = useState({});
 
@@ -35,13 +37,30 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
             const fbxLoader = new FBXLoader();
             const animGltf = await fbxLoader.loadAsync(url);
 
-            const clip = loadMixamoAnimation(animGltf, loadedVrm);
-            if (clip) {
-              const action = newMixer.clipAction(clip);
-              setActions((prev) => ({ ...prev, [name]: action }));
+            setVrm(loadedVrm);
+            activeVrmRef.current = loadedVrm;
 
-              if (name === currentAnimation) {
-                action.reset().fadeIn(0.2).play();
+            const newMixer = new THREE.AnimationMixer(loadedVrm.scene);
+            setMixer(newMixer);
+            activeMixerRef.current = newMixer;
+
+            const loadAnim = async (url, name) => {
+              try {
+                const cachedUrl = await fetchAndCache(url);
+                const fbxLoader = new FBXLoader();
+                const animGltf = await fbxLoader.loadAsync(cachedUrl);
+
+                const clip = loadMixamoAnimation(animGltf, loadedVrm);
+                if (clip) {
+                  const action = newMixer.clipAction(clip);
+                  setActions((prev) => ({ ...prev, [name]: action }));
+
+                  if (name === initialAnimationRef.current) {
+                    action.reset().fadeIn(0.2).play();
+                  }
+                }
+              } catch (error) {
+                console.error(`Error loading animation ${name}:`, error);
               }
             }
           } catch (error) {
@@ -49,13 +68,38 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
           }
         };
 
-        loadAnim('/Idle.fbx', 'idle');
-        loadAnim('/Wave.fbx', 'wave');
-      },
-      (progress) => console.log('Loading model...', 100.0 * (progress.loaded / progress.total), '%'),
-      (error) => console.error('Failed to load VRM:', error)
-    );
-  }, []);
+            loadAnim('/Idle.fbx', 'idle');
+            loadAnim('/Wave.fbx', 'wave');
+            loadAnim('/Sitting.fbx', 'sitting');
+            loadAnim('/Thinking.fbx', 'thinking');
+          },
+          (progress) => console.log('Loading model...', 100.0 * (progress.loaded / progress.total), '%'),
+          (error) => console.error('Failed to parse VRM:', error)
+        );
+      } catch (err) {
+        console.error('Failed to load assets via cache:', err);
+      }
+    };
+
+    loadAssets();
+
+    return () => {
+      isCancelled = true;
+      if (activeMixerRef.current) {
+        activeMixerRef.current.stopAllAction();
+      }
+      if (activeVrmRef.current && activeVrmRef.current.scene) {
+        try {
+          VRMUtils.deepDispose(activeVrmRef.current.scene);
+        } catch (e) {
+          console.warn("Error during VRM scene deepDispose:", e);
+        }
+      }
+    };
+  }, [url]);
+
+  const currentActionRef = useRef(null);
+  const previousAnimationRef = useRef(null);
 
   useEffect(() => {
     if (vrm && actions[currentAnimation]) {

@@ -1,9 +1,19 @@
 # MEMORY
-- Project initiated.
-- Decided to use React + Vite + Three.js + @pixiv/three-vrm based on the specification.
-- A Client-Heavy, Server-Light paradigm.
-- For VRM 1.0 avatars, Mixamo animation retargeting does not require a 180-degree baseline rotation. Explicitly lock horizontal root translations (`dx=0, dz=0`) and remove `Math.PI` rotations from the parent group or the VRM scene itself to prevent the character from facing backwards.
-- Dead code should be rigorously removed (e.g. unused `LipSyncAnalyser.js`) to pass code reviews.
-- Playwright is an effective tool to verify 3D frontend renderings from headless execution.
-- Building complex, floating React UIs over a React Three Fiber canvas requires managing `z-index` carefully. The settings panel and toggle are positioned absolute with high `z-index` over the `<Canvas>`.
-- To allow users to define API keys dynamically without exposing them in the Vite frontend code, proxy them through the Express backend `req.body`.
+- Project initiated based on succubus.red design specification.
+- Architecture: Client-Heavy, Server-Light paradigm utilizing React + Three.js + @pixiv/three-vrm.
+- VRM 1.0 specifications require root translation locks (dx=0, dz=0) and neutral scene rotation.
+- Settings dashboard consolidated into a single panel (`Companion Studio`) without fragmented subpages, structured by value hierarchy.
+- Audio synthesis supports fallback gracefully: ElevenLabs -> Kokoro WebGPU -> Native SpeechSynthesis.
+- Native speech synthesis requires guarding `isSpeaking` reset using `!window.speechSynthesis.pending` in multi-sentence utterance flows.
+- System tray management implemented in `tray_app.py` supporting both pystray GUI and headless CLI execution with IPv4/IPv6 port detection.
+- Custom VRM avatar models can be dynamically uploaded and persisted directly in browser IndexedDB via `CacheUtils.js` without server payload overhead.
+- Multimodal vision requests dynamically format user content as OpenAI-compatible message arrays (`[{ type: 'text', text }, { type: 'image_url', image_url: { url } }]`). The Express `/api/chat` router detects array content containing image URLs and intelligently swaps the model parameter to `meta-llama/llama-3.2-11b-vision-instruct`, while preserving standard roleplay models for pure text.
+- Full-viewport drag-and-drop listener is implemented in `client/src/App.jsx` with window `dragenter`/`dragleave`/`drop` handlers and a visual HUD overlay (`.drop-overlay`), seamlessly routing `.vrm` files to IndexedDB and image files to multimodal vision chat with animated toast feedback.
+- Real-time microphone input testing widget in Companion Studio uses browser `navigator.mediaDevices.getUserMedia` and Web Audio API `AudioContext.createAnalyser()` to calculate instantaneous RMS volume levels, rendered as a responsive VU meter bar.
+- VRM Spring Bone physics parameters (`stiffness` and `dragForce`) can be dynamically updated in real-time by traversing `vrm.springBoneManager.joints` without resetting bone positions or restarting animations.
+- Full studio configuration and conversation transcript backups can be exported and imported as structured JSON files directly from the Companion Studio Account & Session section.
+- Facial emotion blendshapes (`happy`, `angry`, `sad`, `relaxed`, `surprised`) in `Character.jsx` use procedural exponential easing via `THREE.MathUtils.lerp` in `useFrame` to ensure smooth transitions between emotional states and prevent visual blendshape snapping.
+- Procedural eye blinking in `Character.jsx` uses `@pixiv/three-vrm`'s preset expression `blink` with dynamic interval randomized scheduling (2.5 to 5.5 seconds) and half-sine easing without interrupting spoken visemes or active facial emotion blendshapes.
+- Postprocessing bloom glow intensity and ambient light brightness can be dynamically adjusted via sliders in the Companion Studio and are serialized in the full JSON studio backup files.
+- Directional key light color and shadow map resolution buffer sizes (512, 1024, 2048) are dynamically configurable in Companion Studio and serialized across JSON configuration exports.
+- Avatar switching in `Character.jsx` cleans up previous VRM models using `VRMUtils.deepDispose(activeVrmRef.current.scene)` and halts animations via `activeMixerRef.current.stopAllAction()` to prevent WebGL context memory leaks and VRAM fragmentation.

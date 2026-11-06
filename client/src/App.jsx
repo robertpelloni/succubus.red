@@ -8,6 +8,60 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [currentAnimation, setCurrentAnimation] = useState('idle');
+  const [manualEmotion, setManualEmotion] = useState('none');
+  const [apiKey, setApiKey] = useState('');
+  const [environmentFile, setEnvironmentFile] = useState('room.glb');
+  const [lightsOn, setLightsOn] = useState(true);
+  const [particleEffect, setParticleEffect] = useState('none');
+  const [bloomIntensity, setBloomIntensity] = useState(1.0);
+  const [ambientLightScale, setAmbientLightScale] = useState(1.0);
+  const [lightColor, setLightColor] = useState('#ffffff');
+  const [shadowMapResolution, setShadowMapResolution] = useState(1024);
+
+  // Custom Avatar state
+  const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
+  const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
+  const [springStiffness, setSpringStiffness] = useState(1.0);
+  const [springDragForce, setSpringDragForce] = useState(0.4);
+
+  // Drag-and-Drop and Toast State
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+  const dragCounterRef = useRef(0);
+
+  const showToast = (msg, duration = 3000) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, duration);
+  };
+
+  const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
+You have a distinct personality: you are confident, slightly mischievous, deeply attentive, and highly expressive.
+Keep your responses relatively brief and conversational, as if we are speaking face-to-face.
+
+You must output your response as plain text. Do NOT use JSON formatting.
+Crucially, you must physically act out your responses. Embed actions and emotions using bracket tags like [animation:wave] or [emotion:joy] within your sentences.
+Always use these tags naturally to react to the user.
+Available animations: idle, wave, sitting, thinking.
+Available emotions: joy, angry, sorrow, fun, surprised.
+You are standing in a modern, neon-lit virtual room on a sleek stage.
+You can control the room lights using [lights:on] or [lights:off] tags.
+You can spawn visual particles using [effect:sparkle] and clear them with [effect:none].`;
+
+  const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt);
+
+  // Audio & TTS Engine configuration
+  const [ttsProvider, setTtsProvider] = useState('native'); // 'native', 'elevenlabs', 'kokoro'
+  const [ttsPitch, setTtsPitch] = useState(1.2);
+  const [ttsRate, setTtsRate] = useState(1.0);
+  const [ttsVoice, setTtsVoice] = useState('');
+  const [availableVoices, setAvailableVoices] = useState([]);
+
+  const [elevenLabsApiKey, setElevenLabsApiKey] = useState('');
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('');
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [emotion, setEmotion] = useState(null);
 
@@ -179,16 +233,601 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
           />
         </div>
 
-        <div className="setting-group">
-          <label>
-            Character Prompt
-            <span className="tooltip">?<span className="tooltiptext">Defines the persona and response format. Must instruct the AI to output valid JSON for the avatar to animate properly.</span></span>
-          </label>
-          <textarea
-            rows={8}
-            value={systemPrompt}
-            onChange={e => setSystemPrompt(e.target.value)}
-          />
+        {/* Category 0: 3D Avatar & Model Management */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">3D Avatar Model</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Active Avatar Model
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Switch between the default Succubus anime character and your custom uploaded VRoid/VRM model.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${avatarMode === 'default' ? 'active' : ''}`}
+                onClick={() => handleSwitchAvatarMode('default')}
+              >
+                Default Avatar
+              </button>
+              {hasCustomAvatar && (
+                <button
+                  className={`chip-button ${avatarMode === 'custom' ? 'active' : ''}`}
+                  onClick={() => handleSwitchAvatarMode('custom')}
+                >
+                  Custom VRM Avatar
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Upload Custom VRM (.vrm)
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Upload any VRoid Studio or standard VRM 0.0/1.0 avatar. Cached locally in your browser's IndexedDB.</span>
+              </div>
+            </label>
+            <input
+              type="file"
+              accept=".vrm"
+              onChange={handleAvatarUpload}
+              className="dashboard-input"
+              style={{ fontSize: '11px', padding: '6px' }}
+            />
+            {hasCustomAvatar && (
+              <button
+                className="action-button danger"
+                style={{ marginTop: '5px' }}
+                onClick={handleResetAvatar}
+              >
+                Remove Custom Avatar
+              </button>
+            )}
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Spring Bone Stiffness: {springStiffness.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls how rigid hair, clothing, and accessory spring physics behave (0.1 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.1" max="3" step="0.1"
+              value={springStiffness}
+              onChange={(e) => setSpringStiffness(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Spring Bone Damping: {springDragForce.toFixed(2)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls motion air resistance/drag force on VRM secondary animation physics (0.05 to 1.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.05" max="1" step="0.05"
+              value={springDragForce}
+              onChange={(e) => setSpringDragForce(parseFloat(e.target.value))}
+            />
+          </div>
+        </div>
+
+        {/* Category 1: AI Persona & Real-time Expressiveness */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">AI Persona & Interaction</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              System Prompt
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Defines the AI's core persona, conversation style, and autonomous reaction tags (e.g. [animation:wave], [emotion:joy]).</span>
+              </div>
+            </label>
+            <textarea
+              className="dashboard-input"
+              style={{ height: '90px', resize: 'vertical' }}
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Manual Animation Trigger
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Force the 3D character into a specific skeletal animation pose instantly.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              {['idle', 'wave', 'sitting', 'thinking'].map((anim) => (
+                <button
+                  key={anim}
+                  className={`chip-button ${currentAnimation === anim ? 'active' : ''}`}
+                  onClick={() => setCurrentAnimation(anim)}
+                >
+                  {anim.charAt(0).toUpperCase() + anim.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Facial Emotion Blendshape
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Trigger facial blendshapes on the VRM avatar directly (joy, angry, sorrow, fun, surprised).</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              {['none', 'joy', 'angry', 'sorrow', 'fun', 'surprised'].map((emo) => (
+                <button
+                  key={emo}
+                  className={`chip-button ${manualEmotion === emo ? 'active' : ''}`}
+                  onClick={() => setManualEmotion(emo)}
+                >
+                  {emo.charAt(0).toUpperCase() + emo.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Category 2: Voice & Audio Studio */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">Voice & Audio Studio</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              TTS Voice Engine
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Choose between Native Browser SpeechSynthesis, ElevenLabs neural voice, or Kokoro WebGPU/WASM local neural synthesis.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={ttsProvider}
+              onChange={(e) => setTtsProvider(e.target.value)}
+            >
+              <option value="native">Native Browser SpeechSynthesis</option>
+              <option value="elevenlabs">ElevenLabs Neural API</option>
+              <option value="kokoro">Kokoro WebGPU Local Neural</option>
+            </select>
+          </div>
+
+          {ttsProvider === 'elevenlabs' && (
+            <>
+              <div className="dashboard-section">
+                <label className="dashboard-label">
+                  ElevenLabs API Key
+                  <div className="tooltip-container">?
+                    <span className="tooltip-text">Required for ElevenLabs neural TTS. Streams high-fidelity audio with FFT viseme lip-sync.</span>
+                  </div>
+                </label>
+                <input
+                  type="password"
+                  className="dashboard-input"
+                  value={elevenLabsApiKey}
+                  onChange={(e) => setElevenLabsApiKey(e.target.value)}
+                  placeholder="sk_..."
+                />
+              </div>
+
+              <div className="dashboard-section">
+                <label className="dashboard-label">
+                  ElevenLabs Voice ID
+                  <div className="tooltip-container">?
+                    <span className="tooltip-text">Target Voice ID string from ElevenLabs dashboard (e.g. EXAVITQu4vr4xnSDxMaL).</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  className="dashboard-input"
+                  value={elevenLabsVoiceId}
+                  onChange={(e) => setElevenLabsVoiceId(e.target.value)}
+                  placeholder="EXAVITQu4vr4xnSDxMaL"
+                />
+              </div>
+            </>
+          )}
+
+          {ttsProvider === 'native' && (
+            <div className="dashboard-section">
+              <label className="dashboard-label">
+                Browser Voice
+                <div className="tooltip-container">?
+                  <span className="tooltip-text">Select one of your system's installed text-to-speech voices.</span>
+                </div>
+              </label>
+              <select
+                className="dashboard-input"
+                value={ttsVoice}
+                onChange={(e) => setTtsVoice(e.target.value)}
+              >
+                {availableVoices.map((v, i) => (
+                  <option key={i} value={v.name}>{v.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              TTS Pitch: {ttsPitch.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls vocal pitch frequency modifier (0.5 to 2.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.5" max="2" step="0.1"
+              value={ttsPitch}
+              onChange={(e) => setTtsPitch(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              TTS Rate: {ttsRate.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls vocal speech tempo and rate multiplier (0.5 to 2.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.5" max="2" step="0.1"
+              value={ttsRate}
+              onChange={(e) => setTtsRate(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <button
+              className="action-button secondary"
+              onClick={() => speak("Hello! I am Succubus, your 3D interactive AI companion.")}
+            >
+              Preview Voice Sample 🔊
+            </button>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Microphone Input Tester
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Test your microphone input gain in real-time with Web Audio API VU meter before voice chatting.</span>
+              </div>
+            </label>
+            <div className="mic-test-container">
+              <div className="mic-test-controls">
+                <span className="mic-status-text">
+                  {isTestingMic ? `Level: ${micLevel}%` : 'Microphone Inactive'}
+                </span>
+                <button
+                  className={`chip-button ${isTestingMic ? 'active' : ''}`}
+                  onClick={handleToggleMicTest}
+                >
+                  {isTestingMic ? 'Stop Test' : 'Test Mic 🎙️'}
+                </button>
+              </div>
+              <div className="mic-meter-bar">
+                <div
+                  className="mic-meter-fill"
+                  style={{ width: `${isTestingMic ? micLevel : 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Category 3: 3D Stage & Environment Controls */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">3D Stage & Environment</h3>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Camera Perspective Presets
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Smooth programmatic camera transitions powered by CameraControls setLookAt.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0, 1.5, 3, 0, 1.2, 0, true)}
+              >
+                Full Body
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0, 1.3, 1.8, 0, 1.2, 0, true)}
+              >
+                Portrait
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0, 1.45, 0.8, 0, 1.45, 0, true)}
+              >
+                Close-up
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              3D Environment Asset
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Switch active GLB virtual stage model, cached automatically in IndexedDB.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={environmentFile}
+              onChange={(e) => setEnvironmentFile(e.target.value)}
+            >
+              <option value="none">Void (Empty Space)</option>
+              <option value="room.glb">Modern Neon Room</option>
+              <option value="room2.glb">Sci-Fi Deck</option>
+            </select>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Stage Lighting Mode
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Toggles active scene illumination between bright Day and moody Night modes. Can also be triggered by AI via [lights:on]/[lights:off].</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${lightsOn ? 'active' : ''}`}
+                onClick={() => setLightsOn(true)}
+              >
+                ☀️ Lights On
+              </button>
+              <button
+                className={`chip-button ${!lightsOn ? 'active' : ''}`}
+                onClick={() => setLightsOn(false)}
+              >
+                🌙 Night Lights
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Visual Particle Effects
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Toggles ambient sparkles and visual particle simulations. Can also be triggered by AI via [effect:sparkle].</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${particleEffect === 'none' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('none')}
+              >
+                None
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'sparkle' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('sparkle')}
+              >
+                ✨ Sparkles
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Category 4: Integrations & API Config */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">Integrations & API</h3>
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              OpenRouter API Key
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Your personal OpenRouter API key. If left blank, falls back to server environment key.</span>
+              </div>
+            </label>
+            <input
+              type="password"
+              className="dashboard-input"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="sk-or-v1-..."
+            />
+          </div>
+        </div>
+
+        {/* Category 5: Account & Session Management */}
+        <div className="dashboard-category">
+          <h3 className="dashboard-category-title">Account & Session</h3>
+          <div className="dashboard-section">
+            <div style={{ fontSize: '13px', color: '#aaccff', marginBottom: '8px' }}>
+              Logged in as: <strong>{activeUser || 'Studio User'}</strong>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <button
+                className="action-button danger"
+                style={{ flex: 1 }}
+                onClick={() => setMessages([])}
+              >
+                Clear Chat
+              </button>
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={handleLogout}
+              >
+                Switch User
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  const backup = {
+                    version: "0.21.0",
+                    exportedAt: new Date().toISOString(),
+                    user: activeUser,
+                    settings: {
+                      systemPrompt,
+                      openRouterApiKey: apiKey,
+                      elevenLabsApiKey,
+                      elevenLabsVoiceId,
+                      ttsPitch,
+                      ttsRate,
+                      ttsVoice,
+                      ttsProvider,
+                      environmentFile,
+                      currentAnimation,
+                      lightsOn,
+                      particleEffect,
+                      bloomIntensity,
+                      ambientLightScale,
+                      lightColor,
+                      shadowMapResolution
+                    },
+                    messages
+                  };
+                  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `succubus_backup_${activeUser || 'user'}_${Date.now()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showToast("💾 Backup exported successfully!");
+                }}
+              >
+                Export Backup 📤
+              </button>
+              <input
+                type="file"
+                ref={backupFileInputRef}
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    try {
+                      const data = JSON.parse(event.target.result);
+                      if (data.settings) {
+                        if (data.settings.systemPrompt) setSystemPrompt(data.settings.systemPrompt);
+                        if (data.settings.openRouterApiKey !== undefined) setApiKey(data.settings.openRouterApiKey);
+                        if (data.settings.elevenLabsApiKey !== undefined) setElevenLabsApiKey(data.settings.elevenLabsApiKey);
+                        if (data.settings.elevenLabsVoiceId !== undefined) setElevenLabsVoiceId(data.settings.elevenLabsVoiceId);
+                        if (data.settings.ttsPitch !== undefined) setTtsPitch(data.settings.ttsPitch);
+                        if (data.settings.ttsRate !== undefined) setTtsRate(data.settings.ttsRate);
+                        if (data.settings.ttsVoice) setTtsVoice(data.settings.ttsVoice);
+                        if (data.settings.ttsProvider) setTtsProvider(data.settings.ttsProvider);
+                        if (data.settings.environmentFile) setEnvironmentFile(data.settings.environmentFile);
+                        if (data.settings.currentAnimation) setCurrentAnimation(data.settings.currentAnimation);
+                        if (data.settings.lightsOn !== undefined) setLightsOn(data.settings.lightsOn);
+                        if (data.settings.particleEffect !== undefined) setParticleEffect(data.settings.particleEffect);
+                        if (data.settings.bloomIntensity !== undefined) setBloomIntensity(data.settings.bloomIntensity);
+                        if (data.settings.ambientLightScale !== undefined) setAmbientLightScale(data.settings.ambientLightScale);
+                        if (data.settings.lightColor) setLightColor(data.settings.lightColor);
+                        if (data.settings.shadowMapResolution !== undefined) setShadowMapResolution(data.settings.shadowMapResolution);
+                      }
+                      if (Array.isArray(data.messages)) {
+                        setMessages(data.messages);
+                      }
+                      showToast("📥 Backup imported successfully!");
+                    } catch (err) {
+                      console.error("Failed to parse backup:", err);
+                      showToast("❌ Invalid backup JSON file.");
+                    }
+                  };
+                  reader.readAsText(file);
+                }}
+              />
+              <button
+                className="action-button secondary"
+                style={{ flex: 1 }}
+                onClick={() => backupFileInputRef.current?.click()}
+              >
+                Import Backup 📥
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0" max="3" step="0.1"
+              value={bloomIntensity}
+              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.2" max="2" step="0.1"
+              value={ambientLightScale}
+              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Key Light Color
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Sets directional key light hue and atmosphere tint.</span>
+              </div>
+            </label>
+            <input
+              type="color"
+              className="dashboard-input"
+              style={{ height: '36px', padding: '2px', cursor: 'pointer' }}
+              value={lightColor}
+              onChange={(e) => setLightColor(e.target.value)}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Shadow Quality
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Resolution buffer size for real-time dynamic directional shadows.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={shadowMapResolution}
+              onChange={(e) => setShadowMapResolution(parseInt(e.target.value, 10))}
+            >
+              <option value={512}>Low (512x512)</option>
+              <option value={1024}>Medium (1024x1024)</option>
+              <option value={2048}>High (2048x2048)</option>
+            </select>
+          </div>
         </div>
 
         <button
@@ -209,10 +848,17 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
         </button>
       </div>
 
-      <Canvas camera={{ position: [0, 1.4, 2.5], fov: 40 }}>
-        <ambientLight intensity={1.2} color="#ffffff" />
-        <directionalLight position={[2, 5, 2]} intensity={1.5} color="#fff1e6" castShadow />
-        <directionalLight position={[-5, 3, -5]} intensity={0.5} color="#b3e5fc" />
+      {/* 3D Canvas Viewport */}
+      <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
+        <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
+        <directionalLight
+          castShadow
+          position={[5, 5, 5]}
+          intensity={lightsOn ? 2.0 : 0.1}
+          color={lightColor}
+          shadow-mapSize={[shadowMapResolution, shadowMapResolution]}
+        />
+        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>
           <Character url="/avatar.vrm" currentAnimation={currentAnimation} emotion={emotion} isSpeaking={isSpeaking} />
