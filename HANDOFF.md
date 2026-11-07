@@ -1,6 +1,9 @@
-# Session Handoff - v0.38.1
+# Session Handoff - v0.39.0
 
 ## Completed Work in this Session
+- **Phase 51: Visual Drop Flash Ripple & Environment Camera Showcase**:
+  - Implemented `.drop-success-flash` fullscreen radial ripple animation in `App.jsx` and `App.css` triggered on successful drop of `.vrm`, `.glb`, or image files.
+  - Added programmatic camera showcase transition (`setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true)`) when dropping new 3D environment models.
 - **UI Category Harmonization & Component Hygiene (v0.38.1)**:
   - Cleaned up category grouping in `App.jsx`: relocated all 3D lighting, bloom, shadow, and color controls directly inside "3D Stage & Environment".
   - Moved `isHovered` state hook declaration to the top of `Character.jsx` adhering to idiomatic React hook order.

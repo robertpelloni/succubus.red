@@ -41,4 +41,5 @@
 - [x] Avatar hover cursor styling and attentive gaze tracking responsiveness.
 - [x] Multimodal drag-and-drop auto-prompt population and attachment metadata badges.
 - [x] Celebratory avatar materialization stage burst and greeting response.
+- [x] Fullscreen visual drop flash ripple and environment camera showcase.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.

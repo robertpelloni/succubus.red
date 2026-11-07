@@ -553,6 +553,30 @@
   transform: scale(1.2);
 }
 
+/* Fullscreen Success Drop Ripple Flash Overlay */
+.drop-success-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 95;
+  background: radial-gradient(circle, rgba(0, 210, 255, 0.3) 0%, rgba(255, 64, 129, 0.15) 50%, transparent 80%);
+  animation: flash-ripple 0.7s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes flash-ripple {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
 /* Full Viewport Drag and Drop Overlay */
 .drop-overlay {
   position: absolute;

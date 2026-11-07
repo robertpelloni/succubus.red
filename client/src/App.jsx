@@ -49,8 +49,14 @@ function App() {
 
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [dropFlash, setDropFlash] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const dragCounterRef = useRef(0);
+
+  const triggerDropFlash = () => {
+    setDropFlash(true);
+    setTimeout(() => setDropFlash(false), 700);
+  };
 
   const showToast = (msg, duration = 3000) => {
     setToastMessage(msg);
@@ -528,6 +534,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         size: (file.size / 1024).toFixed(0) + ' KB',
         type: file.type.split('/')[1]?.toUpperCase() || 'IMAGE'
       });
+      triggerDropFlash();
       // Suggest default question prompt if field is blank
       setInput(prev => prev.trim() ? prev : "What do you see in this picture?");
       showToast(`📷 ${file.name} attached! Hit Send to analyze.`);
@@ -567,6 +574,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         setCustomAvatarMeta(meta);
         setHasCustomAvatar(true);
         setAvatarMode('custom');
+        triggerDropFlash();
 
         // Celebratory stage effects and greeting
         setCurrentAnimation('wave');
@@ -588,6 +596,11 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       try {
         const envUrl = URL.createObjectURL(file);
         setEnvironmentFile(envUrl);
+        triggerDropFlash();
+
+        // Smooth camera showcase transition when switching environment
+        cameraControlRef.current?.setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true);
+
         showToast(`🌐 Custom 3D environment "${file.name}" loaded!`);
       } catch (err) {
         console.error("Drop GLB error:", err);
@@ -841,6 +854,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#222', overflow: 'hidden' }}>
+
+      {/* Fullscreen Success Drop Ripple Flash */}
+      {dropFlash && <div className="drop-success-flash" />}
 
       {/* Drag & Drop Visual HUD Overlay */}
       {isDraggingFile && (

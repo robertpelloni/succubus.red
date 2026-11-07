@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.39.0] - Visual Drop Flash Ripple & Environment Camera Showcase
+### Added
+- Added fullscreen visual ripple flash overlay (`.drop-success-flash`) triggered upon successful drop and validation of `.vrm`, `.glb`, or image files in `App.jsx` and `App.css`.
+- Added smooth cinematic camera showcase transition (`setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true)`) when a new 3D environment model is dropped onto the viewport.
+
 ## [0.38.1] - UI Category Harmonization & Component Hygiene
 ### Fixed
 - Relocated lighting and postprocessing controls (`Bloom Glow Intensity`, `Ambient Light Brightness`, `Key Light Color`, `Shadow Quality`) from Account & Session into 3D Stage & Environment in `App.jsx`.
