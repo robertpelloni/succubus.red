@@ -6,7 +6,16 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import * as THREE from 'three';
 import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 
-export default function Character({ currentAnimation = 'idle', emotion = null, isSpeaking = false }) {
+export default function Character({
+  url = '/avatar.vrm',
+  currentAnimation = 'idle',
+  emotion = null,
+  isSpeaking = false,
+  visemes = null,
+  springBoneStiffness = 1.0,
+  springBoneDragForce = 0.4,
+  onAvatarPointerDown = null
+}) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
   const activeVrmRef = useRef(null);
@@ -111,6 +120,15 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
   useFrame((state, delta) => {
     if (mixer) mixer.update(delta);
     if (vrm) {
+      // Map mouse coordinates to 3D space for the lookAt target
+      // Camera is usually at z=3, character at z=0.
+      // We scale the mouse coordinates to make the head move naturally.
+      // Subtly amplify tracking responsiveness when hovered
+      const trackingFactor = isHovered ? 2.4 : 2.0;
+      lookAtTargetRef.current.position.x = state.mouse.x * trackingFactor;
+      lookAtTargetRef.current.position.y = state.mouse.y * trackingFactor + 1.2; // 1.2 is approx head height
+      lookAtTargetRef.current.position.z = isHovered ? 1.6 : 2.0; // Brings gaze slightly closer when hovered
+
       vrm.update(delta);
 
       if (vrm.expressionManager) {
@@ -153,8 +171,35 @@ export default function Character({ currentAnimation = 'idle', emotion = null, i
     }
   });
 
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    if (onAvatarPointerDown) {
+      onAvatarPointerDown(e);
+    }
+  };
+
+  const handlePointerOver = (e) => {
+    e.stopPropagation();
+    setIsHovered(true);
+    document.body.style.cursor = 'pointer';
+  };
+
+  const handlePointerOut = (e) => {
+    e.stopPropagation();
+    setIsHovered(false);
+    document.body.style.cursor = 'default';
+  };
+
   return (
-    <group ref={group}>
+    <group
+      ref={group}
+      rotation={[0, Math.PI, 0]}
+      onPointerDown={handlePointerDown}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+    >
       {vrm && <primitive object={vrm.scene} dispose={null} />}
     </group>
   );

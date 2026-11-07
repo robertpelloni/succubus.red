@@ -31,4 +31,14 @@
 - [x] Phase 36: Postprocessing Bloom & Ambient Lighting Controls.
 - [x] Phase 37: Key Light Color & Shadow Map Resolution Controls.
 - [x] Phase 38: WebGL Memory Disposal on Avatar Switching.
-- [ ] Phase 39: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 39: Healthcheck Diagnostic API & CLI Health Command.
+- [x] Phase 40: Viewport Drag-and-Drop 3D Environment Support (.glb/.gltf).
+- [x] Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling.
+- [x] Phase 42: Cinematic & Isometric Camera Perspectives.
+- [x] Phase 43: VRM Drag-and-Drop & IndexedDB Metadata Persistence.
+- [x] Phase 44: Binary VRM Validation & Drop Overlay Visuals.
+- [x] Phase 45: In-Viewport Floating Audio Status HUD & Micro-Waveforms.
+- [x] Phase 46: Interactive Avatar Touch & Gesture Reactions.
+- [x] Phase 47: Interactive Viewport Mic HUD Click-to-Test.
+- [x] Phase 48: Avatar Hover Cursor & Attentive Gaze Tracking.
+- [ ] Phase 49: Dynamic Ambient Soundscapes & Atmospheric Audio.

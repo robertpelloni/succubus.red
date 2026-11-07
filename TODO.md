@@ -29,4 +29,14 @@
 - [x] Add postprocessing bloom and ambient light brightness sliders in Companion Studio.
 - [x] Add key light color picker and shadow quality resolution dropdown in Companion Studio.
 - [x] Implement WebGL memory disposal (VRMUtils.deepDispose) on avatar model changes.
-- [ ] Global shortcut hotkey triggers via system tray app.
+- [x] Implement /api/health endpoint and health command in tray_app.py.
+- [x] Implement viewport drag-and-drop for .glb and .gltf 3D environment models.
+- [x] Implement interactive CLI menu loop and graceful signal handlers in tray_app.py.
+- [x] Add Cinematic Low and Isometric Top camera perspective presets and reset view button.
+- [x] Implement VRM drag-and-drop IndexedDB metadata persistence and UI model badge.
+- [x] Add binary magic header validation for glTF/VRM drag-and-drop with pulsing overlay styling.
+- [x] In-viewport floating audio status HUD badge with live micro-waveform animations.
+- [x] Interactive avatar touch/click reaction events and procedural animation responses.
+- [x] Interactive click-to-test toggle directly on the in-viewport microphone HUD badge.
+- [x] Avatar hover cursor styling and attentive gaze tracking responsiveness.
+- [ ] Atmospheric audio / spatial ambient soundscape generator.

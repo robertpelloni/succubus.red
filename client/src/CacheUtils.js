@@ -67,10 +67,61 @@ export async function fetchAndCache(url) {
 }
 
 export const CUSTOM_AVATAR_KEY = 'custom_avatar.vrm';
+export const CUSTOM_AVATAR_META_KEY = 'custom_avatar_meta.json';
 
-export async function saveCustomAvatar(blob) {
-  await saveToCache(CUSTOM_AVATAR_KEY, blob);
-  return URL.createObjectURL(blob);
+/**
+ * Validates glTF/VRM binary magic header ("glTF" = 0x46546C67 in little-endian).
+ * @param {Blob|File} file
+ * @returns {Promise<boolean>}
+ */
+export async function validateVRMBinary(file) {
+  try {
+    const slice = file.slice(0, 4);
+    const buffer = await slice.arrayBuffer();
+    const view = new DataView(buffer);
+    const magic = view.getUint32(0, true);
+    // 0x46546C67 corresponds to ASCII "glTF"
+    return magic === 0x46546C67;
+  } catch (err) {
+    console.warn("Error validating VRM binary magic header:", err);
+    return false;
+  }
+}
+
+export async function saveCustomAvatar(fileOrBlob) {
+  await saveToCache(CUSTOM_AVATAR_KEY, fileOrBlob);
+
+  const meta = {
+    name: fileOrBlob.name || 'custom_model.vrm',
+    size: fileOrBlob.size || 0,
+    type: fileOrBlob.type || 'model/gltf-binary',
+    lastModified: fileOrBlob.lastModified || Date.now()
+  };
+
+  try {
+    const metaBlob = new Blob([JSON.stringify(meta)], { type: 'application/json' });
+    await saveToCache(CUSTOM_AVATAR_META_KEY, metaBlob);
+  } catch (err) {
+    console.warn("Failed to persist avatar metadata to IndexedDB:", err);
+  }
+
+  return {
+    url: URL.createObjectURL(fileOrBlob),
+    meta
+  };
+}
+
+export async function getCustomAvatarMeta() {
+  try {
+    const cachedBlob = await getFromCache(CUSTOM_AVATAR_META_KEY);
+    if (cachedBlob) {
+      const text = await cachedBlob.text();
+      return JSON.parse(text);
+    }
+  } catch (err) {
+    console.warn("Failed to load custom avatar metadata from IndexedDB:", err);
+  }
+  return null;
 }
 
 export async function getCustomAvatar() {
@@ -90,8 +141,9 @@ export async function clearCustomAvatar() {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(CUSTOM_AVATAR_KEY);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    store.delete(CUSTOM_AVATAR_KEY);
+    store.delete(CUSTOM_AVATAR_META_KEY);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
   });
 }

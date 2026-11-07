@@ -2,6 +2,11 @@ import React, { Suspense, useState, useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
 import Character from './Character';
+import Environment from './Environment';
+import { LipSyncAnalyser } from './LipSyncAnalyser';
+import { StorageService } from './StorageService';
+import { getCustomAvatar, getCustomAvatarMeta, saveCustomAvatar, clearCustomAvatar, validateVRMBinary } from './CacheUtils';
+import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
 function App() {
@@ -21,6 +26,7 @@ function App() {
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [customAvatarMeta, setCustomAvatarMeta] = useState(null);
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
   const [springStiffness, setSpringStiffness] = useState(1.0);
   const [springDragForce, setSpringDragForce] = useState(0.4);
@@ -35,6 +41,21 @@ function App() {
     setTimeout(() => {
       setToastMessage(prev => (prev === msg ? null : prev));
     }, duration);
+  };
+
+  const handleAvatarTouch = () => {
+    // Interactive avatar touch reaction
+    const emotions = ['joy', 'fun', 'surprised'];
+    const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+    setEmotion({ name: randomEmotion, value: 1.0 });
+    setTimeout(() => setEmotion(null), 2500);
+
+    if (currentAnimation === 'idle') {
+      setCurrentAnimation('wave');
+      setTimeout(() => setCurrentAnimation('idle'), 3500);
+    }
+
+    showToast("✨ Touched companion: Succubus reacts happily!");
   };
 
   const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
@@ -82,7 +103,204 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
 
   const endOfMessagesRef = useRef(null);
 
-  const speak = (text) => {
+  // Encode Float32Array to WAV format
+  const encodeWAV = (samples, sampleRate) => {
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
+
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + samples.length * 2, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, samples.length * 2, true);
+
+    floatTo16BitPCM(view, 44, samples);
+    return buffer;
+  };
+
+  const writeString = (view, offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  const floatTo16BitPCM = (output, offset, input) => {
+    for (let i = 0; i < input.length; i++, offset += 2) {
+      const s = Math.max(-1, Math.min(1, input[i]));
+      output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+  };
+
+  // Initialize Custom Avatar from IndexedDB
+  useEffect(() => {
+    const initAvatar = async () => {
+      try {
+        const customUrl = await getCustomAvatar();
+        if (customUrl) {
+          setHasCustomAvatar(true);
+          const meta = await getCustomAvatarMeta();
+          if (meta) setCustomAvatarMeta(meta);
+        }
+      } catch (e) {
+        console.warn("Error checking custom avatar:", e);
+      }
+    };
+    initAvatar();
+  }, []);
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.vrm')) {
+      showToast("❌ Please select a valid .vrm avatar file!");
+      return;
+    }
+
+    const isValid = await validateVRMBinary(file);
+    if (!isValid) {
+      showToast("❌ Invalid VRM binary format (corrupted or unrecognized header).");
+      return;
+    }
+
+    try {
+      const { url, meta } = await saveCustomAvatar(file);
+      setAvatarUrl(url);
+      setCustomAvatarMeta(meta);
+      setHasCustomAvatar(true);
+      setAvatarMode('custom');
+      showToast(`✨ Saved "${meta.name}" to IndexedDB!`);
+    } catch (err) {
+      console.error("Failed to save custom avatar:", err);
+      showToast("❌ Failed to save avatar to IndexedDB.");
+    }
+  };
+
+  const handleSwitchAvatarMode = async (mode) => {
+    setAvatarMode(mode);
+    if (mode === 'default') {
+      setAvatarUrl('/avatar.vrm');
+    } else {
+      const customUrl = await getCustomAvatar();
+      if (customUrl) {
+        setAvatarUrl(customUrl);
+        const meta = await getCustomAvatarMeta();
+        if (meta) setCustomAvatarMeta(meta);
+      }
+    }
+  };
+
+  const handleResetAvatar = async () => {
+    await clearCustomAvatar();
+    setHasCustomAvatar(false);
+    setCustomAvatarMeta(null);
+    setAvatarMode('default');
+    setAvatarUrl('/avatar.vrm');
+    showToast("Default avatar restored.");
+  };
+
+  // Initialize Kokoro
+  useEffect(() => {
+    const initKokoro = async () => {
+      try {
+        const model_id = "onnx-community/Kokoro-82M-v1.0-ONNX";
+        const tts = await KokoroTTS.from_pretrained(model_id, {
+          dtype: "fp32",
+          device: "wasm",
+        });
+        setKokoroTts(tts);
+      } catch (err) {
+        console.warn("Kokoro TTS not loaded on startup:", err);
+      }
+    };
+    initKokoro();
+  }, []);
+
+  // Fetch settings from DB on mount
+  useEffect(() => {
+    const initSettings = async () => {
+      if (!isAuthenticated) return;
+
+      const dbSettings = await StorageService.fetchSettings();
+      if (dbSettings) {
+        if (dbSettings.openRouterApiKey) setApiKey(dbSettings.openRouterApiKey);
+        if (dbSettings.systemPrompt) setSystemPrompt(dbSettings.systemPrompt);
+        if (dbSettings.ttsPitch !== null && dbSettings.ttsPitch !== undefined) setTtsPitch(dbSettings.ttsPitch);
+        if (dbSettings.ttsRate !== null && dbSettings.ttsRate !== undefined) setTtsRate(dbSettings.ttsRate);
+        if (dbSettings.ttsVoice) setTtsVoice(dbSettings.ttsVoice);
+        if (dbSettings.elevenLabsApiKey) {
+          setElevenLabsApiKey(dbSettings.elevenLabsApiKey);
+          setTtsProvider('elevenlabs');
+        }
+        if (dbSettings.elevenLabsVoiceId) setElevenLabsVoiceId(dbSettings.elevenLabsVoiceId);
+        if (dbSettings.currentAnimation) setCurrentAnimation(dbSettings.currentAnimation);
+        if (dbSettings.environmentFile) setEnvironmentFile(dbSettings.environmentFile);
+
+        if (dbSettings.chatHistory) {
+          try {
+             setMessages(JSON.parse(dbSettings.chatHistory));
+          } catch { console.warn("Failed to parse chat history"); }
+        }
+      }
+      setIsSettingsLoaded(true);
+    };
+    initSettings();
+  }, [isAuthenticated]);
+
+  // Debounced save to DB
+  useEffect(() => {
+    if (!isSettingsLoaded) return;
+
+    const settingsData = {
+      openRouterApiKey: apiKey,
+      systemPrompt,
+      ttsPitch,
+      ttsRate,
+      ttsVoice,
+      elevenLabsApiKey,
+      elevenLabsVoiceId,
+      environmentFile,
+      currentAnimation,
+      chatHistory: JSON.stringify(messages)
+    };
+
+    const timeoutId = setTimeout(() => {
+      StorageService.saveSettings(settingsData);
+    }, 1000); // 1s debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [apiKey, systemPrompt, ttsPitch, ttsRate, ttsVoice, elevenLabsApiKey, elevenLabsVoiceId, environmentFile, currentAnimation, messages, isSettingsLoaded]);
+
+  // Handle manual emotion change
+  useEffect(() => {
+    if (manualEmotion === 'none') {
+      setEmotion(null);
+    } else {
+      setEmotion({ name: manualEmotion, value: 1.0 });
+    }
+  }, [manualEmotion]);
+
+  // Load voices for native browser speech synthesis
+  useEffect(() => {
+    const loadVoices = () => {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+      if (!ttsVoice && voices.length > 0) {
+        const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Google US English'));
+        setTtsVoice(femaleVoice ? femaleVoice.name : voices[0].name);
+      }
+    };
+
+    loadVoices();
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -105,13 +323,164 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
   };
 
   useEffect(() => {
-    const savedChat = localStorage.getItem('chat_history');
-    if (savedChat) {
-      try {
-        setMessages(JSON.parse(savedChat));
-      } catch (e) {
-        console.error("Failed to parse local storage chat history", e);
+    let animationFrame;
+    const updateVisemes = () => {
+      if (isSpeaking && analyserRef.current) {
+        const data = analyserRef.current.update();
+        setVisemes(data);
       }
+      animationFrame = requestAnimationFrame(updateVisemes);
+    };
+    updateVisemes();
+    return () => cancelAnimationFrame(animationFrame);
+  }, [isSpeaking]);
+
+  const handleMicToggle = () => {
+    if (isRecording) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support speech recognition.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      setInput((prev) => (prev ? prev + ' ' + speechResult : speechResult));
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech Recognition Error:", event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  // Mic Testing & VU Meter
+  const handleToggleMicTest = async () => {
+    if (isTestingMic) {
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+      }
+      setIsTestingMic(false);
+      setMicLevel(0);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      micAnalyserRef.current = analyser;
+      setIsTestingMic(true);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const checkMic = () => {
+        if (!micStreamRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / bufferLength;
+        const normalized = Math.min(100, Math.round((avg / 128) * 100));
+        setMicLevel(normalized);
+        requestAnimationFrame(checkMic);
+      };
+      requestAnimationFrame(checkMic);
+    } catch (err) {
+      console.error("Mic test error:", err);
+      alert("Unable to access microphone. Please ensure microphone permissions are granted.");
+    }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file (PNG, JPEG, WebP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedImage(event.target.result);
+      showToast("📷 Image attached! Ask a question about it.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Viewport Drag-and-Drop Handler
+  const handleFileDrop = async (file) => {
+    if (!file) return;
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith('.vrm')) {
+      const isValid = await validateVRMBinary(file);
+      if (!isValid) {
+        showToast("❌ Dropped file is not a valid glTF/VRM binary.");
+        return;
+      }
+
+      try {
+        const { url, meta } = await saveCustomAvatar(file);
+        setAvatarUrl(url);
+        setCustomAvatarMeta(meta);
+        setHasCustomAvatar(true);
+        setAvatarMode('custom');
+        showToast(`✨ Custom avatar "${meta.name}" cached & loaded!`);
+      } catch (err) {
+        console.error("Drop VRM error:", err);
+        showToast("❌ Failed to load VRM file.");
+      }
+    } else if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+      try {
+        const envUrl = URL.createObjectURL(file);
+        setEnvironmentFile(envUrl);
+        showToast(`🌐 Custom 3D environment "${file.name}" loaded!`);
+      } catch (err) {
+        console.error("Drop GLB error:", err);
+        showToast("❌ Failed to load 3D environment model.");
+      }
+    } else if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachedImage(event.target.result);
+        showToast("📷 Image attached! Type a prompt or hit send.");
+      };
+      reader.readAsDataURL(file);
+    } else {
+      showToast("⚠️ Unsupported file format. Drop a .vrm avatar, .glb environment, or image file.");
     }
     const savedPrompt = localStorage.getItem('system_prompt');
     if (savedPrompt) setSystemPrompt(savedPrompt);
@@ -205,7 +574,46 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', background: 'radial-gradient(circle at center, #3a3a5a 0%, #1a1a2e 100%)' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#222', overflow: 'hidden' }}>
+
+      {/* Drag & Drop Visual HUD Overlay */}
+      {isDraggingFile && (
+        <div className="drop-overlay">
+          <div className="drop-overlay-box">
+            <div className="drop-overlay-icon">📥</div>
+            <h2 className="drop-overlay-title">Drop File Here</h2>
+            <p className="drop-overlay-desc">Drop a .vrm avatar, .glb 3D environment, or an image to share</p>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="toast-notification">
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Viewport Microphone & Audio Activity HUD Badge */}
+      <div
+        className={`viewport-mic-badge ${isTestingMic || isRecording ? 'active' : ''}`}
+        onClick={handleToggleMicTest}
+        title={isTestingMic ? "Click to stop mic test" : "Click to test microphone input"}
+      >
+        <span className="viewport-mic-icon">
+          {isRecording ? '🔴' : isTestingMic ? '🎙️' : '🎤'}
+        </span>
+        <span className="viewport-mic-label">
+          {isRecording ? 'Listening...' : isTestingMic ? `Mic: ${micLevel}%` : 'Click to Test Mic'}
+        </span>
+        {(isTestingMic || isRecording) && (
+          <div className="viewport-mic-wave">
+            <span style={{ height: `${Math.max(4, Math.min(18, (micLevel / 100) * 18))}px` }} />
+            <span style={{ height: `${Math.max(6, Math.min(22, (micLevel / 100) * 22))}px` }} />
+            <span style={{ height: `${Math.max(4, Math.min(16, (micLevel / 100) * 16))}px` }} />
+          </div>
+        )}
+      </div>
 
       {/* Settings Toggle Button */}
       <button
@@ -277,13 +685,29 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
               style={{ fontSize: '11px', padding: '6px' }}
             />
             {hasCustomAvatar && (
-              <button
-                className="action-button danger"
-                style={{ marginTop: '5px' }}
-                onClick={handleResetAvatar}
-              >
-                Remove Custom Avatar
-              </button>
+              <div style={{
+                marginTop: '8px',
+                padding: '8px 10px',
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.08)'
+              }}>
+                <div style={{ fontSize: '11px', color: '#aaccff', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                    📦 {customAvatarMeta?.name || 'custom_avatar.vrm'}
+                  </span>
+                  <span>
+                    {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'IndexedDB'}
+                  </span>
+                </div>
+                <button
+                  className="action-button danger"
+                  style={{ marginTop: '6px', width: '100%' }}
+                  onClick={handleResetAvatar}
+                >
+                  Remove Custom Avatar
+                </button>
+              </div>
             )}
           </div>
 
@@ -557,6 +981,24 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
                 onClick={() => cameraControlRef.current?.setLookAt(0, 1.45, 0.8, 0, 1.45, 0, true)}
               >
                 Close-up
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0.8, 0.5, 2.2, 0, 1.1, 0, true)}
+              >
+                Cinematic Low
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(1.8, 2.8, 2.8, 0, 0.8, 0, true)}
+              >
+                Isometric Top
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.reset(true)}
+              >
+                Reset View 🔄
               </button>
             </div>
           </div>
@@ -861,9 +1303,25 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
         <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>
-          <Character url="/avatar.vrm" currentAnimation={currentAnimation} emotion={emotion} isSpeaking={isSpeaking} />
-          <Environment preset="city" />
-          <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2} far={4} />
+          {environmentFile !== 'none' && <Environment lightsOn={lightsOn} file={environmentFile} />}
+
+          {particleEffect === 'sparkle' && (
+             <Sparkles count={100} scale={2.5} size={6} speed={0.4} opacity={0.8} color="#ffffaa" position={[0, 1, 0]} />
+          )}
+
+          <Character
+            url={avatarUrl}
+            currentAnimation={currentAnimation}
+            emotion={emotion}
+            isSpeaking={isSpeaking}
+            visemes={visemes}
+            springBoneStiffness={springStiffness}
+            springBoneDragForce={springDragForce}
+            onAvatarPointerDown={handleAvatarTouch}
+          />
+          <EffectComposer>
+            <Bloom intensity={bloomIntensity} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
+          </EffectComposer>
         </Suspense>
 
         <OrbitControls target={[0, 1.1, 0]} minPolarAngle={Math.PI/4} maxPolarAngle={Math.PI/2 + 0.1} minDistance={1.5} maxDistance={5} />

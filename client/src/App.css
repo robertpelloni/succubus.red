@@ -105,17 +105,78 @@ body {
   margin-bottom: 16px;
 }
 
-.setting-group label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #e0e0e0;
+/* Viewport Microphone & Audio Activity HUD Badge */
+.viewport-mic-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 20, 28, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 14px;
+  border-radius: 20px;
+  color: #aaccff;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 30;
+  transition: all 0.25s ease;
+  user-select: none;
+  cursor: pointer;
 }
 
-.setting-group input, .setting-group textarea {
-  width: 100%;
-  padding: 10px;
+.viewport-mic-badge:hover {
+  background: rgba(25, 30, 42, 0.9);
+  border-color: rgba(0, 210, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.viewport-mic-badge.active {
+  border-color: #00d2ff;
+  background: rgba(18, 26, 38, 0.9);
+  box-shadow: 0 0 18px rgba(0, 210, 255, 0.35);
+  color: #fff;
+}
+
+.viewport-mic-icon {
+  font-size: 14px;
+}
+
+.viewport-mic-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  margin-left: 4px;
+}
+
+.viewport-mic-wave span {
+  display: inline-block;
+  width: 3px;
+  background: #00d2ff;
+  border-radius: 2px;
+  transition: height 0.1s ease;
+}
+
+/* Full Viewport Drag and Drop Overlay */
+.drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 4px dashed #ff4081;
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -125,9 +186,25 @@ body {
   resize: vertical;
 }
 
-.setting-group input:focus, .setting-group textarea:focus {
-  outline: none;
-  border-color: #e91e63;
+.drop-overlay-box {
+  background: rgba(25, 25, 35, 0.95);
+  padding: 30px 45px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 64, 129, 0.5);
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(255, 64, 129, 0.2);
+  animation: pulse-drop 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-drop {
+  0% {
+    border-color: rgba(255, 64, 129, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 64, 129, 0.2);
+  }
+  100% {
+    border-color: rgba(0, 210, 255, 0.6);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6), inset 0 0 25px rgba(0, 210, 255, 0.25);
+  }
 }
 
 .error-message {

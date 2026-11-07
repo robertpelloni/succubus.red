@@ -17,3 +17,7 @@
 - Postprocessing bloom glow intensity and ambient light brightness can be dynamically adjusted via sliders in the Companion Studio and are serialized in the full JSON studio backup files.
 - Directional key light color and shadow map resolution buffer sizes (512, 1024, 2048) are dynamically configurable in Companion Studio and serialized across JSON configuration exports.
 - Avatar switching in `Character.jsx` cleans up previous VRM models using `VRMUtils.deepDispose(activeVrmRef.current.scene)` and halts animations via `activeMixerRef.current.stopAllAction()` to prevent WebGL context memory leaks and VRAM fragmentation.
+- A lightweight diagnostic healthcheck is provided at `/api/health` and executable via `python3 tray_app.py health`, testing database connectivity and dual-service reachability.
+- Viewport drag-and-drop handles `.glb` and `.gltf` 3D environment scenes by generating dynamic Object URLs and passing them directly to `Environment.jsx` without server roundtrip.
+- `tray_app.py` supports an interactive menu CLI loop (`python3 tray_app.py interactive`) with signal handling for `SIGINT` and `SIGTERM` to guarantee clean child process termination.
+- Companion Studio camera controls include Cinematic Low (`setLookAt(0.8, 0.5, 2.2, ...)`), Isometric Top (`setLookAt(1.8, 2.8, 2.8, ...)`), and a smooth Reset View transition.

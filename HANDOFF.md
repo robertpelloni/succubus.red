@@ -1,6 +1,42 @@
-# Session Handoff - v0.26.0
+# Session Handoff - v0.36.0
 
 ## Completed Work in this Session
+- **Phase 48: Avatar Hover Cursor & Attentive Gaze Tracking**:
+  - Added pointer hover states (`onPointerOver`/`onPointerOut`) to the VRM avatar scene group in `Character.jsx` to dynamically update document cursor style to `pointer`.
+  - Dynamically scaled gaze tracking responsiveness factor (`2.4x`) and brought gaze depth closer (`z=1.6`) when hovering over the companion.
+- **Phase 47: Interactive Viewport Mic HUD Click-to-Test**:
+  - Attached `onClick={handleToggleMicTest}` to `.viewport-mic-badge` in `App.jsx`, allowing direct activation/deactivation of microphone testing without opening the Companion Studio drawer.
+  - Enhanced HUD badge styling with cursor pointer, lift effect, glowing border, and dynamic tooltip title in `App.css`.
+- **Phase 46: Interactive Avatar Touch & Gesture Reactions**:
+  - Attached `onPointerDown` pointer reaction events to the 3D VRM avatar scene group in `Character.jsx`.
+  - Implemented interactive spontaneous reaction triggering in `App.jsx`, transitioning blendshape emotions (`joy`, `fun`, `surprised`) and triggering wave animations with toast feedback upon user clicks/taps.
+- **Phase 45: In-Viewport Floating Audio Status HUD & Micro-Waveforms**:
+  - Integrated `.viewport-mic-badge` on the top-left of the 3D canvas displaying real-time microphone gain/activity status and micro-waveform bars.
+  - Connected Web Audio API volume peaks to floating HUD to allow voice monitoring without opening Companion Studio.
+  - Styled HUD badge with frosted glassmorphism and cyan pulse accents in `App.css`.
+- **Phase 44: Binary VRM Validation & Drop Overlay Visuals**:
+  - Implemented `validateVRMBinary` in `CacheUtils.js` checking little-endian magic header `0x46546C67` (`glTF`) before writing into IndexedDB.
+  - Integrated fast binary validation into viewport drag-and-drop and input upload handlers in `App.jsx`.
+  - Added pulsing cyan/magenta gradient animation to `.drop-overlay-box` in `App.css`.
+- **Phase 43: VRM Drag-and-Drop & IndexedDB Metadata Persistence**:
+  - Enhanced `CacheUtils.js` with `saveCustomAvatar` and `getCustomAvatarMeta` to persist filename, byte size, and timestamp in IndexedDB alongside the avatar binary blob.
+  - Added dynamic custom avatar metadata badge in Companion Studio displaying the loaded model filename, formatted file size (MB), and a quick removal button.
+  - Updated viewport drag-and-drop notifications and upload flows to provide immediate model name feedback upon caching.
+- **Phase 42: Cinematic & Isometric Camera Perspectives**:
+  - Added new dynamic perspective buttons ("Cinematic Low" and "Isometric Top") under 3D Stage & Environment in `Companion Studio`.
+  - Added a "Reset View 🔄" button to programmatically reset the camera controls smoothly.
+- **Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling**:
+  - Implemented interactive prompt loop in `tray_app.py` supporting `interactive` and `menu` subcommands for manual daemon lifecycle management.
+  - Attached POSIX signal handlers (`SIGINT`, `SIGTERM`) ensuring that frontend and backend server processes are killed cleanly upon termination.
+- **Phase 40: Viewport Drag-and-Drop 3D Environment Support**:
+  - Enhanced window and canvas file drop listener in `client/src/App.jsx` to intercept `.glb` and `.gltf` 3D environment scenes.
+  - Generates dynamic Object URLs (`URL.createObjectURL(file)`) and updates `environmentFile`.
+  - Updated `client/src/Environment.jsx` to dynamically detect and load Blob and Data URLs directly without prepending server asset paths.
+  - Updated HUD overlay copy and toast feedback for seamless environment switching.
+- **Phase 39: Healthcheck Diagnostic API & CLI Health Command**:
+  - Implemented `/api/health` diagnostic endpoint in `server/index.js` reporting database connection status via raw query (`SELECT 1`), process uptime, memory usage, and health state.
+  - Added unit test in `server/test.js` validating healthy responses.
+  - Added `health` CLI subcommand in `tray_app.py` providing instant dual-service HTTP reachability status for both frontend Vite and backend Express servers.
 - **Phase 38: WebGL Memory Disposal on Avatar Switching**:
   - Implemented explicit WebGL resource disposal in `client/src/Character.jsx` inside the avatar loading `useEffect` cleanup hook.
   - Calls `VRMUtils.deepDispose(activeVrmRef.current.scene)` and `activeMixerRef.current.stopAllAction()` to completely purge geometry buffers, material programs, and GPU textures upon unmount or avatar swap.
@@ -37,9 +73,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.26.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.30.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
-- Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
+- Dynamic ambient audio generator / background lo-fi soundscapes for immersive companion environments.
 - Directional light orbital pitch and yaw angle position controls in Companion Studio.

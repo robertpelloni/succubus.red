@@ -8,6 +8,25 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
+// System Health & Diagnostics Endpoint
+app.get('/api/health', async (req, res) => {
+  let dbHealthy = false;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbHealthy = true;
+  } catch {
+    dbHealthy = false;
+  }
+
+  res.status(dbHealthy ? 200 : 503).json({
+    status: dbHealthy ? 'healthy' : 'degraded',
+    uptime: Math.round(process.uptime()),
+    database: dbHealthy ? 'connected' : 'disconnected',
+    memoryUsage: process.memoryUsage(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.post("/api/chat", async (req, res) => {
   const { userMessages, characterSystemPrompt, apiKey } = req.body;
 
