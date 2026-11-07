@@ -1,6 +1,10 @@
-# Session Handoff - v0.32.0
+# Session Handoff - v0.33.0
 
 ## Completed Work in this Session
+- **Phase 45: In-Viewport Floating Audio Status HUD & Micro-Waveforms**:
+  - Integrated `.viewport-mic-badge` on the top-left of the 3D canvas displaying real-time microphone gain/activity status and micro-waveform bars.
+  - Connected Web Audio API volume peaks to floating HUD to allow voice monitoring without opening Companion Studio.
+  - Styled HUD badge with frosted glassmorphism and cyan pulse accents in `App.css`.
 - **Phase 44: Binary VRM Validation & Drop Overlay Visuals**:
   - Implemented `validateVRMBinary` in `CacheUtils.js` checking little-endian magic header `0x46546C67` (`glTF`) before writing into IndexedDB.
   - Integrated fast binary validation into viewport drag-and-drop and input upload handlers in `App.jsx`.

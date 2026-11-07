@@ -35,4 +35,5 @@
 - [x] Add Cinematic Low and Isometric Top camera perspective presets and reset view button.
 - [x] Implement VRM drag-and-drop IndexedDB metadata persistence and UI model badge.
 - [x] Add binary magic header validation for glTF/VRM drag-and-drop with pulsing overlay styling.
+- [x] In-viewport floating audio status HUD badge with live micro-waveform animations.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.

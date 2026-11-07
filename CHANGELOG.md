@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.33.0] - In-Viewport Audio Activity HUD & Micro-Waveforms
+### Added
+- Integrated floating viewport audio HUD badge (`.viewport-mic-badge`) in `App.jsx` showing real-time microphone gain/activity status and dynamic wave bars.
+- Connected Web Audio API volume peaks to floating HUD to allow voice monitoring without opening Companion Studio.
+- Styled HUD badge with frosted glassmorphism and cyan pulse accents in `App.css`.
+
 ## [0.32.0] - Binary VRM Validation & Drop Overlay Visuals
 ### Added
 - Implemented `validateVRMBinary` in `CacheUtils.js` to inspect glTF/VRM magic binary headers (`0x46546C67` / `glTF`) prior to IndexedDB writes.

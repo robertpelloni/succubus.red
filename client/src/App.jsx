@@ -820,6 +820,23 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         </div>
       )}
 
+      {/* Viewport Microphone & Audio Activity HUD Badge */}
+      <div className={`viewport-mic-badge ${isTestingMic || isRecording ? 'active' : ''}`}>
+        <span className="viewport-mic-icon">
+          {isRecording ? '🔴' : isTestingMic ? '🎙️' : '🎤'}
+        </span>
+        <span className="viewport-mic-label">
+          {isRecording ? 'Listening...' : isTestingMic ? `Mic: ${micLevel}%` : 'Mic Ready'}
+        </span>
+        {(isTestingMic || isRecording) && (
+          <div className="viewport-mic-wave">
+            <span style={{ height: `${Math.max(4, Math.min(18, (micLevel / 100) * 18))}px` }} />
+            <span style={{ height: `${Math.max(6, Math.min(22, (micLevel / 100) * 22))}px` }} />
+            <span style={{ height: `${Math.max(4, Math.min(16, (micLevel / 100) * 16))}px` }} />
+          </div>
+        )}
+      </div>
+
       {/* Settings Toggle Button */}
       <button
         className="dashboard-toggle-btn"
