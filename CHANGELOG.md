@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.36.0] - Avatar Hover Affordance & Attentive Gaze Tracking
+### Added
+- Added `onPointerOver` and `onPointerOut` event handlers to the 3D VRM avatar in `Character.jsx` to dynamically update document cursor style to `pointer`.
+- Amplified look-at mouse tracking responsiveness and brought gaze depth closer when hovering over the companion to create an attentive reaction.
+
 ## [0.35.0] - Interactive Viewport Mic HUD Click-to-Test
 ### Added
 - Added interactive click-to-test toggle directly on the in-viewport microphone HUD badge (`.viewport-mic-badge`) in `App.jsx`.

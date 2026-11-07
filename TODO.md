@@ -38,4 +38,5 @@
 - [x] In-viewport floating audio status HUD badge with live micro-waveform animations.
 - [x] Interactive avatar touch/click reaction events and procedural animation responses.
 - [x] Interactive click-to-test toggle directly on the in-viewport microphone HUD badge.
+- [x] Avatar hover cursor styling and attentive gaze tracking responsiveness.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.

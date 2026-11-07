@@ -1,6 +1,9 @@
-# Session Handoff - v0.35.0
+# Session Handoff - v0.36.0
 
 ## Completed Work in this Session
+- **Phase 48: Avatar Hover Cursor & Attentive Gaze Tracking**:
+  - Added pointer hover states (`onPointerOver`/`onPointerOut`) to the VRM avatar scene group in `Character.jsx` to dynamically update document cursor style to `pointer`.
+  - Dynamically scaled gaze tracking responsiveness factor (`2.4x`) and brought gaze depth closer (`z=1.6`) when hovering over the companion.
 - **Phase 47: Interactive Viewport Mic HUD Click-to-Test**:
   - Attached `onClick={handleToggleMicTest}` to `.viewport-mic-badge` in `App.jsx`, allowing direct activation/deactivation of microphone testing without opening the Companion Studio drawer.
   - Enhanced HUD badge styling with cursor pointer, lift effect, glowing border, and dynamic tooltip title in `App.css`.

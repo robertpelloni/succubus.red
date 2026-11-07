@@ -171,9 +171,11 @@ export default function Character({
       // Map mouse coordinates to 3D space for the lookAt target
       // Camera is usually at z=3, character at z=0.
       // We scale the mouse coordinates to make the head move naturally.
-      lookAtTargetRef.current.position.x = state.mouse.x * 2;
-      lookAtTargetRef.current.position.y = state.mouse.y * 2 + 1.2; // 1.2 is approx head height
-      lookAtTargetRef.current.position.z = 2; // Position the target in front of the character
+      // Subtly amplify tracking responsiveness when hovered
+      const trackingFactor = isHovered ? 2.4 : 2.0;
+      lookAtTargetRef.current.position.x = state.mouse.x * trackingFactor;
+      lookAtTargetRef.current.position.y = state.mouse.y * trackingFactor + 1.2; // 1.2 is approx head height
+      lookAtTargetRef.current.position.z = isHovered ? 1.6 : 2.0; // Brings gaze slightly closer when hovered
 
       vrm.update(delta);
 
@@ -263,6 +265,8 @@ export default function Character({
     }
   });
 
+  const [isHovered, setIsHovered] = useState(false);
+
   const handlePointerDown = (e) => {
     e.stopPropagation();
     if (onAvatarPointerDown) {
@@ -270,12 +274,25 @@ export default function Character({
     }
   };
 
+  const handlePointerOver = (e) => {
+    e.stopPropagation();
+    setIsHovered(true);
+    document.body.style.cursor = 'pointer';
+  };
+
+  const handlePointerOut = (e) => {
+    e.stopPropagation();
+    setIsHovered(false);
+    document.body.style.cursor = 'default';
+  };
+
   return (
     <group
       ref={group}
       rotation={[0, Math.PI, 0]}
       onPointerDown={handlePointerDown}
-      style={{ cursor: 'pointer' }}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
     >
       {vrm && <primitive object={vrm.scene} dispose={null} />}
     </group>
