@@ -34,4 +34,5 @@
 - [x] Phase 39: Healthcheck Diagnostic API & CLI Health Command.
 - [x] Phase 40: Viewport Drag-and-Drop 3D Environment Support (.glb/.gltf).
 - [x] Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling.
-- [ ] Phase 42: Dynamic Ambient Soundscapes & Atmospheric Audio.
+- [x] Phase 42: Cinematic & Isometric Camera Perspectives.
+- [ ] Phase 43: Dynamic Ambient Soundscapes & Atmospheric Audio.

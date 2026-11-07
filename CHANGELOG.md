@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.30.0] - Cinematic & Isometric Camera Perspectives
+### Added
+- Added Cinematic Low and Isometric Top perspective presets to `Companion Studio` under 3D Stage & Environment.
+- Added Reset View button to restore baseline camera framing smoothly using `CameraControls.reset`.
+
 ## [0.29.0] - Interactive CLI Daemon Controller & Graceful Signal Handling
 ### Added
 - Added interactive persistent command menu loop in `tray_app.py` supporting `menu` and `interactive` subcommands.

@@ -32,4 +32,5 @@
 - [x] Implement /api/health endpoint and health command in tray_app.py.
 - [x] Implement viewport drag-and-drop for .glb and .gltf 3D environment models.
 - [x] Implement interactive CLI menu loop and graceful signal handlers in tray_app.py.
+- [x] Add Cinematic Low and Isometric Top camera perspective presets and reset view button.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.

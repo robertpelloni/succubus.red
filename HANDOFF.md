@@ -1,6 +1,9 @@
-# Session Handoff - v0.29.0
+# Session Handoff - v0.30.0
 
 ## Completed Work in this Session
+- **Phase 42: Cinematic & Isometric Camera Perspectives**:
+  - Added new dynamic perspective buttons ("Cinematic Low" and "Isometric Top") under 3D Stage & Environment in `Companion Studio`.
+  - Added a "Reset View 🔄" button to programmatically reset the camera controls smoothly.
 - **Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling**:
   - Implemented interactive prompt loop in `tray_app.py` supporting `interactive` and `menu` subcommands for manual daemon lifecycle management.
   - Attached POSIX signal handlers (`SIGINT`, `SIGTERM`) ensuring that frontend and backend server processes are killed cleanly upon termination.
@@ -49,7 +52,7 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.29.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.30.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps

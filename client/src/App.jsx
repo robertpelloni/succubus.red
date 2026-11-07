@@ -1139,6 +1139,24 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               >
                 Close-up
               </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(0.8, 0.5, 2.2, 0, 1.1, 0, true)}
+              >
+                Cinematic Low
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.setLookAt(1.8, 2.8, 2.8, 0, 0.8, 0, true)}
+              >
+                Isometric Top
+              </button>
+              <button
+                className="chip-button"
+                onClick={() => cameraControlRef.current?.reset(true)}
+              >
+                Reset View 🔄
+              </button>
             </div>
           </div>
 
