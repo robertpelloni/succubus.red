@@ -1,6 +1,9 @@
-# Session Handoff - v0.34.0
+# Session Handoff - v0.35.0
 
 ## Completed Work in this Session
+- **Phase 47: Interactive Viewport Mic HUD Click-to-Test**:
+  - Attached `onClick={handleToggleMicTest}` to `.viewport-mic-badge` in `App.jsx`, allowing direct activation/deactivation of microphone testing without opening the Companion Studio drawer.
+  - Enhanced HUD badge styling with cursor pointer, lift effect, glowing border, and dynamic tooltip title in `App.css`.
 - **Phase 46: Interactive Avatar Touch & Gesture Reactions**:
   - Attached `onPointerDown` pointer reaction events to the 3D VRM avatar scene group in `Character.jsx`.
   - Implemented interactive spontaneous reaction triggering in `App.jsx`, transitioning blendshape emotions (`joy`, `fun`, `surprised`) and triggering wave animations with toast feedback upon user clicks/taps.

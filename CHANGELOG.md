@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.35.0] - Interactive Viewport Mic HUD Click-to-Test
+### Added
+- Added interactive click-to-test toggle directly on the in-viewport microphone HUD badge (`.viewport-mic-badge`) in `App.jsx`.
+- Enhanced badge hover affordance with smooth translate, glowing borders, and explanatory tooltips in `App.css`.
+
 ## [0.34.0] - Interactive Avatar Pointer Down Touch Reactions
 ### Added
 - Attached pointer reaction event listeners to the 3D VRM avatar in `Character.jsx` via `onPointerDown`.

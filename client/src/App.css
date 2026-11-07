@@ -435,9 +435,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(18, 20, 28, 0.7);
+  background: rgba(18, 20, 28, 0.75);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 8px 14px;
   border-radius: 20px;
   color: #aaccff;
@@ -446,12 +446,20 @@
   z-index: 30;
   transition: all 0.25s ease;
   user-select: none;
+  cursor: pointer;
+}
+
+.viewport-mic-badge:hover {
+  background: rgba(25, 30, 42, 0.9);
+  border-color: rgba(0, 210, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .viewport-mic-badge.active {
   border-color: #00d2ff;
-  background: rgba(18, 26, 38, 0.85);
-  box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+  background: rgba(18, 26, 38, 0.9);
+  box-shadow: 0 0 18px rgba(0, 210, 255, 0.35);
   color: #fff;
 }
 

@@ -37,4 +37,5 @@
 - [x] Add binary magic header validation for glTF/VRM drag-and-drop with pulsing overlay styling.
 - [x] In-viewport floating audio status HUD badge with live micro-waveform animations.
 - [x] Interactive avatar touch/click reaction events and procedural animation responses.
+- [x] Interactive click-to-test toggle directly on the in-viewport microphone HUD badge.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.
