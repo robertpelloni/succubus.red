@@ -67,6 +67,23 @@ export default function Character({
             // Turn character to face camera
             loadedVrm.scene.rotation.y = Math.PI;
 
+            // Compute bounding box to align feet flush with stage floor
+            const bbox = new THREE.Box3().setFromObject(loadedVrm.scene);
+            const modelHeight = bbox.max.y - bbox.min.y;
+
+            // Normalize outlier scales if model is abnormally small or oversized
+            if (modelHeight > 0.1 && (modelHeight < 0.8 || modelHeight > 2.5)) {
+              const desiredHeight = 1.6;
+              const scaleFactor = desiredHeight / modelHeight;
+              loadedVrm.scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
+              bbox.setFromObject(loadedVrm.scene);
+            }
+
+            // Align ground contact point to y = 0
+            if (bbox.min.y !== 0) {
+              loadedVrm.scene.position.y -= bbox.min.y;
+            }
+
             // Set lookAt target for mouse tracking
             if (loadedVrm.lookAt) {
               loadedVrm.lookAt.target = lookAtTargetRef.current;

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.40.0] - Automatic VRM Ground Alignment & Scale Normalization
+### Added
+- Automatic bounding box computation (`THREE.Box3().setFromObject`) on newly loaded VRM models in `Character.jsx`.
+- Automatic stage floor contact alignment (`vrm.scene.position.y -= bbox.min.y`) ensuring avatars' feet rest flush on the stage floor regardless of custom model origins.
+- Outlier scale normalization automatically sizing abnormal models to standard companion height (~1.6m).
+
 ## [0.39.0] - Visual Drop Flash Ripple & Environment Camera Showcase
 ### Added
 - Added fullscreen visual ripple flash overlay (`.drop-success-flash`) triggered upon successful drop and validation of `.vrm`, `.glb`, or image files in `App.jsx` and `App.css`.

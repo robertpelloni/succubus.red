@@ -1,6 +1,10 @@
-# Session Handoff - v0.39.0
+# Session Handoff - v0.40.0
 
 ## Completed Work in this Session
+- **Phase 52: Automatic VRM Ground Alignment & Scale Normalization**:
+  - Implemented automated bounding box analysis (`THREE.Box3().setFromObject`) on newly loaded VRM models in `Character.jsx`.
+  - Automatically offsets `vrm.scene.position.y` so custom avatar feet align flush with the stage floor (`y = 0`) regardless of model origin disparities.
+  - Automatically normalizes outlier avatar scales so avatars consistently fit within the stage.
 - **Phase 51: Visual Drop Flash Ripple & Environment Camera Showcase**:
   - Implemented `.drop-success-flash` fullscreen radial ripple animation in `App.jsx` and `App.css` triggered on successful drop of `.vrm`, `.glb`, or image files.
   - Added programmatic camera showcase transition (`setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true)`) when dropping new 3D environment models.
