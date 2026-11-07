@@ -1,6 +1,10 @@
-# Session Handoff - v0.30.0
+# Session Handoff - v0.31.0
 
 ## Completed Work in this Session
+- **Phase 43: VRM Drag-and-Drop & IndexedDB Metadata Persistence**:
+  - Enhanced `CacheUtils.js` with `saveCustomAvatar` and `getCustomAvatarMeta` to persist filename, byte size, and timestamp in IndexedDB alongside the avatar binary blob.
+  - Added dynamic custom avatar metadata badge in Companion Studio displaying the loaded model filename, formatted file size (MB), and a quick removal button.
+  - Updated viewport drag-and-drop notifications and upload flows to provide immediate model name feedback upon caching.
 - **Phase 42: Cinematic & Isometric Camera Perspectives**:
   - Added new dynamic perspective buttons ("Cinematic Low" and "Isometric Top") under 3D Stage & Environment in `Companion Studio`.
   - Added a "Reset View 🔄" button to programmatically reset the camera controls smoothly.

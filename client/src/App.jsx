@@ -6,7 +6,7 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
-import { getCustomAvatar, saveCustomAvatar, clearCustomAvatar } from './CacheUtils';
+import { getCustomAvatar, getCustomAvatarMeta, saveCustomAvatar, clearCustomAvatar } from './CacheUtils';
 import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
@@ -41,6 +41,7 @@ function App() {
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
+  const [customAvatarMeta, setCustomAvatarMeta] = useState(null);
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
   const [springStiffness, setSpringStiffness] = useState(1.0);
   const [springDragForce, setSpringDragForce] = useState(0.4);
@@ -148,6 +149,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         const customUrl = await getCustomAvatar();
         if (customUrl) {
           setHasCustomAvatar(true);
+          const meta = await getCustomAvatarMeta();
+          if (meta) setCustomAvatarMeta(meta);
         }
       } catch (e) {
         console.warn("Error checking custom avatar:", e);
@@ -166,10 +169,12 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     }
 
     try {
-      const customUrl = await saveCustomAvatar(file);
-      setAvatarUrl(customUrl);
+      const { url, meta } = await saveCustomAvatar(file);
+      setAvatarUrl(url);
+      setCustomAvatarMeta(meta);
       setHasCustomAvatar(true);
       setAvatarMode('custom');
+      showToast(`✨ Saved "${meta.name}" to IndexedDB!`);
     } catch (err) {
       console.error("Failed to save custom avatar:", err);
       alert("Failed to save avatar to IndexedDB.");
@@ -184,6 +189,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       const customUrl = await getCustomAvatar();
       if (customUrl) {
         setAvatarUrl(customUrl);
+        const meta = await getCustomAvatarMeta();
+        if (meta) setCustomAvatarMeta(meta);
       }
     }
   };
@@ -191,8 +198,10 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   const handleResetAvatar = async () => {
     await clearCustomAvatar();
     setHasCustomAvatar(false);
+    setCustomAvatarMeta(null);
     setAvatarMode('default');
     setAvatarUrl('/avatar.vrm');
+    showToast("Default avatar restored.");
   };
 
   // Initialize Kokoro
@@ -512,11 +521,12 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
     if (fileName.endsWith('.vrm')) {
       try {
-        const customUrl = await saveCustomAvatar(file);
-        setAvatarUrl(customUrl);
+        const { url, meta } = await saveCustomAvatar(file);
+        setAvatarUrl(url);
+        setCustomAvatarMeta(meta);
         setHasCustomAvatar(true);
         setAvatarMode('custom');
-        showToast(`✨ Custom avatar "${file.name}" loaded successfully!`);
+        showToast(`✨ Custom avatar "${meta.name}" cached & loaded!`);
       } catch (err) {
         console.error("Drop VRM error:", err);
         showToast("❌ Failed to load VRM file.");
@@ -858,13 +868,29 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               style={{ fontSize: '11px', padding: '6px' }}
             />
             {hasCustomAvatar && (
-              <button
-                className="action-button danger"
-                style={{ marginTop: '5px' }}
-                onClick={handleResetAvatar}
-              >
-                Remove Custom Avatar
-              </button>
+              <div style={{
+                marginTop: '8px',
+                padding: '8px 10px',
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.08)'
+              }}>
+                <div style={{ fontSize: '11px', color: '#aaccff', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                    📦 {customAvatarMeta?.name || 'custom_avatar.vrm'}
+                  </span>
+                  <span>
+                    {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'IndexedDB'}
+                  </span>
+                </div>
+                <button
+                  className="action-button danger"
+                  style={{ marginTop: '6px', width: '100%' }}
+                  onClick={handleResetAvatar}
+                >
+                  Remove Custom Avatar
+                </button>
+              </div>
             )}
           </div>
 

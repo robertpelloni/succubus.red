@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.31.0] - VRM Drag-and-Drop & IndexedDB Metadata Persistence
+### Added
+- Enhanced `CacheUtils.js` with `saveCustomAvatar` and `getCustomAvatarMeta` to persist filename, byte size, and timestamp in IndexedDB alongside the avatar binary blob.
+- Added dynamic custom avatar metadata badge in Companion Studio displaying the loaded model filename, formatted file size (MB), and a quick removal button.
+- Updated viewport drag-and-drop notifications and upload flows to provide immediate model name feedback upon caching.
+
 ## [0.30.0] - Cinematic & Isometric Camera Perspectives
 ### Added
 - Added Cinematic Low and Isometric Top perspective presets to `Companion Studio` under 3D Stage & Environment.

@@ -35,4 +35,5 @@
 - [x] Phase 40: Viewport Drag-and-Drop 3D Environment Support (.glb/.gltf).
 - [x] Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling.
 - [x] Phase 42: Cinematic & Isometric Camera Perspectives.
-- [ ] Phase 43: Dynamic Ambient Soundscapes & Atmospheric Audio.
+- [x] Phase 43: VRM Drag-and-Drop & IndexedDB Metadata Persistence.
+- [ ] Phase 44: Dynamic Ambient Soundscapes & Atmospheric Audio.

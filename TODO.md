@@ -33,4 +33,5 @@
 - [x] Implement viewport drag-and-drop for .glb and .gltf 3D environment models.
 - [x] Implement interactive CLI menu loop and graceful signal handlers in tray_app.py.
 - [x] Add Cinematic Low and Isometric Top camera perspective presets and reset view button.
+- [x] Implement VRM drag-and-drop IndexedDB metadata persistence and UI model badge.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.

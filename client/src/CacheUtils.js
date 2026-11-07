@@ -67,10 +67,42 @@ export async function fetchAndCache(url) {
 }
 
 export const CUSTOM_AVATAR_KEY = 'custom_avatar.vrm';
+export const CUSTOM_AVATAR_META_KEY = 'custom_avatar_meta.json';
 
-export async function saveCustomAvatar(blob) {
-  await saveToCache(CUSTOM_AVATAR_KEY, blob);
-  return URL.createObjectURL(blob);
+export async function saveCustomAvatar(fileOrBlob) {
+  await saveToCache(CUSTOM_AVATAR_KEY, fileOrBlob);
+
+  const meta = {
+    name: fileOrBlob.name || 'custom_model.vrm',
+    size: fileOrBlob.size || 0,
+    type: fileOrBlob.type || 'model/gltf-binary',
+    lastModified: fileOrBlob.lastModified || Date.now()
+  };
+
+  try {
+    const metaBlob = new Blob([JSON.stringify(meta)], { type: 'application/json' });
+    await saveToCache(CUSTOM_AVATAR_META_KEY, metaBlob);
+  } catch (err) {
+    console.warn("Failed to persist avatar metadata to IndexedDB:", err);
+  }
+
+  return {
+    url: URL.createObjectURL(fileOrBlob),
+    meta
+  };
+}
+
+export async function getCustomAvatarMeta() {
+  try {
+    const cachedBlob = await getFromCache(CUSTOM_AVATAR_META_KEY);
+    if (cachedBlob) {
+      const text = await cachedBlob.text();
+      return JSON.parse(text);
+    }
+  } catch (err) {
+    console.warn("Failed to load custom avatar metadata from IndexedDB:", err);
+  }
+  return null;
 }
 
 export async function getCustomAvatar() {
@@ -90,8 +122,9 @@ export async function clearCustomAvatar() {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(CUSTOM_AVATAR_KEY);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    store.delete(CUSTOM_AVATAR_KEY);
+    store.delete(CUSTOM_AVATAR_META_KEY);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
   });
 }
