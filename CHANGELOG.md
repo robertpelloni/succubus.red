@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.29.0] - Interactive CLI Daemon Controller & Graceful Signal Handling
+### Added
+- Added interactive persistent command menu loop in `tray_app.py` supporting `menu` and `interactive` subcommands.
+- Added POSIX signal handlers (`SIGINT`, `SIGTERM`) to ensure clean server process termination upon interruption.
+
 ## [0.28.0] - Viewport Drag-and-Drop 3D Environment Support
 ### Added
 - Direct drag-and-drop ingestion of 3D environment models (`.glb` and `.gltf`) directly onto the 3D viewport canvas.

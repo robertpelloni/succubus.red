@@ -33,4 +33,5 @@
 - [x] Phase 38: WebGL Memory Disposal on Avatar Switching.
 - [x] Phase 39: Healthcheck Diagnostic API & CLI Health Command.
 - [x] Phase 40: Viewport Drag-and-Drop 3D Environment Support (.glb/.gltf).
-- [ ] Phase 41: Desktop Global Hotkeys & Native Speech Activation.
+- [x] Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling.
+- [ ] Phase 42: Dynamic Ambient Soundscapes & Atmospheric Audio.

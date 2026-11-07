@@ -264,22 +264,60 @@ def run_tray_gui(manager: ServerManager):
         run_interactive_cli(manager)
 
 def run_interactive_cli(manager: ServerManager):
-    """Fallback interactive CLI menu."""
+    """Interactive CLI menu with command loop."""
+    print("\n=============================================")
+    print("  Succubus.red Interactive Controller")
+    print("=============================================")
     manager.print_status()
-    print("\nAvailable Commands:")
-    print("  [s] Check Status    [u] Start All      [d] Stop All (Quit)")
-    print("  [r] Restart All     [o] Open Browser   [l] Tail Logs")
-    print("  [q] Quit System Tray Manager (Leaves servers running or prompts)\n")
+
+    while True:
+        print("\nCommands: [s] Status  [u] Start  [d] Stop  [r] Restart  [o] Open  [h] Health  [l] Logs  [q] Quit")
+        try:
+            choice = input("Enter command: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\nExiting interactive CLI...")
+            break
+
+        if choice == 's':
+            manager.print_status()
+        elif choice == 'u':
+            manager.start_all()
+            manager.print_status()
+        elif choice == 'd':
+            manager.stop_all()
+            manager.print_status()
+        elif choice == 'r':
+            manager.restart_all()
+            manager.print_status()
+        elif choice == 'o':
+            manager.open_browser()
+        elif choice == 'h':
+            manager.check_health()
+        elif choice == 'l':
+            manager.tail_logs()
+        elif choice == 'q':
+            print("Exiting interactive controller.")
+            break
+        elif choice:
+            print(f"Unknown command: '{choice}'")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Succubus.red System Tray & Server Control")
     parser.add_argument("command", nargs="?", default="status",
-                        choices=["status", "start", "stop", "restart", "tray", "logs", "open", "health"],
+                        choices=["status", "start", "stop", "restart", "tray", "logs", "open", "health", "menu", "interactive"],
                         help="Command to execute")
     args = parser.parse_args()
 
     manager = ServerManager()
+
+    def handle_signal(sig, frame):
+        print(f"\nReceived signal {sig}. Stopping all servers cleanly...")
+        manager.stop_all()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, handle_signal)
+    signal.signal(signal.SIGTERM, handle_signal)
 
     if args.command == "status":
         manager.print_status()
@@ -298,6 +336,8 @@ def main():
         manager.open_browser()
     elif args.command == "health":
         manager.check_health()
+    elif args.command in ("menu", "interactive"):
+        run_interactive_cli(manager)
     elif args.command == "tray":
         run_tray_gui(manager)
 

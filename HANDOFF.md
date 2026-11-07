@@ -1,6 +1,9 @@
-# Session Handoff - v0.28.0
+# Session Handoff - v0.29.0
 
 ## Completed Work in this Session
+- **Phase 41: Interactive CLI Daemon Controller & Graceful Signal Handling**:
+  - Implemented interactive prompt loop in `tray_app.py` supporting `interactive` and `menu` subcommands for manual daemon lifecycle management.
+  - Attached POSIX signal handlers (`SIGINT`, `SIGTERM`) ensuring that frontend and backend server processes are killed cleanly upon termination.
 - **Phase 40: Viewport Drag-and-Drop 3D Environment Support**:
   - Enhanced window and canvas file drop listener in `client/src/App.jsx` to intercept `.glb` and `.gltf` 3D environment scenes.
   - Generates dynamic Object URLs (`URL.createObjectURL(file)`) and updates `environmentFile`.
@@ -46,9 +49,9 @@
   - Production build (`vite build`): completed successfully.
   - Playwright verification (`scripts/verify_all.py`): verified canvas, auth, settings studio, mic testing widget, camera presets, and drag-and-drop overlay HUD.
 - **Governance & Versioning**:
-  - Bumped `VERSION.md` and `package.json` to `0.28.0`.
+  - Bumped `VERSION.md` and `package.json` to `0.29.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
 ## Next Steps
-- Desktop global keyboard shortcut triggers via `tray_app.py` / system tray integration.
+- Dynamic ambient audio generator / background lo-fi soundscapes for immersive companion environments.
 - Directional light orbital pitch and yaw angle position controls in Companion Studio.
