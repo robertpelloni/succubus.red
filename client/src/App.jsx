@@ -6,7 +6,7 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
-import { getCustomAvatar, getCustomAvatarMeta, saveCustomAvatar, clearCustomAvatar } from './CacheUtils';
+import { getCustomAvatar, getCustomAvatarMeta, saveCustomAvatar, clearCustomAvatar, validateVRMBinary } from './CacheUtils';
 import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
@@ -164,7 +164,13 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.vrm')) {
-      alert("Please select a valid .vrm file!");
+      showToast("❌ Please select a valid .vrm avatar file!");
+      return;
+    }
+
+    const isValid = await validateVRMBinary(file);
+    if (!isValid) {
+      showToast("❌ Invalid VRM binary format (corrupted or unrecognized header).");
       return;
     }
 
@@ -177,7 +183,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       showToast(`✨ Saved "${meta.name}" to IndexedDB!`);
     } catch (err) {
       console.error("Failed to save custom avatar:", err);
-      alert("Failed to save avatar to IndexedDB.");
+      showToast("❌ Failed to save avatar to IndexedDB.");
     }
   };
 
@@ -520,6 +526,12 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith('.vrm')) {
+      const isValid = await validateVRMBinary(file);
+      if (!isValid) {
+        showToast("❌ Dropped file is not a valid glTF/VRM binary.");
+        return;
+      }
+
       try {
         const { url, meta } = await saveCustomAvatar(file);
         setAvatarUrl(url);

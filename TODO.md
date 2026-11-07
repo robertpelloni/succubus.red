@@ -34,4 +34,5 @@
 - [x] Implement interactive CLI menu loop and graceful signal handlers in tray_app.py.
 - [x] Add Cinematic Low and Isometric Top camera perspective presets and reset view button.
 - [x] Implement VRM drag-and-drop IndexedDB metadata persistence and UI model badge.
+- [x] Add binary magic header validation for glTF/VRM drag-and-drop with pulsing overlay styling.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.

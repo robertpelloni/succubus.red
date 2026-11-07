@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.32.0] - Binary VRM Validation & Drop Overlay Visuals
+### Added
+- Implemented `validateVRMBinary` in `CacheUtils.js` to inspect glTF/VRM magic binary headers (`0x46546C67` / `glTF`) prior to IndexedDB writes.
+- Added pre-upload and drag-and-drop binary validation in `App.jsx`, preventing corrupt or masquerading files from entering IndexedDB storage.
+- Enhanced viewport `.drop-overlay-box` with pulsing dual-tone cyan/magenta border animation in `App.css`.
+
 ## [0.31.0] - VRM Drag-and-Drop & IndexedDB Metadata Persistence
 ### Added
 - Enhanced `CacheUtils.js` with `saveCustomAvatar` and `getCustomAvatarMeta` to persist filename, byte size, and timestamp in IndexedDB alongside the avatar binary blob.

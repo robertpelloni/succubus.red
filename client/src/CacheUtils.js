@@ -69,6 +69,25 @@ export async function fetchAndCache(url) {
 export const CUSTOM_AVATAR_KEY = 'custom_avatar.vrm';
 export const CUSTOM_AVATAR_META_KEY = 'custom_avatar_meta.json';
 
+/**
+ * Validates glTF/VRM binary magic header ("glTF" = 0x46546C67 in little-endian).
+ * @param {Blob|File} file
+ * @returns {Promise<boolean>}
+ */
+export async function validateVRMBinary(file) {
+  try {
+    const slice = file.slice(0, 4);
+    const buffer = await slice.arrayBuffer();
+    const view = new DataView(buffer);
+    const magic = view.getUint32(0, true);
+    // 0x46546C67 corresponds to ASCII "glTF"
+    return magic === 0x46546C67;
+  } catch (err) {
+    console.warn("Error validating VRM binary magic header:", err);
+    return false;
+  }
+}
+
 export async function saveCustomAvatar(fileOrBlob) {
   await saveToCache(CUSTOM_AVATAR_KEY, fileOrBlob);
 

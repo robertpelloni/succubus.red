@@ -1,6 +1,10 @@
-# Session Handoff - v0.31.0
+# Session Handoff - v0.32.0
 
 ## Completed Work in this Session
+- **Phase 44: Binary VRM Validation & Drop Overlay Visuals**:
+  - Implemented `validateVRMBinary` in `CacheUtils.js` checking little-endian magic header `0x46546C67` (`glTF`) before writing into IndexedDB.
+  - Integrated fast binary validation into viewport drag-and-drop and input upload handlers in `App.jsx`.
+  - Added pulsing cyan/magenta gradient animation to `.drop-overlay-box` in `App.css`.
 - **Phase 43: VRM Drag-and-Drop & IndexedDB Metadata Persistence**:
   - Enhanced `CacheUtils.js` with `saveCustomAvatar` and `getCustomAvatarMeta` to persist filename, byte size, and timestamp in IndexedDB alongside the avatar binary blob.
   - Added dynamic custom avatar metadata badge in Companion Studio displaying the loaded model filename, formatted file size (MB), and a quick removal button.
