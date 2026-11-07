@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.37.0] - Multimodal Drag-and-Drop Auto-Prompt & Attachment Badges
+### Added
+- Automated prompt population ("What do you see in this picture?") upon dropping or uploading images in `App.jsx`, enabling instant 1-click multimodal submission.
+- Added structured image metadata badges (format type and filesize) and polished thumbnail preview bar in `App.css`.
+
 ## [0.36.0] - Avatar Hover Affordance & Attentive Gaze Tracking
 ### Added
 - Added `onPointerOver` and `onPointerOut` event handlers to the 3D VRM avatar in `Character.jsx` to dynamically update document cursor style to `pointer`.

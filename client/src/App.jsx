@@ -14,6 +14,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [attachedImage, setAttachedImage] = useState(null);
+  const [attachedImageMeta, setAttachedImageMeta] = useState(null);
   const fileInputRef = useRef(null);
 
   // Auth State
@@ -518,21 +519,32 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     }
   };
 
+  const processImageFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedImage(event.target.result);
+      setAttachedImageMeta({
+        name: file.name,
+        size: (file.size / 1024).toFixed(0) + ' KB',
+        type: file.type.split('/')[1]?.toUpperCase() || 'IMAGE'
+      });
+      // Suggest default question prompt if field is blank
+      setInput(prev => prev.trim() ? prev : "What do you see in this picture?");
+      showToast(`📷 ${file.name} attached! Hit Send to analyze.`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert("Please select a valid image file (PNG, JPEG, WebP).");
+      showToast("❌ Please select a valid image file (PNG, JPEG, WebP, GIF).");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setAttachedImage(event.target.result);
-      showToast("📷 Image attached! Ask a question about it.");
-    };
-    reader.readAsDataURL(file);
+    processImageFile(file);
   };
 
   // Viewport Drag-and-Drop Handler
@@ -568,14 +580,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         showToast("❌ Failed to load 3D environment model.");
       }
     } else if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAttachedImage(event.target.result);
-        showToast("📷 Image attached! Type a prompt or hit send.");
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file);
     } else {
-      showToast("⚠️ Unsupported file format. Drop a .vrm avatar, .glb environment, or image file.");
+      showToast("⚠️ Unsupported format. Drop a .vrm avatar, .glb environment, or image file.");
     }
   };
 
@@ -1618,31 +1625,28 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
         {/* Attached image preview */}
         {attachedImage && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '8px',
-            background: 'rgba(0,0,0,0.4)',
-            padding: '6px 10px',
-            borderRadius: '10px'
-          }}>
+          <div className="attached-image-bar">
             <img
               src={attachedImage}
               alt="preview"
-              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+              className="attached-image-thumb"
             />
-            <span style={{ fontSize: '12px', flex: 1, color: '#aaccff' }}>Image Attached</span>
+            <div className="attached-image-info">
+              <span className="attached-image-title">
+                {attachedImageMeta?.name || 'Attached Image'}
+              </span>
+              <div className="attached-image-badges">
+                <span className="attached-badge">{attachedImageMeta?.type || 'IMAGE'}</span>
+                <span className="attached-badge">{attachedImageMeta?.size || ''}</span>
+              </div>
+            </div>
             <button
-              onClick={() => setAttachedImage(null)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#ff4081',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '14px'
+              className="attached-image-remove"
+              onClick={() => {
+                setAttachedImage(null);
+                setAttachedImageMeta(null);
               }}
+              title="Remove attached image"
             >
               ✕
             </button>

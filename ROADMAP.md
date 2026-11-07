@@ -41,4 +41,5 @@
 - [x] Phase 46: Interactive Avatar Touch & Gesture Reactions.
 - [x] Phase 47: Interactive Viewport Mic HUD Click-to-Test.
 - [x] Phase 48: Avatar Hover Cursor & Attentive Gaze Tracking.
-- [ ] Phase 49: Dynamic Ambient Soundscapes & Atmospheric Audio.
+- [x] Phase 49: Multimodal Drag-and-Drop Auto-Prompt & Attachment Badges.
+- [ ] Phase 50: Dynamic Ambient Soundscapes & Atmospheric Audio.

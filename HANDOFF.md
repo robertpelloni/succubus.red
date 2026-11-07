@@ -1,6 +1,9 @@
-# Session Handoff - v0.36.0
+# Session Handoff - v0.37.0
 
 ## Completed Work in this Session
+- **Phase 49: Multimodal Drag-and-Drop Auto-Prompt & Attachment Badges**:
+  - Enhanced multimodal image attachments in `App.jsx` with automatic analysis prompt pre-filling ("What do you see in this picture?") upon drop or upload.
+  - Added structured metadata badges for image format and file size in `App.css`.
 - **Phase 48: Avatar Hover Cursor & Attentive Gaze Tracking**:
   - Added pointer hover states (`onPointerOver`/`onPointerOut`) to the VRM avatar scene group in `Character.jsx` to dynamically update document cursor style to `pointer`.
   - Dynamically scaled gaze tracking responsiveness factor (`2.4x`) and brought gaze depth closer (`z=1.6`) when hovering over the companion.

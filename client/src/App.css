@@ -483,6 +483,76 @@
   transition: height 0.1s ease;
 }
 
+/* Multimodal Attached Image Bar */
+.attached-image-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  background: rgba(18, 24, 38, 0.85);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 8px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.attached-image-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.attached-image-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.attached-image-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attached-image-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.attached-badge {
+  font-size: 10px;
+  background: rgba(0, 210, 255, 0.15);
+  color: #00d2ff;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.attached-image-remove {
+  background: transparent;
+  border: none;
+  color: #ff4081;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 4px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.attached-image-remove:hover {
+  transform: scale(1.2);
+}
+
 /* Full Viewport Drag and Drop Overlay */
 .drop-overlay {
   position: absolute;
