@@ -1,6 +1,9 @@
-# Session Handoff - v0.33.0
+# Session Handoff - v0.34.0
 
 ## Completed Work in this Session
+- **Phase 46: Interactive Avatar Touch & Gesture Reactions**:
+  - Attached `onPointerDown` pointer reaction events to the 3D VRM avatar scene group in `Character.jsx`.
+  - Implemented interactive spontaneous reaction triggering in `App.jsx`, transitioning blendshape emotions (`joy`, `fun`, `surprised`) and triggering wave animations with toast feedback upon user clicks/taps.
 - **Phase 45: In-Viewport Floating Audio Status HUD & Micro-Waveforms**:
   - Integrated `.viewport-mic-badge` on the top-left of the 3D canvas displaying real-time microphone gain/activity status and micro-waveform bars.
   - Connected Web Audio API volume peaks to floating HUD to allow voice monitoring without opening Companion Studio.

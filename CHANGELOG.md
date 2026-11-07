@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.34.0] - Interactive Avatar Pointer Down Touch Reactions
+### Added
+- Attached pointer reaction event listeners to the 3D VRM avatar in `Character.jsx` via `onPointerDown`.
+- Implemented spontaneous expressive reaction animations and facial blendshapes (`joy`, `fun`, `surprised`, `wave`) when tapping or clicking on the avatar.
+- Displayed real-time user notification toasts confirming touch interactions in the viewport.
+
 ## [0.33.0] - In-Viewport Audio Activity HUD & Micro-Waveforms
 ### Added
 - Integrated floating viewport audio HUD badge (`.viewport-mic-badge`) in `App.jsx` showing real-time microphone gain/activity status and dynamic wave bars.

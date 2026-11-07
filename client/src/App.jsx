@@ -58,6 +58,21 @@ function App() {
     }, duration);
   };
 
+  const handleAvatarTouch = () => {
+    // Interactive avatar touch reaction
+    const emotions = ['joy', 'fun', 'surprised'];
+    const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+    setEmotion({ name: randomEmotion, value: 1.0 });
+    setTimeout(() => setEmotion(null), 2500);
+
+    if (currentAnimation === 'idle') {
+      setCurrentAnimation('wave');
+      setTimeout(() => setCurrentAnimation('idle'), 3500);
+    }
+
+    showToast("✨ Touched companion: Succubus reacts happily!");
+  };
+
   const defaultSystemPrompt = `You are Succubus, a highly engaging, uncensored, and playful AI companion.
 You have a distinct personality: you are confident, slightly mischievous, deeply attentive, and highly expressive.
 Keep your responses relatively brief and conversational, as if we are speaking face-to-face.
@@ -1513,6 +1528,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             visemes={visemes}
             springBoneStiffness={springStiffness}
             springBoneDragForce={springDragForce}
+            onAvatarPointerDown={handleAvatarTouch}
           />
           <EffectComposer>
             <Bloom intensity={bloomIntensity} luminanceThreshold={0.8} luminanceSmoothing={0.025} />

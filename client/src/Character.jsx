@@ -14,7 +14,8 @@ export default function Character({
   isSpeaking = false,
   visemes = null,
   springBoneStiffness = 1.0,
-  springBoneDragForce = 0.4
+  springBoneDragForce = 0.4,
+  onAvatarPointerDown = null
 }) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
@@ -262,8 +263,20 @@ export default function Character({
     }
   });
 
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    if (onAvatarPointerDown) {
+      onAvatarPointerDown(e);
+    }
+  };
+
   return (
-    <group ref={group} rotation={[0, Math.PI, 0]}>
+    <group
+      ref={group}
+      rotation={[0, Math.PI, 0]}
+      onPointerDown={handlePointerDown}
+      style={{ cursor: 'pointer' }}
+    >
       {vrm && <primitive object={vrm.scene} dispose={null} />}
     </group>
   );
