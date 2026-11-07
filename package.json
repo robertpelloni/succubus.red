@@ -1,6 +1,6 @@
 {
   "name": "succubus-red-root",
-  "version": "0.37.0",
+  "version": "0.38.1",
   "private": true,
   "description": "Root orchestration scripts for Succubus.red 3D AI companion",
   "scripts": {

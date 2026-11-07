@@ -547,6 +547,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     processImageFile(file);
   };
 
+  const handleFileDropRef = useRef(null);
+
   // Viewport Drag-and-Drop Handler
   const handleFileDrop = async (file) => {
     if (!file) return;
@@ -565,7 +567,19 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         setCustomAvatarMeta(meta);
         setHasCustomAvatar(true);
         setAvatarMode('custom');
-        showToast(`✨ Custom avatar "${meta.name}" cached & loaded!`);
+
+        // Celebratory stage effects and greeting
+        setCurrentAnimation('wave');
+        setEmotion({ name: 'joy', value: 1.0 });
+        setParticleEffect('sparkle');
+        setTimeout(() => {
+          setCurrentAnimation('idle');
+          setEmotion(null);
+          setParticleEffect('none');
+        }, 4000);
+
+        speak("I love this avatar! It looks amazing on stage.");
+        showToast(`✨ Avatar "${meta.name}" materialized on stage!`);
       } catch (err) {
         console.error("Drop VRM error:", err);
         showToast("❌ Failed to load VRM file.");
@@ -585,6 +599,10 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       showToast("⚠️ Unsupported format. Drop a .vrm avatar, .glb environment, or image file.");
     }
   };
+
+  useEffect(() => {
+    handleFileDropRef.current = handleFileDrop;
+  });
 
   useEffect(() => {
     const handleDragEnter = (e) => {
@@ -618,7 +636,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       setIsDraggingFile(false);
 
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        handleFileDrop(e.dataTransfer.files[0]);
+        handleFileDropRef.current?.(e.dataTransfer.files[0]);
       }
     };
 
@@ -1304,6 +1322,72 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               </button>
             </div>
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0" max="3" step="0.1"
+              value={bloomIntensity}
+              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.2" max="2" step="0.1"
+              value={ambientLightScale}
+              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Key Light Color
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Sets directional key light hue and atmosphere tint.</span>
+              </div>
+            </label>
+            <input
+              type="color"
+              className="dashboard-input"
+              style={{ height: '36px', padding: '2px', cursor: 'pointer' }}
+              value={lightColor}
+              onChange={(e) => setLightColor(e.target.value)}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Shadow Quality
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Resolution buffer size for real-time dynamic directional shadows.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={shadowMapResolution}
+              onChange={(e) => setShadowMapResolution(parseInt(e.target.value, 10))}
+            >
+              <option value={512}>Low (512x512)</option>
+              <option value={1024}>Medium (1024x1024)</option>
+              <option value={2048}>High (2048x2048)</option>
+            </select>
+          </div>
         </div>
 
         {/* Category 4: Integrations & API Config */}
@@ -1441,72 +1525,6 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 Import Backup 📥
               </button>
             </div>
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
-              </div>
-            </label>
-            <input
-              type="range"
-              className="dashboard-slider"
-              min="0" max="3" step="0.1"
-              value={bloomIntensity}
-              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
-              </div>
-            </label>
-            <input
-              type="range"
-              className="dashboard-slider"
-              min="0.2" max="2" step="0.1"
-              value={ambientLightScale}
-              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Key Light Color
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Sets directional key light hue and atmosphere tint.</span>
-              </div>
-            </label>
-            <input
-              type="color"
-              className="dashboard-input"
-              style={{ height: '36px', padding: '2px', cursor: 'pointer' }}
-              value={lightColor}
-              onChange={(e) => setLightColor(e.target.value)}
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Shadow Quality
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Resolution buffer size for real-time dynamic directional shadows.</span>
-              </div>
-            </label>
-            <select
-              className="dashboard-input"
-              value={shadowMapResolution}
-              onChange={(e) => setShadowMapResolution(parseInt(e.target.value, 10))}
-            >
-              <option value={512}>Low (512x512)</option>
-              <option value={1024}>Medium (1024x1024)</option>
-              <option value={2048}>High (2048x2048)</option>
-            </select>
           </div>
         </div>
 

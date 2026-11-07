@@ -19,6 +19,7 @@ export default function Character({
 }) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
   const activeVrmRef = useRef(null);
   const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
@@ -264,8 +265,6 @@ export default function Character({
       }
     }
   });
-
-  const [isHovered, setIsHovered] = useState(false);
 
   const handlePointerDown = (e) => {
     e.stopPropagation();

@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [0.38.1] - UI Category Harmonization & Component Hygiene
+### Fixed
+- Relocated lighting and postprocessing controls (`Bloom Glow Intensity`, `Ambient Light Brightness`, `Key Light Color`, `Shadow Quality`) from Account & Session into 3D Stage & Environment in `App.jsx`.
+- Cleaned up React hook declaration order in `Character.jsx` by elevating `isHovered` state to the top of the component.
+- Removed stray testing script `client/screenshot.cjs` and added `*.db*` to `.gitignore`.
+
+## [0.38.0] - Celebratory Avatar Materialization Stage Burst
+### Added
+- Automated celebratory avatar materialization event in `App.jsx`: triggering wave animation, joyful emotion blendshape, and temporary particle sparkle burst (`<Sparkles>`) when a new VRM model is dropped onto the viewport.
+- Spoken companion welcoming phrase celebrating new avatar appearances.
+
 ## [0.37.0] - Multimodal Drag-and-Drop Auto-Prompt & Attachment Badges
 ### Added
 - Automated prompt population ("What do you see in this picture?") upon dropping or uploading images in `App.jsx`, enabling instant 1-click multimodal submission.

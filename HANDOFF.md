@@ -1,6 +1,12 @@
-# Session Handoff - v0.37.0
+# Session Handoff - v0.38.1
 
 ## Completed Work in this Session
+- **UI Category Harmonization & Component Hygiene (v0.38.1)**:
+  - Cleaned up category grouping in `App.jsx`: relocated all 3D lighting, bloom, shadow, and color controls directly inside "3D Stage & Environment".
+  - Moved `isHovered` state hook declaration to the top of `Character.jsx` adhering to idiomatic React hook order.
+  - Removed stray test script `client/screenshot.cjs` and added `*.db*` to `.gitignore`.
+- **Phase 50: Celebratory Avatar Materialization Stage Burst**:
+  - Implemented automatic stage celebratory sequence upon dropping and validating new VRM avatar models in `App.jsx`, triggering wave animations, joy blendshape easing, sparkle particle bursts, and welcoming vocal reactions.
 - **Phase 49: Multimodal Drag-and-Drop Auto-Prompt & Attachment Badges**:
   - Enhanced multimodal image attachments in `App.jsx` with automatic analysis prompt pre-filling ("What do you see in this picture?") upon drop or upload.
   - Added structured metadata badges for image format and file size in `App.css`.

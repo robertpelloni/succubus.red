@@ -40,4 +40,5 @@
 - [x] Interactive click-to-test toggle directly on the in-viewport microphone HUD badge.
 - [x] Avatar hover cursor styling and attentive gaze tracking responsiveness.
 - [x] Multimodal drag-and-drop auto-prompt population and attachment metadata badges.
+- [x] Celebratory avatar materialization stage burst and greeting response.
 - [ ] Atmospheric audio / spatial ambient soundscape generator.
