@@ -553,6 +553,77 @@
   transform: scale(1.2);
 }
 
+/* VRM Avatar Metadata Inspector Modal */
+.avatar-inspector-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.avatar-inspector-modal {
+  background: rgba(18, 22, 34, 0.95);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  border-radius: 16px;
+  width: 90%;
+  maxWidth: 480px;
+  padding: 24px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 210, 255, 0.2);
+}
+
+.avatar-inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.avatar-inspector-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #fff;
+}
+
+.avatar-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inspector-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.inspector-label {
+  color: #8899aa;
+  font-weight: 500;
+}
+
+.inspector-val {
+  color: #aaccff;
+  font-weight: 600;
+  text-align: right;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Real-time Asset Ingestion Spinner Overlay */
 .asset-ingestion-spinner {
   position: absolute;

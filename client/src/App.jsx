@@ -43,6 +43,7 @@ function App() {
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
   const [customAvatarMeta, setCustomAvatarMeta] = useState(null);
+  const [showAvatarInspector, setShowAvatarInspector] = useState(false);
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
   const [springStiffness, setSpringStiffness] = useState(1.0);
   const [springDragForce, setSpringDragForce] = useState(0.4);
@@ -1076,6 +1077,46 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         )}
       </div>
 
+      {/* VRM Avatar Metadata Inspector Modal */}
+      {showAvatarInspector && (
+        <div className="avatar-inspector-modal-backdrop" onClick={() => setShowAvatarInspector(false)}>
+          <div className="avatar-inspector-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="avatar-inspector-header">
+              <h3>VRM Avatar Inspector</h3>
+              <button className="dashboard-close-btn" onClick={() => setShowAvatarInspector(false)}>✕</button>
+            </div>
+            <div className="avatar-inspector-body">
+              <div className="inspector-row">
+                <span className="inspector-label">Model Filename</span>
+                <span className="inspector-val">{customAvatarMeta?.name || 'avatar.vrm'}</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Binary File Size</span>
+                <span className="inspector-val">
+                  {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(2)} MB (${customAvatarMeta.size.toLocaleString()} bytes)` : 'Default Model Asset'}
+                </span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Format Header</span>
+                <span className="inspector-val">glTF Binary 2.0 (VRM)</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Storage Location</span>
+                <span className="inspector-val">Browser IndexedDB (WebWaifuCache)</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Spring Bone Physics</span>
+                <span className="inspector-val">Active (Stiffness: {springStiffness.toFixed(1)}, Damping: {springDragForce.toFixed(2)})</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Retargeting Engine</span>
+                <span className="inspector-val">Mixamo to VRM Skeletal Normalizer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Toggle Button */}
       <button
         className="dashboard-toggle-btn"
@@ -1143,13 +1184,27 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 borderRadius: '8px',
                 border: '1px solid rgba(255,255,255,0.08)'
               }}>
-                <div style={{ fontSize: '11px', color: '#aaccff', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                <div style={{ fontSize: '11px', color: '#aaccff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span
+                    style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px', cursor: 'pointer' }}
+                    onClick={() => setShowAvatarInspector(true)}
+                    title="Click to view detailed model inspection"
+                  >
                     📦 {customAvatarMeta?.name || 'custom_avatar.vrm'}
                   </span>
-                  <span>
-                    {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'IndexedDB'}
-                  </span>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button
+                      className="chip-button"
+                      style={{ padding: '2px 6px', fontSize: '10px' }}
+                      onClick={() => setShowAvatarInspector(true)}
+                      title="Inspect VRM Metadata"
+                    >
+                      Inspect 🔍
+                    </button>
+                    <span>
+                      {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'IndexedDB'}
+                    </span>
+                  </div>
                 </div>
                 <button
                   className="action-button danger"

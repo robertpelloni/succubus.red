@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.47.0] - VRM Avatar Metadata Inspector Modal
+### Added
+- Added interactive VRM Avatar Inspector modal (`.avatar-inspector-modal`) in `App.jsx` and `App.css`, detailing filename, binary filesize, header type, storage cache, active spring bone physics, and retargeting engine.
+- Added inspect button (`Inspect 🔍`) to the active model badge in Companion Studio under 3D Avatar Model.
+
 ## [0.46.0] - Spatial 3D Positional Audio for Environment Interactions
 ### Added
 - Implemented real-time spatial 3D audio hovering chimes in `Environment.jsx` using Web Audio `StereoPannerNode`, mapping 3D mesh hit points along the X-axis (-1.0 to +1.0) into binaural stereo sound.

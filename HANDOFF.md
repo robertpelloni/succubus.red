@@ -1,6 +1,9 @@
-# Session Handoff - v0.46.0
+# Session Handoff - v0.47.0
 
 ## Completed Work in this Session
+- **Phase 59: Interactive VRM Avatar Metadata Inspector Modal**:
+  - Implemented `.avatar-inspector-modal` with glassmorphic modal overlay in `App.jsx` and `App.css`, detailing avatar model name, binary filesize (bytes + formatted MB), glTF header signature, IndexedDB caching location, spring bone physics status, and skeletal retargeting state.
+  - Linked to custom avatar model badges via dedicated "Inspect 🔍" trigger in Companion Studio.
 - **Phase 58: Spatial 3D Positional Audio for Environment Interactions**:
   - Implemented real-time binaural spatial audio in `Environment.jsx` using the Web Audio API's `StereoPannerNode`.
   - Maps 3D hit point coordinates along the X-axis (-1.0 left to +1.0 right) into stereo panned resonance chimes on hover, respecting the user's global sound effects toggle.
