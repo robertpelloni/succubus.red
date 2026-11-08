@@ -45,4 +45,5 @@
 - [x] Automatic VRM bounding box ground alignment and scale normalization.
 - [x] Procedural atmospheric soundscape synthesizer (Cyber Drone and Warm Rain) with dynamic volume slider.
 - [x] UI sound effects and procedural interaction chimes with toggle button.
+- [x] Smooth avatar materialization scaling transition and opacity dissolve.
 - [ ] Spatial 3D positional audio for environment hover interactions.

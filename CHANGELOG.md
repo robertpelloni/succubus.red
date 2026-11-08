@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.43.0] - Smooth Avatar Transition & Materialization Scale Dissolve
+### Added
+- Implemented smooth dynamic materialization transition in `Character.jsx`: smoothly interpolates avatar scale from 0 to 1 over 400ms on initial load, model switching, and drag-and-drop loading, eliminating visual popping and mesh snapping.
+
 ## [0.42.0] - UI Sound Effects & Procedural Chimes
 ### Added
 - Implemented synthetic Web Audio interactive feedback chimes (`playInteractionChime`) in `App.jsx` triggered on avatar touches, asset drops, and action buttons.

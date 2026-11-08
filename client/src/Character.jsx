@@ -20,6 +20,7 @@ export default function Character({
   const group = useRef();
   const [vrm, setVrm] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [mountOpacity, setMountOpacity] = useState(0.0);
   const activeVrmRef = useRef(null);
   const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
@@ -48,6 +49,7 @@ export default function Character({
 
   useEffect(() => {
     let isCancelled = false;
+    setMountOpacity(0.0);
 
     const loadAssets = async () => {
       try {
@@ -186,6 +188,11 @@ export default function Character({
   useFrame((state, delta) => {
     if (mixer) mixer.update(delta);
     if (vrm) {
+      // Smooth materialization fade-in
+      if (mountOpacity < 1.0) {
+        setMountOpacity(prev => Math.min(1.0, prev + delta * 2.5));
+      }
+
       // Map mouse coordinates to 3D space for the lookAt target
       // Camera is usually at z=3, character at z=0.
       // We scale the mouse coordinates to make the head move naturally.
@@ -306,6 +313,7 @@ export default function Character({
     <group
       ref={group}
       rotation={[0, Math.PI, 0]}
+      scale={vrm ? [mountOpacity, mountOpacity, mountOpacity] : [0, 0, 0]}
       onPointerDown={handlePointerDown}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
