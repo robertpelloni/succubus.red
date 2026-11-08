@@ -1856,8 +1856,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         <directionalLight
           castShadow
           position={[5, 5, 5]}
-          intensity={lightsOn ? 2.0 : 0.1}
-          color={lightColor}
+          intensity={lightsOn ? (isDraggingFile ? 2.8 : 2.0) : 0.1}
+          color={isDraggingFile ? '#aaccff' : lightColor}
           shadow-mapSize={[shadowMapResolution, shadowMapResolution]}
         />
         <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
@@ -1877,10 +1877,16 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
           {/* Holographic 3D Stage Landing Zone Reticle when dragging files */}
           {isDraggingFile && (
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-              <ringGeometry args={[0.8, 1.0, 32]} />
-              <meshBasicMaterial color="#00d2ff" transparent opacity={0.7} />
-            </mesh>
+            <group position={[0, 0.02, 0]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.8, 1.05, 32]} />
+                <meshBasicMaterial color="#00d2ff" transparent opacity={0.75} side={2} />
+              </mesh>
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[1.2, 1.25, 32]} />
+                <meshBasicMaterial color="#ff4081" transparent opacity={0.5} side={2} />
+              </mesh>
+            </group>
           )}
 
           <Character

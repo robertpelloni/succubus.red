@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.49.0] - Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle
+### Added
+- Upgraded the 3D stage landing zone to a dual-ring concentric holographic reticle (cyan core and magenta accent ring) in `App.jsx`.
+- Dynamically pulsed directional key light intensity (2.8x) and adjusted atmosphere tint during active viewport drag events to create theatrical model materialization anticipation.
+
 ## [0.48.0] - Holographic Landing Zone & Multi-File Drag Prioritization
 ### Added
 - Rendered 3D holographic landing zone reticle on the stage floor (`y = 0.02`) during file drag events in `App.jsx`, providing spatial guidance for model placement.

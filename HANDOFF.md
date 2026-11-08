@@ -1,6 +1,9 @@
-# Session Handoff - v0.48.0
+# Session Handoff - v0.49.0
 
 ## Completed Work in this Session
+- **Phase 61: Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle**:
+  - Upgraded the 3D stage landing zone to a concentric dual-ring holographic reticle (cyan core and magenta boundary) on the stage floor in `App.jsx`.
+  - Dynamically pulsed directional key light intensity to 2.8x with atmospheric tinting during active file drags across the viewport, creating theatrical lighting anticipation.
 - **Phase 60: Holographic Landing Zone & Multi-File Drag Prioritization**:
   - Rendered 3D holographic landing zone reticle on the stage floor (`y = 0.02`) when dragging files over the viewport in `App.jsx`, providing visual spatial landing feedback.
   - Upgraded drag ingestion handler to gracefully handle multi-file drops with priority hierarchy: `.vrm` avatars first, `.glb` environments second, and images third.

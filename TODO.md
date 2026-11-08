@@ -51,4 +51,5 @@
 - [x] Spatial 3D positional audio for environment hover interactions via StereoPannerNode.
 - [x] Interactive VRM avatar metadata inspector modal with spring bone and retargeting metrics.
 - [x] 3D holographic landing zone reticle and multi-file drag prioritization.
+- [x] Theatrical drag lighting pulse and dual-ring stage reticle.
 - [ ] Multi-animation crossfade speed customization slider in Companion Studio.
