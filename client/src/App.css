@@ -553,6 +553,48 @@
   transform: scale(1.2);
 }
 
+/* Real-time Asset Ingestion Spinner Overlay */
+.asset-ingestion-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: rgba(18, 24, 38, 0.9);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  padding: 24px 36px;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 210, 255, 0.25);
+  z-index: 92;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.ingestion-spinner-circle {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(0, 210, 255, 0.2);
+  border-top-color: #00d2ff;
+  border-radius: 50%;
+  animation: spin-ingest 0.8s linear infinite;
+}
+
+@keyframes spin-ingest {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ingestion-spinner-text {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
 /* Fullscreen Success Drop Ripple Flash Overlay */
 .drop-success-flash {
   position: absolute;

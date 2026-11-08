@@ -1,6 +1,8 @@
-# Session Handoff - v0.44.0
+# Session Handoff - v0.45.0
 
 ## Completed Work in this Session
+- **Phase 57: Real-time Asset Ingestion Spinner Overlay**:
+  - Added `.asset-ingestion-spinner` with animated cyan rotating spinner and translucent glassmorphism backdrop in `App.jsx` and `App.css`, providing real-time visual progress during asynchronous VRM and GLB model parsing and IndexedDB caching.
 - **Phase 56: Contextual Drag-and-Drop HUD Detection & Dynamic Cues**:
   - Implemented dynamic MIME-type detection during drag events in `App.jsx`, contextually styling and updating the visual HUD overlay to "Drop Image for AI Vision" (with camera icon) or "Materialize Avatar or Stage" (with 3D mask icon).
 - **Phase 55: Smooth Avatar Materialization & Scale Dissolve**:

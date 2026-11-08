@@ -49,6 +49,7 @@ function App() {
 
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isIngestingAsset, setIsIngestingAsset] = useState(false);
   const [dropFlash, setDropFlash] = useState(false);
   const [dropContextCue, setDropContextCue] = useState({ icon: '📥', title: 'Drop File Here', desc: 'Drop a .vrm avatar, .glb 3D environment, or an image to share' });
   const [toastMessage, setToastMessage] = useState(null);
@@ -708,8 +709,10 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith('.vrm')) {
+      setIsIngestingAsset(true);
       const isValid = await validateVRMBinary(file);
       if (!isValid) {
+        setIsIngestingAsset(false);
         showToast("❌ Dropped file is not a valid glTF/VRM binary.");
         return;
       }
@@ -737,8 +740,11 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       } catch (err) {
         console.error("Drop VRM error:", err);
         showToast("❌ Failed to load VRM file.");
+      } finally {
+        setIsIngestingAsset(false);
       }
     } else if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+      setIsIngestingAsset(true);
       try {
         const envUrl = URL.createObjectURL(file);
         setEnvironmentFile(envUrl);
@@ -751,6 +757,8 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       } catch (err) {
         console.error("Drop GLB error:", err);
         showToast("❌ Failed to load 3D environment model.");
+      } finally {
+        setIsIngestingAsset(false);
       }
     } else if (file.type.startsWith('image/')) {
       processImageFile(file);
@@ -1020,6 +1028,14 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
       {/* Fullscreen Success Drop Ripple Flash */}
       {dropFlash && <div className="drop-success-flash" />}
+
+      {/* Real-time Asset Ingestion Spinner */}
+      {isIngestingAsset && (
+        <div className="asset-ingestion-spinner">
+          <div className="ingestion-spinner-circle" />
+          <span className="ingestion-spinner-text">Materializing 3D Asset...</span>
+        </div>
+      )}
 
       {/* Drag & Drop Visual HUD Overlay */}
       {isDraggingFile && (
