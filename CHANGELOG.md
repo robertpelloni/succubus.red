@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.44.0] - Contextual Drop Detection & Drag Cues
+### Added
+- Dynamic drag detection in `App.jsx`: automatically distinguishes between image file drops (updating HUD to "Drop Image for AI Vision" with camera icon) and 3D asset drops (updating HUD to "Materialize Avatar or Stage" with mask icon).
+
 ## [0.43.0] - Smooth Avatar Transition & Materialization Scale Dissolve
 ### Added
 - Implemented smooth dynamic materialization transition in `Character.jsx`: smoothly interpolates avatar scale from 0 to 1 over 400ms on initial load, model switching, and drag-and-drop loading, eliminating visual popping and mesh snapping.

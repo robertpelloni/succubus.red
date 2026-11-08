@@ -50,6 +50,7 @@ function App() {
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [dropFlash, setDropFlash] = useState(false);
+  const [dropContextCue, setDropContextCue] = useState({ icon: '📥', title: 'Drop File Here', desc: 'Drop a .vrm avatar, .glb 3D environment, or an image to share' });
   const [toastMessage, setToastMessage] = useState(null);
   const dragCounterRef = useRef(0);
 
@@ -767,8 +768,25 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       e.preventDefault();
       e.stopPropagation();
       dragCounterRef.current += 1;
+
       if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
         setIsDraggingFile(true);
+
+        // Detect contextual drag item type
+        const item = e.dataTransfer.items[0];
+        if (item.type?.startsWith('image/')) {
+          setDropContextCue({
+            icon: '📷',
+            title: 'Drop Image for AI Vision',
+            desc: 'Succubus will analyze and discuss this image with you'
+          });
+        } else {
+          setDropContextCue({
+            icon: '🎭',
+            title: 'Materialize Avatar or Stage',
+            desc: 'Drop a .vrm avatar model or .glb 3D environment'
+          });
+        }
       }
     };
 
@@ -1007,9 +1025,9 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       {isDraggingFile && (
         <div className="drop-overlay">
           <div className="drop-overlay-box">
-            <div className="drop-overlay-icon">📥</div>
-            <h2 className="drop-overlay-title">Drop File Here</h2>
-            <p className="drop-overlay-desc">Drop a .vrm avatar, .glb 3D environment, or an image to share</p>
+            <div className="drop-overlay-icon">{dropContextCue.icon}</div>
+            <h2 className="drop-overlay-title">{dropContextCue.title}</h2>
+            <p className="drop-overlay-desc">{dropContextCue.desc}</p>
           </div>
         </div>
       )}

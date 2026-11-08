@@ -46,4 +46,5 @@
 - [x] Procedural atmospheric soundscape synthesizer (Cyber Drone and Warm Rain) with dynamic volume slider.
 - [x] UI sound effects and procedural interaction chimes with toggle button.
 - [x] Smooth avatar materialization scaling transition and opacity dissolve.
+- [x] Contextual drag-and-drop HUD detection and dynamic cue labels.
 - [ ] Spatial 3D positional audio for environment hover interactions.

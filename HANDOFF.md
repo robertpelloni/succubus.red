@@ -1,6 +1,8 @@
-# Session Handoff - v0.43.0
+# Session Handoff - v0.44.0
 
 ## Completed Work in this Session
+- **Phase 56: Contextual Drag-and-Drop HUD Detection & Dynamic Cues**:
+  - Implemented dynamic MIME-type detection during drag events in `App.jsx`, contextually styling and updating the visual HUD overlay to "Drop Image for AI Vision" (with camera icon) or "Materialize Avatar or Stage" (with 3D mask icon).
 - **Phase 55: Smooth Avatar Materialization & Scale Dissolve**:
   - Implemented dynamic avatar scale interpolation in `Character.jsx`: smoothly ramps root scale from 0 to 1 over ~400ms (`mountOpacity`) upon mounting new or dropped avatars, eliminating visual popping and snap glitches.
 - **Phase 54: UI Sound Effects & Procedural Chimes**:
