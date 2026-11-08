@@ -55,4 +55,5 @@
 - [x] Phase 60: Holographic Landing Zone & Multi-File Drag Prioritization.
 - [x] Phase 61: Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle.
 - [x] Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes.
-- [ ] Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning.
+- [x] Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning.
+- [ ] Phase 64: Real-time WebGL Engine Performance & Frame Rate Monitor.

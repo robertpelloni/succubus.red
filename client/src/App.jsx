@@ -38,6 +38,7 @@ function App() {
   const [ambientLightScale, setAmbientLightScale] = useState(1.0);
   const [lightColor, setLightColor] = useState('#ffffff');
   const [shadowMapResolution, setShadowMapResolution] = useState(1024);
+  const [cameraFov, setCameraFov] = useState(45);
 
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
@@ -1599,6 +1600,22 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Camera Field of View: {cameraFov}°
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls viewport perspective and focal zoom (25° telephoto to 75° wide angle).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="25" max="75" step="1"
+              value={cameraFov}
+              onChange={(e) => setCameraFov(parseInt(e.target.value, 10))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               3D Environment Asset
               <div className="tooltip-container">?
                 <span className="tooltip-text">Switch active GLB virtual stage model, cached automatically in IndexedDB.</span>
@@ -1869,7 +1886,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       </div>
 
       {/* 3D Canvas Viewport */}
-      <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
+      <Canvas shadows camera={{ position: [0, 1.5, 3], fov: cameraFov }}>
         <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
         <directionalLight
           castShadow

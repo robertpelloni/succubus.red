@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.51.0] - Custom Camera FOV Zoom & Viewport Perspective Tuning
+### Added
+- Added dynamic Camera Field of View slider (`cameraFov`, 25° telephoto to 75° wide angle) under 3D Stage & Environment in Companion Studio, dynamically updating Three.js canvas projection.
+
 ## [0.50.0] - Animation Crossfade Speed Slider & Drag Rejection Chimes
 ### Added
 - Added custom animation crossfade speed duration slider (`crossfadeDuration`, 0.1s to 1.0s) in Companion Studio under "AI Persona & Interaction" and wired dynamically into `Character.jsx`.

@@ -1,6 +1,8 @@
-# Session Handoff - v0.50.0
+# Session Handoff - v0.51.0
 
 ## Completed Work in this Session
+- **Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning**:
+  - Added interactive `Camera Field of View` slider (`cameraFov`, 25° to 75°) under 3D Stage & Environment in Companion Studio, dynamically re-projecting the Three.js viewport canvas.
 - **Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes**:
   - Added a real-time `Animation Crossfade` slider (0.1s to 1.0s) under AI Persona & Interaction in Companion Studio, dynamically configuring `crossfadeDuration` during Mixamo action blending in `Character.jsx`.
   - Implemented low-frequency rejection audio feedback (`playInteractionChime(220, 0.25)`) when unsupported file types are dropped onto the viewport.
