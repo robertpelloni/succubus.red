@@ -704,9 +704,17 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
   const handleFileDropRef = useRef(null);
 
-  // Viewport Drag-and-Drop Handler
-  const handleFileDrop = async (file) => {
-    if (!file) return;
+  // Viewport Drag-and-Drop Handler supporting multi-file prioritization
+  const handleFilesDrop = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+
+    // Prioritize VRM avatar, then GLB environment, then image
+    const vrmFile = files.find(f => f.name.toLowerCase().endsWith('.vrm'));
+    const glbFile = files.find(f => f.name.toLowerCase().endsWith('.glb') || f.name.toLowerCase().endsWith('.gltf'));
+    const imgFile = files.find(f => f.type.startsWith('image/'));
+
+    const file = vrmFile || glbFile || imgFile || files[0];
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith('.vrm')) {
@@ -769,7 +777,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   };
 
   useEffect(() => {
-    handleFileDropRef.current = handleFileDrop;
+    handleFileDropRef.current = handleFilesDrop;
   });
 
   useEffect(() => {
@@ -821,7 +829,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
       setIsDraggingFile(false);
 
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        handleFileDropRef.current?.(e.dataTransfer.files[0]);
+        handleFileDropRef.current?.(e.dataTransfer.files);
       }
     };
 
@@ -1865,6 +1873,14 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
           {particleEffect === 'sparkle' && (
              <Sparkles count={100} scale={2.5} size={6} speed={0.4} opacity={0.8} color="#ffffaa" position={[0, 1, 0]} />
+          )}
+
+          {/* Holographic 3D Stage Landing Zone Reticle when dragging files */}
+          {isDraggingFile && (
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+              <ringGeometry args={[0.8, 1.0, 32]} />
+              <meshBasicMaterial color="#00d2ff" transparent opacity={0.7} />
+            </mesh>
           )}
 
           <Character

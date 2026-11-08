@@ -50,4 +50,5 @@
 - [x] Real-time asset ingestion spinner and progress feedback during 3D model parsing.
 - [x] Spatial 3D positional audio for environment hover interactions via StereoPannerNode.
 - [x] Interactive VRM avatar metadata inspector modal with spring bone and retargeting metrics.
+- [x] 3D holographic landing zone reticle and multi-file drag prioritization.
 - [ ] Multi-animation crossfade speed customization slider in Companion Studio.

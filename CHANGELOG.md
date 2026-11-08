@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.48.0] - Holographic Landing Zone & Multi-File Drag Prioritization
+### Added
+- Rendered 3D holographic landing zone reticle on the stage floor (`y = 0.02`) during file drag events in `App.jsx`, providing spatial guidance for model placement.
+- Implemented multi-file drag-and-drop prioritization in `App.jsx`, resolving avatar models first (`.vrm`), environment scenes second (`.glb`/`.gltf`), and images third (`image/*`).
+
 ## [0.47.0] - VRM Avatar Metadata Inspector Modal
 ### Added
 - Added interactive VRM Avatar Inspector modal (`.avatar-inspector-modal`) in `App.jsx` and `App.css`, detailing filename, binary filesize, header type, storage cache, active spring bone physics, and retargeting engine.
