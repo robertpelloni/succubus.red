@@ -54,4 +54,5 @@
 - [x] Theatrical drag lighting pulse and dual-ring stage reticle.
 - [x] Multi-animation crossfade speed customization slider in Companion Studio and drag rejection audio chimes.
 - [x] Custom user-defined camera FOV zoom slider in Companion Studio.
-- [ ] Real-time FPS and WebGL render statistics toggle overlay.
+- [x] Real-time FPS and WebGL render statistics toggle overlay.
+- [ ] Atmospheric weather particle presets (Rain, Sakura petals, Snow) in Companion Studio.

@@ -16,6 +16,7 @@ export default function Character({
   springBoneStiffness = 1.0,
   springBoneDragForce = 0.4,
   crossfadeDuration = 0.25,
+  onFpsUpdate = null,
   onAvatarPointerDown = null
 }) {
   const group = useRef();
@@ -151,6 +152,8 @@ export default function Character({
 
   const currentActionRef = useRef(null);
   const previousAnimationRef = useRef(null);
+  const fpsFrameCountRef = useRef(0);
+  const fpsLastTimeRef = useRef(0);
 
   useEffect(() => {
     if (vrm && actions[currentAnimation]) {
@@ -187,6 +190,16 @@ export default function Character({
   }, [vrm, springBoneStiffness, springBoneDragForce]);
 
   useFrame((state, delta) => {
+    // Rolling FPS calculation
+    fpsFrameCountRef.current += 1;
+    const now = state.clock.elapsedTime;
+    if (now - fpsLastTimeRef.current >= 0.5) {
+      const currentFps = Math.round((fpsFrameCountRef.current / (now - fpsLastTimeRef.current)));
+      if (onFpsUpdate) onFpsUpdate(currentFps);
+      fpsFrameCountRef.current = 0;
+      fpsLastTimeRef.current = now;
+    }
+
     if (mixer) mixer.update(delta);
     if (vrm) {
       // Smooth materialization fade-in

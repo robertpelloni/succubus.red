@@ -427,6 +427,34 @@
   transform: scale(1.05);
 }
 
+/* Viewport Performance & FPS HUD Badge */
+.viewport-fps-badge {
+  position: absolute;
+  top: 20px;
+  left: 170px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 20, 28, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 14px;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 30;
+  user-select: none;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.fps-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
 /* Viewport Microphone & Audio Activity HUD Badge */
 .viewport-mic-badge {
   position: absolute;

@@ -99,6 +99,10 @@
 - **Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing**:
   - Implemented procedural linear interpolation (lerp) for VRM expression blendshapes in `client/src/Character.jsx`.
   - Replaced abrupt blendshape resets with delta-timed exponential smoothing (`THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0))`) across joy, anger, sorrow, relaxed, and surprised expressions.
+- **Phase 64 (v0.52.0): Real-Time WebGL Performance Statistics & Frame Rate Monitor**:
+  - Implemented rolling frame rate (FPS) calculation in `client/src/Character.jsx` using `useFrame`, computing instantaneous and smoothed FPS across rolling delta time windows.
+  - Designed floating glassmorphism HUD badge (`.viewport-fps-badge`) in the top-right canvas viewport displaying live FPS with a dynamic color-coded indicator dot (green >=50fps, orange >=30fps, red <30fps).
+  - Added dedicated toggle button under 3D Stage & Environment in `Companion Studio` with tooltip guidance and persistent state handling.
 - **Phase 33: VRM Spring Bone Physics & Backup Export/Import**:
   - Implemented dynamic VRM Spring Bone physics sliders (stiffness and damping/drag force) in `Companion Studio` under 3D Avatar Model.
   - Wired real-time spring bone joint adjustments in `client/src/Character.jsx` via `vrm.springBoneManager.joints`, enabling dynamic hair and clothing elasticity tuning without animation interruption.

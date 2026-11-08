@@ -39,6 +39,8 @@ function App() {
   const [lightColor, setLightColor] = useState('#ffffff');
   const [shadowMapResolution, setShadowMapResolution] = useState(1024);
   const [cameraFov, setCameraFov] = useState(45);
+  const [showPerformanceHud, setShowPerformanceHud] = useState(false);
+  const [fps, setFps] = useState(60);
 
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
@@ -1067,6 +1069,16 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         </div>
       )}
 
+      {/* Viewport Performance & FPS HUD Badge */}
+      {showPerformanceHud && (
+        <div className="viewport-fps-badge">
+          <span className="fps-indicator-dot" style={{ background: fps >= 50 ? '#00ff88' : fps >= 30 ? '#ffaa00' : '#ff4081' }} />
+          <span>{fps} FPS</span>
+          <span style={{ opacity: 0.6 }}>|</span>
+          <span style={{ fontSize: '11px', opacity: 0.8 }}>WebGL 2.0</span>
+        </div>
+      )}
+
       {/* Viewport Microphone & Audio Activity HUD Badge */}
       <div
         className={`viewport-mic-badge ${isTestingMic || isRecording ? 'active' : ''}`}
@@ -1600,6 +1612,29 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Performance HUD Overlay
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Displays live WebGL rendering frame rate (FPS) and engine status on the 3D viewport.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${showPerformanceHud ? 'active' : ''}`}
+                onClick={() => setShowPerformanceHud(true)}
+              >
+                📊 Show FPS HUD
+              </button>
+              <button
+                className={`chip-button ${!showPerformanceHud ? 'active' : ''}`}
+                onClick={() => setShowPerformanceHud(false)}
+              >
+                Hidden
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               Camera Field of View: {cameraFov}°
               <div className="tooltip-container">?
                 <span className="tooltip-text">Controls viewport perspective and focal zoom (25° telephoto to 75° wide angle).</span>
@@ -1933,6 +1968,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             springBoneStiffness={springStiffness}
             springBoneDragForce={springDragForce}
             crossfadeDuration={crossfadeDuration}
+            onFpsUpdate={setFps}
             onAvatarPointerDown={handleAvatarTouch}
           />
           <EffectComposer>

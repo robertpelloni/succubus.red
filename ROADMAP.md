@@ -56,4 +56,5 @@
 - [x] Phase 61: Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle.
 - [x] Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes.
 - [x] Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning.
-- [ ] Phase 64: Real-time WebGL Engine Performance & Frame Rate Monitor.
+- [x] Phase 64: Real-time WebGL Engine Performance & Frame Rate Monitor.
+- [ ] Phase 65: Procedural Particle Simulation Presets (Weather & Ambient).
