@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.41.0] - Atmospheric Procedural Soundscapes
+### Added
+- Added procedural Web Audio API atmospheric background soundscape synthesizer in `App.jsx` with selectable modes: "None (Silent)", "Cyber Drone Atmosphere", and "Warm Ambient Rain".
+- Added dynamic soundscape volume gain slider and preset dropdown in Companion Studio under Voice & Audio Studio with explanatory tooltips.
+
 ## [0.40.0] - Automatic VRM Ground Alignment & Scale Normalization
 ### Added
 - Automatic bounding box computation (`THREE.Box3().setFromObject`) on newly loaded VRM models in `Character.jsx`.

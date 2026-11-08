@@ -105,6 +105,18 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   const [elevenLabsApiKey, setElevenLabsApiKey] = useState('');
   const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('');
 
+  // Atmospheric Soundscape State
+  const [ambientSoundscape, setAmbientSoundscape] = useState('none'); // 'none', 'cyber', 'rain'
+  const [ambientVolume, setAmbientVolume] = useState(0.3);
+  const ambientVolumeRef = useRef(ambientVolume);
+  const ambientAudioCtxRef = useRef(null);
+  const ambientGainNodeRef = useRef(null);
+  const ambientSourceNodesRef = useRef([]);
+
+  useEffect(() => {
+    ambientVolumeRef.current = ambientVolume;
+  }, [ambientVolume]);
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const endOfMessagesRef = useRef(null);
   const [emotion, setEmotion] = useState(null);
@@ -127,6 +139,109 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
   // Kokoro TTS State
   const [kokoroTts, setKokoroTts] = useState(null);
+
+  // Procedural Web Audio Soundscape Synthesizer
+  useEffect(() => {
+    // Stop any existing soundscape nodes
+    ambientSourceNodesRef.current.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch {}
+    });
+    ambientSourceNodesRef.current = [];
+
+    if (ambientSoundscape === 'none') {
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!ambientAudioCtxRef.current) {
+        ambientAudioCtxRef.current = new AudioCtx();
+      }
+      const ctx = ambientAudioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      if (!ambientGainNodeRef.current) {
+        ambientGainNodeRef.current = ctx.createGain();
+        ambientGainNodeRef.current.connect(ctx.destination);
+      }
+      ambientGainNodeRef.current.gain.setValueAtTime(ambientVolumeRef.current, ctx.currentTime);
+
+      if (ambientSoundscape === 'cyber') {
+        // Procedural Cyber Drone (Dual detuned sine oscillators + lowpass filter)
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(65.41, ctx.currentTime); // C2 note
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(65.8, ctx.currentTime); // Slightly detuned
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(280, ctx.currentTime);
+        filter.Q.setValueAtTime(4.0, ctx.currentTime);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(ambientGainNodeRef.current);
+
+        osc1.start();
+        osc2.start();
+        ambientSourceNodesRef.current = [osc1, osc2];
+      } else if (ambientSoundscape === 'rain') {
+        // Procedural Pink Noise / Rain Simulation
+        const bufferSize = ctx.sampleRate * 2;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          output[i] = (b0 + b1 + b2 + white * 0.5362) * 0.11;
+        }
+
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const rainFilter = ctx.createBiquadFilter();
+        rainFilter.type = 'lowpass';
+        rainFilter.frequency.setValueAtTime(950, ctx.currentTime);
+
+        whiteNoise.connect(rainFilter);
+        rainFilter.connect(ambientGainNodeRef.current);
+
+        whiteNoise.start();
+        ambientSourceNodesRef.current = [whiteNoise];
+      }
+    } catch (err) {
+      console.warn("Soundscape generation error:", err);
+    }
+
+    return () => {
+      ambientSourceNodesRef.current.forEach(node => {
+        try {
+          node.stop();
+          node.disconnect();
+        } catch {}
+      });
+      ambientSourceNodesRef.current = [];
+    };
+  }, [ambientSoundscape]);
+
+  // Update soundscape volume dynamically
+  useEffect(() => {
+    if (ambientGainNodeRef.current && ambientAudioCtxRef.current) {
+      ambientGainNodeRef.current.gain.setValueAtTime(ambientVolume, ambientAudioCtxRef.current.currentTime);
+    }
+  }, [ambientVolume]);
 
   // Encode Float32Array to WAV format
   const encodeWAV = (samples, sampleRate) => {
@@ -1194,6 +1309,42 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               Preview Voice Sample 🔊
             </button>
           </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Atmospheric Soundscape
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Procedural Web Audio background loops (Cyber Drone or Warm Rain) for immersive presence.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={ambientSoundscape}
+              onChange={(e) => setAmbientSoundscape(e.target.value)}
+            >
+              <option value="none">None (Silent Stage)</option>
+              <option value="cyber">Cyber Drone Atmosphere</option>
+              <option value="rain">Warm Ambient Rain</option>
+            </select>
+          </div>
+
+          {ambientSoundscape !== 'none' && (
+            <div className="dashboard-section">
+              <label className="dashboard-label">
+                Ambient Soundscape Volume: {Math.round(ambientVolume * 100)}%
+                <div className="tooltip-container">?
+                  <span className="tooltip-text">Volume gain level of procedural background audio.</span>
+                </div>
+              </label>
+              <input
+                type="range"
+                className="dashboard-slider"
+                min="0.05" max="1" step="0.05"
+                value={ambientVolume}
+                onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+              />
+            </div>
+          )}
 
           <div className="dashboard-section">
             <label className="dashboard-label">
