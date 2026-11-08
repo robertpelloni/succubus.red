@@ -122,7 +122,7 @@ Available animations: idle, wave, sitting, thinking.
 Available emotions: joy, angry, sorrow, fun, surprised.
 You are standing in a modern, neon-lit virtual room on a sleek stage.
 You can control the room lights using [lights:on] or [lights:off] tags.
-You can spawn visual particles using [effect:sparkle] and clear them with [effect:none].`;
+You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effect:snow], [effect:stardust], and clear them with [effect:none].`;
 
   const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt);
 
@@ -1692,12 +1692,12 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
           <div className="dashboard-section">
             <label className="dashboard-label">
-              Visual Particle Effects
+              Atmospheric Particle Simulation
               <div className="tooltip-container">?
-                <span className="tooltip-text">Toggles ambient sparkles and visual particle simulations. Can also be triggered by AI via [effect:sparkle].</span>
+                <span className="tooltip-text">Selects ambient 3D particle simulation presets (Sparkles, Fireflies, Digital Snow, or Stardust). Can also be triggered by AI via [effect:name].</span>
               </div>
             </label>
-            <div className="button-grid">
+            <div className="button-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))' }}>
               <button
                 className={`chip-button ${particleEffect === 'none' ? 'active' : ''}`}
                 onClick={() => setParticleEffect('none')}
@@ -1709,6 +1709,24 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 onClick={() => setParticleEffect('sparkle')}
               >
                 ✨ Sparkles
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'fireflies' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('fireflies')}
+              >
+                🌿 Fireflies
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'snow' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('snow')}
+              >
+                ❄️ Snow
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'stardust' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('stardust')}
+              >
+                🌌 Stardust
               </button>
             </div>
           </div>
@@ -1943,6 +1961,15 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
           {particleEffect === 'sparkle' && (
              <Sparkles count={100} scale={2.5} size={6} speed={0.4} opacity={0.8} color="#ffffaa" position={[0, 1, 0]} />
+          )}
+          {particleEffect === 'fireflies' && (
+             <Sparkles count={45} scale={3.5} size={8} speed={0.25} opacity={0.9} color="#aaff44" position={[0, 1.2, 0]} />
+          )}
+          {particleEffect === 'snow' && (
+             <Sparkles count={160} scale={4.0} size={5} speed={0.8} opacity={0.85} color="#e0f7fa" position={[0, 2.0, 0]} />
+          )}
+          {particleEffect === 'stardust' && (
+             <Sparkles count={220} scale={3.2} size={3.5} speed={0.18} opacity={0.75} color="#70d6ff" position={[0, 1.0, 0]} />
           )}
 
           {/* Holographic 3D Stage Landing Zone Reticle when dragging files */}

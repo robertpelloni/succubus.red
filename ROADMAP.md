@@ -57,4 +57,5 @@
 - [x] Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes.
 - [x] Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning.
 - [x] Phase 64: Real-time WebGL Engine Performance & Frame Rate Monitor.
-- [ ] Phase 65: Procedural Particle Simulation Presets (Weather & Ambient).
+- [x] Phase 65: Procedural Particle Simulation Presets (Weather & Ambient).
+- [ ] Phase 66: Viewport Screenshot & Camera Snapshot Tool.

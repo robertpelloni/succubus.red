@@ -55,4 +55,5 @@
 - [x] Multi-animation crossfade speed customization slider in Companion Studio and drag rejection audio chimes.
 - [x] Custom user-defined camera FOV zoom slider in Companion Studio.
 - [x] Real-time FPS and WebGL render statistics toggle overlay.
-- [ ] Atmospheric weather particle presets (Rain, Sakura petals, Snow) in Companion Studio.
+- [x] Atmospheric particle simulation presets (Sparkle, Fireflies, Snow, Stardust) in Companion Studio.
+- [ ] In-viewport camera snapshot / screenshot export button with resolution scaling.

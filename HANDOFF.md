@@ -125,6 +125,12 @@
   - Bumped `VERSION.md` and `package.json` to `0.30.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
+- **Phase 65: Atmospheric Particle Simulation Presets (v0.53.0)**:
+  - Extended particle effects beyond standard sparkles to support 4 selectable atmospheric presets: `none`, `sparkle` (100 particles, golden yellow #ffd166), `fireflies` (45 floating particles, glowing lime #aaff44 with gentle bobbing motion), `snow` (160 particles, icy white #e0f7fa with drifting vertical descent), and `stardust` (220 particles, luminous cyan #70d6ff with ambient drift).
+  - Designed responsive preset selector button grid in Companion Studio under "3D Stage & Environment" with real-time active highlighting and informative tooltips.
+  - Enhanced Companion system prompt to guide LLM particle tags (`[effect:sparkle]`, `[effect:fireflies]`, `[effect:snow]`, `[effect:stardust]`, `[effect:none]`).
+  - Successfully verified via visual Playwright screenshots, production Vite build, and 15/15 passing Mocha test suite.
+
 ## Next Steps
-- Dynamic ambient audio generator / background lo-fi soundscapes for immersive companion environments.
+- In-viewport camera snapshot / screenshot export button with resolution scaling.
 - Directional light orbital pitch and yaw angle position controls in Companion Studio.
