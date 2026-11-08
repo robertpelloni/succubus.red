@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.42.0] - UI Sound Effects & Procedural Chimes
+### Added
+- Implemented synthetic Web Audio interactive feedback chimes (`playInteractionChime`) in `App.jsx` triggered on avatar touches, asset drops, and action buttons.
+- Added UI interaction sound toggle button ("Sound On" / "Muted") under Voice & Audio Studio in Companion Studio with full tooltip guidance.
+
 ## [0.41.0] - Atmospheric Procedural Soundscapes
 ### Added
 - Added procedural Web Audio API atmospheric background soundscape synthesizer in `App.jsx` with selectable modes: "None (Silent)", "Cyber Drone Atmosphere", and "Warm Ambient Rain".

@@ -53,7 +53,30 @@ function App() {
   const [toastMessage, setToastMessage] = useState(null);
   const dragCounterRef = useRef(0);
 
+  const playInteractionChime = (frequency = 520, duration = 0.15) => {
+    if (!soundEffectsEnabledRef.current) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = ambientAudioCtxRef.current || new AudioCtx();
+      ambientAudioCtxRef.current = ctx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch {}
+  };
+
   const triggerDropFlash = () => {
+    playInteractionChime(660, 0.3);
     setDropFlash(true);
     setTimeout(() => setDropFlash(false), 700);
   };
@@ -66,6 +89,7 @@ function App() {
   };
 
   const handleAvatarTouch = () => {
+    playInteractionChime(880, 0.2);
     // Interactive avatar touch reaction
     const emotions = ['joy', 'fun', 'surprised'];
     const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
@@ -108,10 +132,16 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
   // Atmospheric Soundscape State
   const [ambientSoundscape, setAmbientSoundscape] = useState('none'); // 'none', 'cyber', 'rain'
   const [ambientVolume, setAmbientVolume] = useState(0.3);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
   const ambientVolumeRef = useRef(ambientVolume);
+  const soundEffectsEnabledRef = useRef(soundEffectsEnabled);
   const ambientAudioCtxRef = useRef(null);
   const ambientGainNodeRef = useRef(null);
   const ambientSourceNodesRef = useRef([]);
+
+  useEffect(() => {
+    soundEffectsEnabledRef.current = soundEffectsEnabled;
+  }, [soundEffectsEnabled]);
 
   useEffect(() => {
     ambientVolumeRef.current = ambientVolume;
@@ -1345,6 +1375,32 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
               />
             </div>
           )}
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              UI Interaction Sound Effects
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Enable subtle procedural audio chimes when clicking avatars, dropping assets, or triggering actions.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${soundEffectsEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setSoundEffectsEnabled(true);
+                  playInteractionChime(750, 0.15);
+                }}
+              >
+                🔔 Sound On
+              </button>
+              <button
+                className={`chip-button ${!soundEffectsEnabled ? 'active' : ''}`}
+                onClick={() => setSoundEffectsEnabled(false)}
+              >
+                🔕 Muted
+              </button>
+            </div>
+          </div>
 
           <div className="dashboard-section">
             <label className="dashboard-label">
