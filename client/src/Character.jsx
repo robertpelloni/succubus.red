@@ -15,6 +15,7 @@ export default function Character({
   visemes = null,
   springBoneStiffness = 1.0,
   springBoneDragForce = 0.4,
+  crossfadeDuration = 0.25,
   onAvatarPointerDown = null
 }) {
   const group = useRef();
@@ -161,14 +162,14 @@ export default function Character({
       const nextAction = actions[currentAnimation];
 
       if (currentActionRef.current && currentActionRef.current !== nextAction) {
-        currentActionRef.current.fadeOut(0.2);
+        currentActionRef.current.fadeOut(crossfadeDuration);
       }
 
-      nextAction.reset().fadeIn(0.2).play();
+      nextAction.reset().fadeIn(crossfadeDuration).play();
       currentActionRef.current = nextAction;
       previousAnimationRef.current = currentAnimation;
     }
-  }, [currentAnimation, actions, vrm]);
+  }, [currentAnimation, actions, vrm, crossfadeDuration]);
 
   // Update spring bone physics dynamically when sliders change
   useEffect(() => {

@@ -1,6 +1,9 @@
-# Session Handoff - v0.49.0
+# Session Handoff - v0.50.0
 
 ## Completed Work in this Session
+- **Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes**:
+  - Added a real-time `Animation Crossfade` slider (0.1s to 1.0s) under AI Persona & Interaction in Companion Studio, dynamically configuring `crossfadeDuration` during Mixamo action blending in `Character.jsx`.
+  - Implemented low-frequency rejection audio feedback (`playInteractionChime(220, 0.25)`) when unsupported file types are dropped onto the viewport.
 - **Phase 61: Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle**:
   - Upgraded the 3D stage landing zone to a concentric dual-ring holographic reticle (cyan core and magenta boundary) on the stage floor in `App.jsx`.
   - Dynamically pulsed directional key light intensity to 2.8x with atmospheric tinting during active file drags across the viewport, creating theatrical lighting anticipation.

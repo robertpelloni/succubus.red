@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.50.0] - Animation Crossfade Speed Slider & Drag Rejection Chimes
+### Added
+- Added custom animation crossfade speed duration slider (`crossfadeDuration`, 0.1s to 1.0s) in Companion Studio under "AI Persona & Interaction" and wired dynamically into `Character.jsx`.
+- Added distinct low-frequency audio rejection feedback (`playInteractionChime(220, 0.25)`) when unsupported file formats are dropped onto the 3D viewport.
+
 ## [0.49.0] - Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle
 ### Added
 - Upgraded the 3D stage landing zone to a dual-ring concentric holographic reticle (cyan core and magenta accent ring) in `App.jsx`.

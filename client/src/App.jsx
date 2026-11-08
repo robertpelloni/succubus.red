@@ -47,6 +47,7 @@ function App() {
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
   const [springStiffness, setSpringStiffness] = useState(1.0);
   const [springDragForce, setSpringDragForce] = useState(0.4);
+  const [crossfadeDuration, setCrossfadeDuration] = useState(0.25);
 
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -772,6 +773,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
     } else if (file.type.startsWith('image/')) {
       processImageFile(file);
     } else {
+      playInteractionChime(220, 0.25);
       showToast("⚠️ Unsupported format. Drop a .vrm avatar, .glb environment, or image file.");
     }
   };
@@ -1295,6 +1297,22 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Animation Crossfade: {crossfadeDuration.toFixed(2)}s
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls skeletal blending speed when transitioning between animation poses (0.1s to 1.0s).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.1" max="1" step="0.05"
+              value={crossfadeDuration}
+              onChange={(e) => setCrossfadeDuration(parseFloat(e.target.value))}
+            />
           </div>
 
           <div className="dashboard-section">
@@ -1897,6 +1915,7 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
             visemes={visemes}
             springBoneStiffness={springStiffness}
             springBoneDragForce={springDragForce}
+            crossfadeDuration={crossfadeDuration}
             onAvatarPointerDown={handleAvatarTouch}
           />
           <EffectComposer>
