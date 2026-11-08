@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.46.0] - Spatial 3D Positional Audio for Environment Interactions
+### Added
+- Implemented real-time spatial 3D audio hovering chimes in `Environment.jsx` using Web Audio `StereoPannerNode`, mapping 3D mesh hit points along the X-axis (-1.0 to +1.0) into binaural stereo sound.
+- Bound to the global `soundEffectsEnabled` toggle in `App.jsx`.
+
 ## [0.45.0] - Real-time Asset Ingestion Spinner Overlay
 ### Added
 - Real-time asset ingestion state and animated progress indicator card (`.asset-ingestion-spinner`) in `App.jsx` and `App.css` during asynchronous VRM and GLB model parsing and IndexedDB caching.

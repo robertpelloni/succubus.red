@@ -1800,7 +1800,13 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
         <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>
-          {environmentFile !== 'none' && <Environment lightsOn={lightsOn} file={environmentFile} />}
+          {environmentFile !== 'none' && (
+            <Environment
+              lightsOn={lightsOn}
+              file={environmentFile}
+              soundEffectsEnabled={soundEffectsEnabled}
+            />
+          )}
 
           {particleEffect === 'sparkle' && (
              <Sparkles count={100} scale={2.5} size={6} speed={0.4} opacity={0.8} color="#ffffaa" position={[0, 1, 0]} />

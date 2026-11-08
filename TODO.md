@@ -48,4 +48,5 @@
 - [x] Smooth avatar materialization scaling transition and opacity dissolve.
 - [x] Contextual drag-and-drop HUD detection and dynamic cue labels.
 - [x] Real-time asset ingestion spinner and progress feedback during 3D model parsing.
-- [ ] Spatial 3D positional audio for environment hover interactions.
+- [x] Spatial 3D positional audio for environment hover interactions via StereoPannerNode.
+- [ ] Multi-animation crossfade speed customization slider in Companion Studio.

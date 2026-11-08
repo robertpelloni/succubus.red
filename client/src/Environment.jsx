@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import { fetchAndCache } from './CacheUtils';
 
-export default function Environment({ lightsOn = true, file = 'room.glb' }) {
+export default function Environment({ lightsOn = true, file = 'room.glb', soundEffectsEnabled = true }) {
   const [modelUrl, setModelUrl] = useState(null);
 
   useEffect(() => {
@@ -62,10 +62,41 @@ export default function Environment({ lightsOn = true, file = 'room.glb' }) {
     }
   }, [modelUrl]);
 
+  const playSpatialHoverSound = (pointX) => {
+    if (!soundEffectsEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+
+      if (ctx.createStereoPanner) {
+        const panner = ctx.createStereoPanner();
+        // Normalize 3D X coordinate (-3 to +3) to pan (-1 to +1)
+        const panValue = Math.max(-1, Math.min(1, (pointX || 0) / 3));
+        panner.pan.setValueAtTime(panValue, ctx.currentTime);
+        osc.connect(panner);
+        panner.connect(gain);
+      } else {
+        osc.connect(gain);
+      }
+
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    } catch {}
+  };
+
   const handlePointerOver = (e) => {
     e.stopPropagation();
     if (e.object.isMesh && e.object.material) {
       setHoveredMesh(e.object.uuid);
+      playSpatialHoverSound(e.point?.x);
       e.object.material.emissive.setHex(0x333333); // subtle highlight
     }
   };
