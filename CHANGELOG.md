@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.59.0] - 3D Stage Landing Guidance Beacon & Rising Harmonic Audio Materialization
+### Added
+- **Vertical 3D Holographic Guidance Beacon Ray**: Extended `HolographicLandingReticle` in `client/src/App.jsx` with an illuminated rotating light pillar beacon cylinder (`cylinderGeometry args={[0.08, 0.45, 4.0, 32, 1, true]}`) descending vertically onto the 3D stage landing zone with zone-responsive color and opacity.
+- **Web Audio Rising Harmonic Materialization Chord**: Implemented `playMaterializationChord()` in `client/src/App.jsx` using three-tone ascending chord synthesis (C5 523.25Hz, E5 659.25Hz, G5 783.99Hz) via Web Audio API triangle wave oscillators upon successful asset ingestion.
+- **Stage Landing Guidance Beacon Studio Control**: Added "Stage Landing Guidance Beacon" toggle button (`stageBeaconEnabled`) with informative tooltip guidance under 3D Stage & Environment in Companion Studio.
+- **Robust Drop Ingestion Diagnostics**: Repaired asset array population in `handleFilesDrop` with explicit asset metadata strings, voice reaction speech feedback, and comprehensive batch toast notifications.
+
 ## [0.58.0] - Multi-Asset Drag Batch Ingestion HUD & Viewport Holographic Target Ring Spin
 ### Added
 - Multi-Asset Batch Ingestion support: dragging and dropping multiple assets concurrently processes avatars (`.vrm`), animations (`.fbx`), 3D stage scenes (`.glb`), and vision images without discarding complementary files.
