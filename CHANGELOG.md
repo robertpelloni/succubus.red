@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [0.57.0] - Real-Time Drag Target Zones & Spoken Companion Reactions
+### Added
+- Real-time cursor distance tracking during viewport drag gestures detects target zones (`dragTargetZone`: 'avatar' vs 'stage').
+- Concentric 3D landing reticle dynamically highlights an inner avatar aura ring (`#ff4081`) with intensified opacity when dragging near the avatar, or an outer perimeter stage ring (`#00e5ff`) when aiming at stage surroundings.
+- AI Companion dynamically vocalizes contextual reactions upon asset drops (celebrating new avatars, announcing animation retargeting, or welcoming the user to a new stage environment).
+- Added "Voice Drop Reactions" toggle button in Companion Studio under Voice & Audio Studio to allow toggling between spoken reactions and silent drops.
+
+## [0.56.0] - Dynamic Viewport FBX Retargeting & Camera Alignment
+### Added
+- Direct drag-and-drop ingestion of Mixamo FBX skeletal animation files onto the 3D viewport canvas.
+- Dynamic skeletal retargeting via `MixamoVRMRetargeting.js` (`loadMixamoAnimation`) blending new animations into active mixer actions without re-materializing the avatar.
+- Concentric holographic landing zone reticle on the stage floor plane with theatrical key light intensity pulsing during file drags.
+- Hierarchical multi-file drag prioritization (.vrm -> .fbx -> .glb -> images).
+- Camera framing initialized directly on the VRM avatar's face and upper torso on canvas mount.
+
 ## [0.55.0] - Persistent Custom 3D Environments via IndexedDB
 ### Added
 - Extended IndexedDB persistence in `client/src/CacheUtils.js` for custom 3D environment scenes (`custom_environment.glb`) and metadata (`custom_environment_meta.json`).

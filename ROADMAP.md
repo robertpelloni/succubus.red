@@ -60,4 +60,6 @@
 - [x] Phase 65: Procedural Particle Simulation Presets (Weather & Ambient).
 - [x] Phase 66: Drop Impact Ground Shockwave & Avatar Landing Physics (v0.54.0).
 - [x] Phase 67: Persistent Custom 3D Environments via IndexedDB (v0.55.0).
-- [ ] Phase 68: Viewport Screenshot & Camera Snapshot Tool.
+- [x] Phase 68: Dynamic Viewport FBX Retargeting & Camera Alignment (v0.56.0).
+- [x] Phase 69: Real-time Cursor Target Zone Detection & Spoken Companion Reactions (v0.57.0).
+- [ ] Phase 70: Viewport Screenshot & Camera Snapshot Tool.

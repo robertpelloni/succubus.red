@@ -59,4 +59,5 @@
 - [x] Drop impact ground shockwave ring and avatar landing bounce physics in Companion Studio.
 - [x] Persistent custom 3D environment loading and IndexedDB caching in Companion Studio.
 - [x] Viewport FBX animation drag-and-drop retargeting and default camera framing alignment.
+- [x] Real-time drag target zone reticle aura (avatar vs stage) and spoken companion reactions.
 - [ ] In-viewport camera snapshot / screenshot export button with resolution scaling.

@@ -75,6 +75,8 @@ function App() {
   const [dropFlash, setDropFlash] = useState(false);
   const [dropShockwave, setDropShockwave] = useState(false);
   const [dropPhysicsEnabled, setDropPhysicsEnabled] = useState(true);
+  const [voiceDropReactions, setVoiceDropReactions] = useState(true);
+  const [dragTargetZone, setDragTargetZone] = useState('avatar'); // 'avatar' (center) or 'stage' (outer)
   const [dropContextCue, setDropContextCue] = useState({ icon: '📥', title: 'Drop File Here', desc: 'Drop a .vrm avatar, .glb 3D environment, or an image to share' });
   const [toastMessage, setToastMessage] = useState(null);
   const dragCounterRef = useRef(0);
@@ -788,7 +790,9 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
           setParticleEffect('none');
         }, 4000);
 
-        speak("I love this avatar! It looks amazing on stage.");
+        if (voiceDropReactions) {
+          speak("I love this avatar! It looks amazing on stage.");
+        }
         showToast(`✨ Avatar "${meta.name}" materialized on stage!`);
       } catch (err) {
         console.error("Drop VRM error:", err);
@@ -804,7 +808,9 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
         setCustomAnimationAsset({ url: animBlobUrl, name: animName });
         setCurrentAnimation(animName);
         triggerDropFlash();
-        speak("Retargeting new skeletal animation!");
+        if (voiceDropReactions) {
+          speak("Retargeting new skeletal animation!");
+        }
         showToast(`💃 Custom animation "${file.name}" retargeted and playing!`);
       } catch (err) {
         console.error("Drop FBX error:", err);
@@ -823,6 +829,9 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
 
         // Smooth camera showcase transition when switching environment
         cameraControlRef.current?.setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true);
+        if (voiceDropReactions) {
+          speak("Welcome to our new surroundings! Custom stage environment loaded.");
+        }
 
         showToast(`🌐 Custom 3D environment "${envMeta.name}" saved to cache!`);
       } catch (err) {
@@ -883,6 +892,13 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
     const handleDragOver = (e) => {
       e.preventDefault();
       e.stopPropagation();
+      // Track screen distance to center to determine drop target affinity
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight * 0.45;
+      const dx = (e.clientX - centerX) / (window.innerWidth / 2);
+      const dy = (e.clientY - centerY) / (window.innerHeight / 2);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      setDragTargetZone(dist < 0.45 ? 'avatar' : 'stage');
     };
 
     const handleDrop = (e) => {
@@ -1619,6 +1635,32 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Voice Drop Reactions
+              <div className="tooltip-container">?
+                <span className="tooltip-text">When enabled, the companion dynamically vocalizes spoken reactions and observations when avatars, animations, or environments are dropped onto the stage.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${voiceDropReactions ? 'active' : ''}`}
+                onClick={() => {
+                  setVoiceDropReactions(true);
+                  playInteractionChime(620, 0.15);
+                }}
+              >
+                🗣️ Spoken Reactions
+              </button>
+              <button
+                className={`chip-button ${!voiceDropReactions ? 'active' : ''}`}
+                onClick={() => setVoiceDropReactions(false)}
+              >
+                Silent
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               Microphone Input Tester
               <div className="tooltip-container">?
                 <span className="tooltip-text">Test your microphone input gain in real-time with Web Audio API VU meter before voice chatting.</span>
@@ -2081,13 +2123,35 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
           {/* Holographic 3D Stage Landing Zone Reticle when dragging files */}
           {isDraggingFile && (
             <group position={[0, 0.02, 0]}>
+              {/* Avatar Center Aura Ring */}
               <mesh rotation={[-Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[0.8, 1.05, 32]} />
-                <meshBasicMaterial color="#00d2ff" transparent opacity={0.75} side={2} />
+                <ringGeometry args={[0.7, 0.88, 36]} />
+                <meshBasicMaterial
+                  color={dragTargetZone === 'avatar' ? '#ff4081' : '#00e5ff'}
+                  transparent
+                  opacity={dragTargetZone === 'avatar' ? 0.9 : 0.4}
+                  side={2}
+                />
               </mesh>
+              {/* Outer Stage Floor Perimeter Ring */}
               <mesh rotation={[-Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[1.2, 1.25, 32]} />
-                <meshBasicMaterial color="#ff4081" transparent opacity={0.5} side={2} />
+                <ringGeometry args={[1.45, 1.62, 48]} />
+                <meshBasicMaterial
+                  color={dragTargetZone === 'stage' ? '#00e5ff' : '#aaccff'}
+                  transparent
+                  opacity={dragTargetZone === 'stage' ? 0.85 : 0.35}
+                  side={2}
+                />
+              </mesh>
+              {/* Inner Bullseye Target Circle */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.3, 32]} />
+                <meshBasicMaterial
+                  color={dragTargetZone === 'avatar' ? '#ff4081' : '#00e5ff'}
+                  transparent
+                  opacity={dragTargetZone === 'avatar' ? 0.5 : 0.25}
+                  side={2}
+                />
               </mesh>
             </group>
           )}
@@ -2109,6 +2173,7 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
           <Character
             url={avatarUrl}
             currentAnimation={currentAnimation}
+            customAnimationAsset={customAnimationAsset}
             emotion={emotion}
             isSpeaking={isSpeaking}
             visemes={visemes}
