@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.54.0] - Drop Impact Ground Shockwave & Avatar Landing Physics
+### Added
+- Dynamic 3D ground shockwave ring (`dropShockwave`) rendered on the stage floor plane (`y = 0.03`) upon successful VRM/GLB drops via `triggerDropFlash` in `client/src/App.jsx`.
+- Soft vertical avatar landing bounce and damped spring settling physics (`landingOffsetY`) in `client/src/Character.jsx` during model loading and drops.
+- Added "Drop Shockwave & Landing Bounce" toggle control (`dropPhysicsEnabled`) in Companion Studio with real-time audio chimes and descriptive tooltips.
+
 ## [0.53.0] - Atmospheric Particle Simulation Presets
 ### Added
 - Upgraded 3D scene particle simulations beyond sparkles to four distinctive atmospheric simulation presets: `none`, `sparkle` (100 particles, golden yellow #ffd166), `fireflies` (45 floating particles, glowing lime #aaff44 with gentle bob), `snow` (160 particles, icy white #e0f7fa with drifting vertical descent), and `stardust` (220 particles, luminous cyan #70d6ff with expansive ambient drift).

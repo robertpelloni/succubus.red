@@ -56,4 +56,5 @@
 - [x] Custom user-defined camera FOV zoom slider in Companion Studio.
 - [x] Real-time FPS and WebGL render statistics toggle overlay.
 - [x] Atmospheric particle simulation presets (Sparkle, Fireflies, Snow, Stardust) in Companion Studio.
+- [x] Drop impact ground shockwave ring and avatar landing bounce physics in Companion Studio.
 - [ ] In-viewport camera snapshot / screenshot export button with resolution scaling.

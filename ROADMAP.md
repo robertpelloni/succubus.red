@@ -58,4 +58,5 @@
 - [x] Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning.
 - [x] Phase 64: Real-time WebGL Engine Performance & Frame Rate Monitor.
 - [x] Phase 65: Procedural Particle Simulation Presets (Weather & Ambient).
-- [ ] Phase 66: Viewport Screenshot & Camera Snapshot Tool.
+- [x] Phase 66: Drop Impact Ground Shockwave & Avatar Landing Physics (v0.54.0).
+- [ ] Phase 67: Viewport Screenshot & Camera Snapshot Tool.

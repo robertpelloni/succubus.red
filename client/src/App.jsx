@@ -56,6 +56,8 @@ function App() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [isIngestingAsset, setIsIngestingAsset] = useState(false);
   const [dropFlash, setDropFlash] = useState(false);
+  const [dropShockwave, setDropShockwave] = useState(false);
+  const [dropPhysicsEnabled, setDropPhysicsEnabled] = useState(true);
   const [dropContextCue, setDropContextCue] = useState({ icon: '📥', title: 'Drop File Here', desc: 'Drop a .vrm avatar, .glb 3D environment, or an image to share' });
   const [toastMessage, setToastMessage] = useState(null);
   const dragCounterRef = useRef(0);
@@ -85,6 +87,10 @@ function App() {
   const triggerDropFlash = () => {
     playInteractionChime(660, 0.3);
     setDropFlash(true);
+    if (dropPhysicsEnabled) {
+      setDropShockwave(true);
+      setTimeout(() => setDropShockwave(false), 1200);
+    }
     setTimeout(() => setDropFlash(false), 700);
   };
 
@@ -1532,6 +1538,35 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Drop Shockwave & Landing Bounce
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Enables dynamic 3D expanding ground shockwave ring and soft vertical avatar landing bounce physics when files are dropped.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${dropPhysicsEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setDropPhysicsEnabled(true);
+                  playInteractionChime(700, 0.15);
+                }}
+              >
+                🌊 Shockwave & Bounce
+              </button>
+              <button
+                className={`chip-button ${!dropPhysicsEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setDropPhysicsEnabled(false);
+                  playInteractionChime(400, 0.15);
+                }}
+              >
+                Static
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               Microphone Input Tester
               <div className="tooltip-container">?
                 <span className="tooltip-text">Test your microphone input gain in real-time with Web Audio API VU meter before voice chatting.</span>
@@ -1986,6 +2021,20 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
             </group>
           )}
 
+          {/* 3D Drop Impact Expanding Shockwave Ring */}
+          {dropShockwave && (
+            <group position={[0, 0.03, 0]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[1.1, 1.35, 48]} />
+                <meshBasicMaterial color="#00e5ff" transparent opacity={0.8} side={2} />
+              </mesh>
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.4, 0.55, 32]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.9} side={2} />
+              </mesh>
+            </group>
+          )}
+
           <Character
             url={avatarUrl}
             currentAnimation={currentAnimation}
@@ -1995,6 +2044,7 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
             springBoneStiffness={springStiffness}
             springBoneDragForce={springDragForce}
             crossfadeDuration={crossfadeDuration}
+            landingPhysicsEnabled={dropPhysicsEnabled}
             onFpsUpdate={setFps}
             onAvatarPointerDown={handleAvatarTouch}
           />

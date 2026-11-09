@@ -131,6 +131,12 @@
   - Enhanced Companion system prompt to guide LLM particle tags (`[effect:sparkle]`, `[effect:fireflies]`, `[effect:snow]`, `[effect:stardust]`, `[effect:none]`).
   - Successfully verified via visual Playwright screenshots, production Vite build, and 15/15 passing Mocha test suite.
 
+- **Phase 66: Drop Impact Ground Shockwave & Avatar Landing Physics (v0.54.0)**:
+  - Added 3D expanding ground shockwave ring (`dropShockwave`) rendered dynamically on the stage floor plane (`y = 0.03`) upon successful VRM/GLB drops via `triggerDropFlash` in `client/src/App.jsx`.
+  - Implemented vertical avatar landing bounce and damped spring settling physics (`landingOffsetY`) in `client/src/Character.jsx` during model loading and drops.
+  - Added "Drop Shockwave & Landing Bounce" toggle control (`dropPhysicsEnabled`) in Companion Studio with real-time audio chimes and descriptive tooltips.
+  - Successfully verified with Playwright visual screenshots, production Vite build, and 15/15 Mocha backend tests.
+
 ## Next Steps
 - In-viewport camera snapshot / screenshot export button with resolution scaling.
 - Directional light orbital pitch and yaw angle position controls in Companion Studio.

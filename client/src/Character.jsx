@@ -16,6 +16,7 @@ export default function Character({
   springBoneStiffness = 1.0,
   springBoneDragForce = 0.4,
   crossfadeDuration = 0.25,
+  landingPhysicsEnabled = true,
   onFpsUpdate = null,
   onAvatarPointerDown = null
 }) {
@@ -23,6 +24,7 @@ export default function Character({
   const [vrm, setVrm] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
   const [mountOpacity, setMountOpacity] = useState(0.0);
+  const [landingOffsetY, setLandingOffsetY] = useState(landingPhysicsEnabled ? 0.35 : 0.0);
   const activeVrmRef = useRef(null);
   const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
@@ -52,6 +54,7 @@ export default function Character({
   useEffect(() => {
     let isCancelled = false;
     setMountOpacity(0.0);
+    setLandingOffsetY(landingPhysicsEnabled ? 0.35 : 0.0);
 
     const loadAssets = async () => {
       try {
@@ -148,7 +151,7 @@ export default function Character({
         }
       }
     };
-  }, [url]);
+  }, [url, landingPhysicsEnabled]);
 
   const currentActionRef = useRef(null);
   const previousAnimationRef = useRef(null);
@@ -205,6 +208,11 @@ export default function Character({
       // Smooth materialization fade-in
       if (mountOpacity < 1.0) {
         setMountOpacity(prev => Math.min(1.0, prev + delta * 2.5));
+      }
+
+      // Smooth landing physics settling toward y = 0
+      if (landingOffsetY > 0.001) {
+        setLandingOffsetY(prev => Math.max(0.0, prev - prev * delta * 6.0));
       }
 
       // Map mouse coordinates to 3D space for the lookAt target
@@ -326,6 +334,7 @@ export default function Character({
   return (
     <group
       ref={group}
+      position={[0, landingOffsetY, 0]}
       rotation={[0, Math.PI, 0]}
       scale={vrm ? [mountOpacity, mountOpacity, mountOpacity] : [0, 0, 0]}
       onPointerDown={handlePointerDown}
