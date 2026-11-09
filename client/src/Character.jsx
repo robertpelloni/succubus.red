@@ -10,6 +10,7 @@ import { fetchAndCache } from './CacheUtils';
 export default function Character({
   url = '/avatar.vrm',
   currentAnimation = 'idle',
+  customAnimationAsset = null,
   emotion = null,
   isSpeaking = false,
   visemes = null,
@@ -23,8 +24,8 @@ export default function Character({
   const group = useRef();
   const [vrm, setVrm] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [mountOpacity, setMountOpacity] = useState(0.0);
-  const [landingOffsetY, setLandingOffsetY] = useState(landingPhysicsEnabled ? 0.35 : 0.0);
+  const mountScaleRef = useRef(0.0);
+  const landingOffsetYRef = useRef(landingPhysicsEnabled ? 0.35 : 0.0);
   const activeVrmRef = useRef(null);
   const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
@@ -53,8 +54,12 @@ export default function Character({
 
   useEffect(() => {
     let isCancelled = false;
-    setMountOpacity(0.0);
-    setLandingOffsetY(landingPhysicsEnabled ? 0.35 : 0.0);
+    mountScaleRef.current = 0.0;
+    landingOffsetYRef.current = landingPhysicsEnabled ? 0.35 : 0.0;
+    if (group.current) {
+      group.current.scale.set(0, 0, 0);
+      group.current.position.y = landingOffsetYRef.current;
+    }
 
     const loadAssets = async () => {
       try {
@@ -158,6 +163,42 @@ export default function Character({
   const fpsFrameCountRef = useRef(0);
   const fpsLastTimeRef = useRef(0);
 
+  // Dynamically load, retarget, and register custom dropped FBX animation
+  useEffect(() => {
+    if (!vrm || !mixer || !customAnimationAsset) return;
+
+    let isDisposed = false;
+    const loadCustomFbx = async () => {
+      try {
+        const { url: fbxUrl, name } = customAnimationAsset;
+        const fbxLoader = new FBXLoader();
+        const animGltf = await fbxLoader.loadAsync(fbxUrl);
+        if (isDisposed) return;
+
+        const clip = loadMixamoAnimation(animGltf, vrm);
+        if (clip) {
+          const action = mixer.clipAction(clip);
+          setActions((prev) => ({ ...prev, [name]: action }));
+
+          // Automatically switch and crossfade into the new dropped animation
+          if (currentActionRef.current) {
+            currentActionRef.current.fadeOut(crossfadeDuration);
+          }
+          action.reset().fadeIn(crossfadeDuration).play();
+          currentActionRef.current = action;
+          previousAnimationRef.current = name;
+        }
+      } catch (err) {
+        console.error("Failed to retarget custom FBX animation:", err);
+      }
+    };
+
+    loadCustomFbx();
+    return () => {
+      isDisposed = true;
+    };
+  }, [customAnimationAsset, vrm, mixer, crossfadeDuration]);
+
   useEffect(() => {
     if (vrm && actions[currentAnimation]) {
       // Prevent resetting the animation if we are already playing it
@@ -204,15 +245,18 @@ export default function Character({
     }
 
     if (mixer) mixer.update(delta);
-    if (vrm) {
-      // Smooth materialization fade-in
-      if (mountOpacity < 1.0) {
-        setMountOpacity(prev => Math.min(1.0, prev + delta * 2.5));
+    if (vrm && group.current) {
+      // Smooth materialization scale-in directly on Three.js transform without re-rendering React
+      if (mountScaleRef.current < 1.0) {
+        mountScaleRef.current = Math.min(1.0, mountScaleRef.current + delta * 2.5);
+        const s = mountScaleRef.current;
+        group.current.scale.set(s, s, s);
       }
 
-      // Smooth landing physics settling toward y = 0
-      if (landingOffsetY > 0.001) {
-        setLandingOffsetY(prev => Math.max(0.0, prev - prev * delta * 6.0));
+      // Smooth landing physics settling toward y = 0 directly on transform
+      if (landingOffsetYRef.current > 0.001) {
+        landingOffsetYRef.current = Math.max(0.0, landingOffsetYRef.current - landingOffsetYRef.current * delta * 6.0);
+        group.current.position.y = landingOffsetYRef.current;
       }
 
       // Map mouse coordinates to 3D space for the lookAt target
@@ -334,9 +378,9 @@ export default function Character({
   return (
     <group
       ref={group}
-      position={[0, landingOffsetY, 0]}
+      position={[0, landingPhysicsEnabled ? 0.35 : 0.0, 0]}
       rotation={[0, Math.PI, 0]}
-      scale={vrm ? [mountOpacity, mountOpacity, mountOpacity] : [0, 0, 0]}
+      scale={[0, 0, 0]}
       onPointerDown={handlePointerDown}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}

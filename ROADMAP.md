@@ -59,4 +59,5 @@
 - [x] Phase 64: Real-time WebGL Engine Performance & Frame Rate Monitor.
 - [x] Phase 65: Procedural Particle Simulation Presets (Weather & Ambient).
 - [x] Phase 66: Drop Impact Ground Shockwave & Avatar Landing Physics (v0.54.0).
-- [ ] Phase 67: Viewport Screenshot & Camera Snapshot Tool.
+- [x] Phase 67: Persistent Custom 3D Environments via IndexedDB (v0.55.0).
+- [ ] Phase 68: Viewport Screenshot & Camera Snapshot Tool.

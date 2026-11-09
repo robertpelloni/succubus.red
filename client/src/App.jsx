@@ -6,7 +6,17 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
-import { getCustomAvatar, getCustomAvatarMeta, saveCustomAvatar, clearCustomAvatar, validateVRMBinary } from './CacheUtils';
+import {
+  getCustomAvatar,
+  getCustomAvatarMeta,
+  saveCustomAvatar,
+  clearCustomAvatar,
+  validateVRMBinary,
+  saveCustomEnvironment,
+  getCustomEnvironment,
+  getCustomEnvironmentMeta,
+  clearCustomEnvironment
+} from './CacheUtils';
 import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
@@ -51,6 +61,13 @@ function App() {
   const [springStiffness, setSpringStiffness] = useState(1.0);
   const [springDragForce, setSpringDragForce] = useState(0.4);
   const [crossfadeDuration, setCrossfadeDuration] = useState(0.25);
+
+  // Custom 3D Environment state
+  const [hasCustomEnv, setHasCustomEnv] = useState(false);
+  const [customEnvMeta, setCustomEnvMeta] = useState(null);
+
+  // Custom Animation (.fbx) state
+  const [customAnimationAsset, setCustomAnimationAsset] = useState(null);
 
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -324,7 +341,7 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
 
   // Initialize Custom Avatar from IndexedDB
   useEffect(() => {
-    const initAvatar = async () => {
+    const initAvatarAndEnv = async () => {
       try {
         const customUrl = await getCustomAvatar();
         if (customUrl) {
@@ -332,11 +349,19 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
           const meta = await getCustomAvatarMeta();
           if (meta) setCustomAvatarMeta(meta);
         }
+
+        const customEnvUrl = await getCustomEnvironment();
+        if (customEnvUrl) {
+          setEnvironmentFile(customEnvUrl);
+          setHasCustomEnv(true);
+          const envMeta = await getCustomEnvironmentMeta();
+          if (envMeta) setCustomEnvMeta(envMeta);
+        }
       } catch (e) {
-        console.warn("Error checking custom avatar:", e);
+        console.warn("Error checking cached avatar or environment:", e);
       }
     };
-    initAvatar();
+    initAvatarAndEnv();
   }, []);
 
   const handleAvatarUpload = async (event) => {
@@ -388,6 +413,14 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
     setAvatarMode('default');
     setAvatarUrl('/avatar.vrm');
     showToast("Default avatar restored.");
+  };
+
+  const handleResetEnvironment = async () => {
+    await clearCustomEnvironment();
+    setHasCustomEnv(false);
+    setCustomEnvMeta(null);
+    setEnvironmentFile('room.glb');
+    showToast("Default room environment restored.");
   };
 
   // Initialize Kokoro
@@ -719,12 +752,13 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
     if (!fileList || fileList.length === 0) return;
     const files = Array.from(fileList);
 
-    // Prioritize VRM avatar, then GLB environment, then image
+    // Prioritize VRM avatar, then FBX animation, then GLB environment, then image
     const vrmFile = files.find(f => f.name.toLowerCase().endsWith('.vrm'));
+    const fbxFile = files.find(f => f.name.toLowerCase().endsWith('.fbx'));
     const glbFile = files.find(f => f.name.toLowerCase().endsWith('.glb') || f.name.toLowerCase().endsWith('.gltf'));
     const imgFile = files.find(f => f.type.startsWith('image/'));
 
-    const file = vrmFile || glbFile || imgFile || files[0];
+    const file = vrmFile || fbxFile || glbFile || imgFile || files[0];
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith('.vrm')) {
@@ -762,17 +796,35 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
       } finally {
         setIsIngestingAsset(false);
       }
+    } else if (fileName.endsWith('.fbx')) {
+      setIsIngestingAsset(true);
+      try {
+        const animName = file.name.replace(/\.[^/.]+$/, "").toLowerCase();
+        const animBlobUrl = URL.createObjectURL(file);
+        setCustomAnimationAsset({ url: animBlobUrl, name: animName });
+        setCurrentAnimation(animName);
+        triggerDropFlash();
+        speak("Retargeting new skeletal animation!");
+        showToast(`💃 Custom animation "${file.name}" retargeted and playing!`);
+      } catch (err) {
+        console.error("Drop FBX error:", err);
+        showToast("❌ Failed to process FBX animation file.");
+      } finally {
+        setIsIngestingAsset(false);
+      }
     } else if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
       setIsIngestingAsset(true);
       try {
-        const envUrl = URL.createObjectURL(file);
+        const { url: envUrl, meta: envMeta } = await saveCustomEnvironment(file);
         setEnvironmentFile(envUrl);
+        setCustomEnvMeta(envMeta);
+        setHasCustomEnv(true);
         triggerDropFlash();
 
         // Smooth camera showcase transition when switching environment
         cameraControlRef.current?.setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true);
 
-        showToast(`🌐 Custom 3D environment "${file.name}" loaded!`);
+        showToast(`🌐 Custom 3D environment "${envMeta.name}" saved to cache!`);
       } catch (err) {
         console.error("Drop GLB error:", err);
         showToast("❌ Failed to load 3D environment model.");
@@ -783,7 +835,7 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
       processImageFile(file);
     } else {
       playInteractionChime(220, 0.25);
-      showToast("⚠️ Unsupported format. Drop a .vrm avatar, .glb environment, or image file.");
+      showToast("⚠️ Unsupported format. Drop a .vrm avatar, .fbx animation, .glb environment, or image file.");
     }
   };
 
@@ -1693,13 +1745,32 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
             </label>
             <select
               className="dashboard-input"
-              value={environmentFile}
-              onChange={(e) => setEnvironmentFile(e.target.value)}
+              value={environmentFile.startsWith('blob:') || environmentFile.startsWith('data:') ? 'custom' : environmentFile}
+              onChange={(e) => {
+                if (e.target.value !== 'custom') {
+                  setEnvironmentFile(e.target.value);
+                }
+              }}
             >
               <option value="none">Void (Empty Space)</option>
               <option value="room.glb">Modern Neon Room</option>
               <option value="room2.glb">Sci-Fi Deck</option>
+              {hasCustomEnv && <option value="custom">🌐 Custom ({customEnvMeta?.name || 'IndexedDB Cached'})</option>}
             </select>
+            {hasCustomEnv && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: '#00e5ff' }}>
+                  📦 {customEnvMeta?.name || 'Custom Environment'} ({((customEnvMeta?.size || 0) / 1024 / 1024).toFixed(1)} MB)
+                </span>
+                <button
+                  className="chip-button"
+                  style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                  onClick={handleResetEnvironment}
+                >
+                  Reset Room ✕
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="dashboard-section">
@@ -1974,16 +2045,16 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
       </div>
 
       {/* 3D Canvas Viewport */}
-      <Canvas shadows camera={{ position: [0, 1.5, 3], fov: cameraFov }}>
-        <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
+      <Canvas shadows camera={{ position: [0, 1.3, 2.6], fov: cameraFov }}>
+        <ambientLight intensity={(lightsOn ? 0.45 : 0.05) * ambientLightScale} />
         <directionalLight
           castShadow
-          position={[5, 5, 5]}
-          intensity={lightsOn ? (isDraggingFile ? 2.8 : 2.0) : 0.1}
+          position={[3, 4, 4]}
+          intensity={lightsOn ? (isDraggingFile ? 1.8 : 1.2) : 0.1}
           color={isDraggingFile ? '#aaccff' : lightColor}
           shadow-mapSize={[shadowMapResolution, shadowMapResolution]}
         />
-        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
+        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.3 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>
           {environmentFile !== 'none' && (
@@ -2049,7 +2120,7 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
             onAvatarPointerDown={handleAvatarTouch}
           />
           <EffectComposer>
-            <Bloom intensity={bloomIntensity} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
+            <Bloom intensity={bloomIntensity * 0.4} luminanceThreshold={0.92} luminanceSmoothing={0.05} />
           </EffectComposer>
         </Suspense>
 

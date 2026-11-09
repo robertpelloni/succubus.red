@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.55.0] - Persistent Custom 3D Environments via IndexedDB
+### Added
+- Extended IndexedDB persistence in `client/src/CacheUtils.js` for custom 3D environment scenes (`custom_environment.glb`) and metadata (`custom_environment_meta.json`).
+- Automatically caches dropped `.glb`/`.gltf` environments to IndexedDB in `client/src/App.jsx` and auto-restores them seamlessly on session start.
+- Added Custom Environment indicator badge with byte size readout and "Reset Room ✕" restore button in Companion Studio under 3D Stage & Environment.
+
 ## [0.54.0] - Drop Impact Ground Shockwave & Avatar Landing Physics
 ### Added
 - Dynamic 3D ground shockwave ring (`dropShockwave`) rendered on the stage floor plane (`y = 0.03`) upon successful VRM/GLB drops via `triggerDropFlash` in `client/src/App.jsx`.

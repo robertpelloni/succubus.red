@@ -57,4 +57,6 @@
 - [x] Real-time FPS and WebGL render statistics toggle overlay.
 - [x] Atmospheric particle simulation presets (Sparkle, Fireflies, Snow, Stardust) in Companion Studio.
 - [x] Drop impact ground shockwave ring and avatar landing bounce physics in Companion Studio.
+- [x] Persistent custom 3D environment loading and IndexedDB caching in Companion Studio.
+- [x] Viewport FBX animation drag-and-drop retargeting and default camera framing alignment.
 - [ ] In-viewport camera snapshot / screenshot export button with resolution scaling.

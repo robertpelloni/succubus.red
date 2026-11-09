@@ -1,6 +1,13 @@
-# Session Handoff - v0.51.0
+# Session Handoff - v0.56.0
 
 ## Completed Work in this Session
+- **Phase 68: Viewport FBX Animation Drag-and-Drop Retargeting & Default Camera Alignment (v0.56.0)**:
+  - Enabled drag-and-drop ingestion of Mixamo `.fbx` animation clips in `client/src/App.jsx` and `client/src/Character.jsx`.
+  - Dynamically parsed and retargeted dropped `.fbx` files using `MixamoVRMRetargeting.js` (`loadMixamoAnimation`), binding the new clip to the active character animation mixer actions and smoothly crossfading into it without re-materializing the character.
+  - Added dedicated custom animation chip buttons and badge in Companion Studio under 'AI Persona & Interaction' with a "Clear ✕" reset action reverting to default idle animation.
+  - Upgraded stage drag landing guide with a concentric multi-ring holographic reticle on the floor plane (`y = 0.02`), while prioritizing `.vrm` avatars first, `.fbx` animations second, `.glb`/`.gltf` stages third, and images fourth.
+  - Fixed default camera alignment via `CameraControls` (`onInit={(controls) => controls.setLookAt(0, 1.35, 2.4, 0, 1.15, 0, false)}`), ensuring the avatar's face and upper torso are immediately centered upon canvas mount rather than looking at floor level.
+  - Fully verified with 15/15 passing Mocha backend tests, clean oxlint runs, and Playwright visual screenshots (`custom_fbx_retargeting.png`, `camera_framing_fixed.png`, `canvas_drag_reticle.png`).
 - **Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning**:
   - Added interactive `Camera Field of View` slider (`cameraFov`, 25° to 75°) under 3D Stage & Environment in Companion Studio, dynamically re-projecting the Three.js viewport canvas.
 - **Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes**:
@@ -136,6 +143,12 @@
   - Implemented vertical avatar landing bounce and damped spring settling physics (`landingOffsetY`) in `client/src/Character.jsx` during model loading and drops.
   - Added "Drop Shockwave & Landing Bounce" toggle control (`dropPhysicsEnabled`) in Companion Studio with real-time audio chimes and descriptive tooltips.
   - Successfully verified with Playwright visual screenshots, production Vite build, and 15/15 Mocha backend tests.
+
+- **Phase 67: Persistent Custom 3D Environments via IndexedDB (v0.55.0)**:
+  - Extended `client/src/CacheUtils.js` with `saveCustomEnvironment`, `getCustomEnvironment`, `getCustomEnvironmentMeta`, and `clearCustomEnvironment` to store `.glb` scenes and metadata in IndexedDB.
+  - Integrated custom environment caching and auto-restoration in `client/src/App.jsx` upon dropping or session startup.
+  - Added visual model metadata badge and one-click "Reset Room ✕" restore control in Companion Studio under "3D Stage & Environment".
+  - Verified with Playwright visual screenshots, production Vite build, and passing backend Mocha test suite.
 
 ## Next Steps
 - In-viewport camera snapshot / screenshot export button with resolution scaling.

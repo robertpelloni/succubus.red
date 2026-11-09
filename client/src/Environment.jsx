@@ -117,8 +117,8 @@ export default function Environment({ lightsOn = true, file = 'room.glb', soundE
       {gltfScene && (
         <primitive
           object={gltfScene}
-          position={[0, -0.5, 0]}
-          scale={[2, 2, 2]}
+          position={[0, -1.0, -1.5]}
+          scale={[1.2, 1.2, 1.2]}
           onPointerOver={handlePointerOver}
           onPointerOut={handlePointerOut}
         />
