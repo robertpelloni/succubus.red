@@ -60,4 +60,5 @@
 - [x] Persistent custom 3D environment loading and IndexedDB caching in Companion Studio.
 - [x] Viewport FBX animation drag-and-drop retargeting and default camera framing alignment.
 - [x] Real-time drag target zone reticle aura (avatar vs stage) and spoken companion reactions.
+- [x] Multi-asset drag batch ingestion HUD and animated holographic target reticle spinning.
 - [ ] In-viewport camera snapshot / screenshot export button with resolution scaling.

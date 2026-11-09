@@ -2194,6 +2194,9 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
           minDistance={0.5}
           maxDistance={5}
           maxPolarAngle={Math.PI / 1.5}
+          onInit={(controls) => {
+            controls.setLookAt(0, 1.35, 2.4, 0, 1.15, 0, false);
+          }}
         />
       </Canvas>
 

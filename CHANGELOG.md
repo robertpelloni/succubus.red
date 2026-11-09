@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [0.58.0] - Multi-Asset Drag Batch Ingestion HUD & Viewport Holographic Target Ring Spin
+### Added
+- Multi-Asset Batch Ingestion support: dragging and dropping multiple assets concurrently processes avatars (`.vrm`), animations (`.fbx`), 3D stage scenes (`.glb`), and vision images without discarding complementary files.
+- Dynamic multi-file drag queue badge (`.drop-overlay-batch-badge`) in the HUD overlay showing real-time item count (`📂 Batch Ingest: X Items Detected`).
+- `HolographicLandingReticle` component with dynamic counter-rotating rings and accelerated spin speed when hovering directly over the avatar target zone.
+- Added "Multi-Asset Batch Ingestion" toggle button in Companion Studio under 3D Stage & Environment with explanatory tooltips.
+- Refined CameraControls `onInit` hook framing the VRM avatar's face and upper torso directly on initial canvas mount.
+
 ## [0.57.0] - Real-Time Drag Target Zones & Spoken Companion Reactions
 ### Added
 - Real-time cursor distance tracking during viewport drag gestures detects target zones (`dragTargetZone`: 'avatar' vs 'stage').

@@ -62,4 +62,5 @@
 - [x] Phase 67: Persistent Custom 3D Environments via IndexedDB (v0.55.0).
 - [x] Phase 68: Dynamic Viewport FBX Retargeting & Camera Alignment (v0.56.0).
 - [x] Phase 69: Real-time Cursor Target Zone Detection & Spoken Companion Reactions (v0.57.0).
-- [ ] Phase 70: Viewport Screenshot & Camera Snapshot Tool.
+- [x] Phase 70: Multi-Asset Drag Batch Ingestion HUD & Viewport Holographic Target Ring Spin (v0.58.0).
+- [ ] Phase 71: Viewport Screenshot & Camera Snapshot Tool.
