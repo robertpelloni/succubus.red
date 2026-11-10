@@ -76,6 +76,7 @@ function App() {
   const [dropShockwave, setDropShockwave] = useState(false);
   const [dropPhysicsEnabled, setDropPhysicsEnabled] = useState(true);
   const [voiceDropReactions, setVoiceDropReactions] = useState(true);
+  const [stageBeaconEnabled, setStageBeaconEnabled] = useState(true);
   const [dragTargetZone, setDragTargetZone] = useState('avatar'); // 'avatar' (center) or 'stage' (outer)
   const [dropContextCue, setDropContextCue] = useState({ icon: '📥', title: 'Drop File Here', desc: 'Drop a .vrm avatar, .glb 3D environment, or an image to share' });
   const [toastMessage, setToastMessage] = useState(null);
@@ -103,8 +104,34 @@ function App() {
     } catch {}
   };
 
+  const playMaterializationChord = () => {
+    if (!soundEffectsEnabledRef.current) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = ambientAudioCtxRef.current || new AudioCtx();
+      ambientAudioCtxRef.current = ctx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      // Rising harmonic triad: C5 (523.25Hz), E5 (659.25Hz), G5 (783.99Hz)
+      const chordFrequencies = [523.25, 659.25, 783.99];
+      chordFrequencies.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.09, ctx.currentTime + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.08);
+        osc.stop(ctx.currentTime + idx * 0.08 + 0.35);
+      });
+    } catch {}
+  };
+
   const triggerDropFlash = () => {
-    playInteractionChime(660, 0.3);
+    playMaterializationChord();
     setDropFlash(true);
     if (dropPhysicsEnabled) {
       setDropShockwave(true);
@@ -1606,6 +1633,32 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Stage Landing Guidance Beacon
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Toggles the 3D illuminated holographic beacon light cylinder that descends onto the landing zone when dragging files onto the stage.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${stageBeaconEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setStageBeaconEnabled(true);
+                  playInteractionChime(750, 0.15);
+                }}
+              >
+                💡 Beacon Ray
+              </button>
+              <button
+                className={`chip-button ${!stageBeaconEnabled ? 'active' : ''}`}
+                onClick={() => setStageBeaconEnabled(false)}
+              >
+                Disabled
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               Drop Shockwave & Landing Bounce
               <div className="tooltip-container">?
                 <span className="tooltip-text">Enables dynamic 3D expanding ground shockwave ring and soft vertical avatar landing bounce physics when files are dropped.</span>
@@ -2123,6 +2176,19 @@ You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effe
           {/* Holographic 3D Stage Landing Zone Reticle when dragging files */}
           {isDraggingFile && (
             <group position={[0, 0.02, 0]}>
+              {/* Stage Guidance Beacon Ray Cylinder */}
+              {stageBeaconEnabled && (
+                <mesh position={[0, 2.0, 0]}>
+                  <cylinderGeometry args={[0.08, 0.45, 4.0, 32, 1, true]} />
+                  <meshBasicMaterial
+                    color={dragTargetZone === 'avatar' ? '#ff4081' : '#00e5ff'}
+                    transparent
+                    opacity={dragTargetZone === 'avatar' ? 0.45 : 0.25}
+                    side={2}
+                    wireframe={false}
+                  />
+                </mesh>
+              )}
               {/* Avatar Center Aura Ring */}
               <mesh rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.7, 0.88, 36]} />
