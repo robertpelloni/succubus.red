@@ -105,6 +105,34 @@ body {
   margin-bottom: 16px;
 }
 
+/* Viewport Performance & FPS HUD Badge */
+.viewport-fps-badge {
+  position: absolute;
+  top: 20px;
+  left: 170px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 20, 28, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 14px;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 30;
+  user-select: none;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.fps-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
 /* Viewport Microphone & Audio Activity HUD Badge */
 .viewport-mic-badge {
   position: absolute;
@@ -159,6 +187,213 @@ body {
   background: #00d2ff;
   border-radius: 2px;
   transition: height 0.1s ease;
+}
+
+/* Multimodal Attached Image Bar */
+.attached-image-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  background: rgba(18, 24, 38, 0.85);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 8px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.attached-image-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.attached-image-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.attached-image-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attached-image-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.attached-badge {
+  font-size: 10px;
+  background: rgba(0, 210, 255, 0.15);
+  color: #00d2ff;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.attached-image-remove {
+  background: transparent;
+  border: none;
+  color: #ff4081;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 4px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.attached-image-remove:hover {
+  transform: scale(1.2);
+}
+
+/* VRM Avatar Metadata Inspector Modal */
+.avatar-inspector-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.avatar-inspector-modal {
+  background: rgba(18, 22, 34, 0.95);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  border-radius: 16px;
+  width: 90%;
+  maxWidth: 480px;
+  padding: 24px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 210, 255, 0.2);
+}
+
+.avatar-inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.avatar-inspector-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #fff;
+}
+
+.avatar-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inspector-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.inspector-label {
+  color: #8899aa;
+  font-weight: 500;
+}
+
+.inspector-val {
+  color: #aaccff;
+  font-weight: 600;
+  text-align: right;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Real-time Asset Ingestion Spinner Overlay */
+.asset-ingestion-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: rgba(18, 24, 38, 0.9);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  padding: 24px 36px;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 210, 255, 0.25);
+  z-index: 92;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.ingestion-spinner-circle {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(0, 210, 255, 0.2);
+  border-top-color: #00d2ff;
+  border-radius: 50%;
+  animation: spin-ingest 0.8s linear infinite;
+}
+
+@keyframes spin-ingest {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ingestion-spinner-text {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Fullscreen Success Drop Ripple Flash Overlay */
+.drop-success-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 95;
+  background: radial-gradient(circle, rgba(0, 210, 255, 0.3) 0%, rgba(255, 64, 129, 0.15) 50%, transparent 80%);
+  animation: flash-ripple 0.7s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes flash-ripple {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
 }
 
 /* Full Viewport Drag and Drop Overlay */

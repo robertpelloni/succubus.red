@@ -68,6 +68,8 @@ export async function fetchAndCache(url) {
 
 export const CUSTOM_AVATAR_KEY = 'custom_avatar.vrm';
 export const CUSTOM_AVATAR_META_KEY = 'custom_avatar_meta.json';
+export const CUSTOM_ENV_KEY = 'custom_environment.glb';
+export const CUSTOM_ENV_META_KEY = 'custom_environment_meta.json';
 
 /**
  * Validates glTF/VRM binary magic header ("glTF" = 0x46546C67 in little-endian).
@@ -143,6 +145,66 @@ export async function clearCustomAvatar() {
     const store = transaction.objectStore(STORE_NAME);
     store.delete(CUSTOM_AVATAR_KEY);
     store.delete(CUSTOM_AVATAR_META_KEY);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export async function saveCustomEnvironment(fileOrBlob) {
+  await saveToCache(CUSTOM_ENV_KEY, fileOrBlob);
+
+  const meta = {
+    name: fileOrBlob.name || 'custom_environment.glb',
+    size: fileOrBlob.size || 0,
+    type: fileOrBlob.type || 'model/gltf-binary',
+    lastModified: fileOrBlob.lastModified || Date.now()
+  };
+
+  try {
+    const metaBlob = new Blob([JSON.stringify(meta)], { type: 'application/json' });
+    await saveToCache(CUSTOM_ENV_META_KEY, metaBlob);
+  } catch (err) {
+    console.warn("Failed to persist environment metadata to IndexedDB:", err);
+  }
+
+  return {
+    url: URL.createObjectURL(fileOrBlob),
+    meta
+  };
+}
+
+export async function getCustomEnvironmentMeta() {
+  try {
+    const cachedBlob = await getFromCache(CUSTOM_ENV_META_KEY);
+    if (cachedBlob) {
+      const text = await cachedBlob.text();
+      return JSON.parse(text);
+    }
+  } catch (err) {
+    console.warn("Failed to load custom environment metadata from IndexedDB:", err);
+  }
+  return null;
+}
+
+export async function getCustomEnvironment() {
+  try {
+    const cachedBlob = await getFromCache(CUSTOM_ENV_KEY);
+    if (cachedBlob) {
+      return URL.createObjectURL(cachedBlob);
+    }
+  } catch (err) {
+    console.warn("Failed to load custom environment from IndexedDB:", err);
+  }
+  return null;
+}
+
+export async function clearCustomEnvironment() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    store.delete(CUSTOM_ENV_KEY);
+    store.delete(CUSTOM_ENV_META_KEY);
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);
   });

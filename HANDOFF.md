@@ -1,6 +1,80 @@
-# Session Handoff - v0.36.0
+# Session Handoff - v0.59.0
 
 ## Completed Work in this Session
+- **Phase 71: 3D Stage Landing Guidance Beacon & Rising Harmonic Audio Materialization (v0.59.0)**:
+  - Enhanced `HolographicLandingReticle` in `client/src/App.jsx` with an animated vertical cylindrical beacon light ray (`cylinderGeometry args={[0.08, 0.45, 4.0, 32, 1, true]}`) that descends onto the 3D stage landing zone with zone-responsive color (`#ff4081` vs `#00e5ff`) and opacity.
+  - Added `playMaterializationChord()` synthesizing a rising three-tone harmonic chime sequence (523.25Hz C5, 659.25Hz E5, 783.99Hz G5) via Web Audio API triangle wave oscillators upon asset drop mounting.
+  - Added "Stage Landing Guidance Beacon" toggle button (`stageBeaconEnabled`) with explanatory tooltips in Companion Studio under 3D Stage & Environment.
+  - Repaired drop ingestion logic with explicit asset descriptions (`ingestedAssets.push(...)`), voice drop speech reactions, and informative batch toast alerts.
+  - Fully verified with 15/15 passing Mocha backend tests, clean oxlint runs (0 errors), successful production Vite build, and Playwright visual capture (`landing_beacon_studio.png`).
+- **Phase 70: Multi-Asset Drag Batch Ingestion HUD & Viewport Holographic Target Ring Spin (v0.58.0)**:
+  - Enabled multi-asset concurrent drag-and-drop batch ingestion in `client/src/App.jsx`: dropping bundles of files concurrently materializes avatars (`.vrm`), retargets skeletal animations (`.fbx`), loads 3D stage environments (`.glb`/`.gltf`), and attaches multimodal images without dropping complementary files.
+  - Implemented dynamic item counter badge (`.drop-overlay-batch-badge`) in `App.css` and `App.jsx`, displaying "📂 Batch Ingest: X Items Detected" when multiple assets are hovered over the viewport.
+  - Created animated `HolographicLandingReticle` in React Three Fiber with counter-rotating inner and outer rings that spin smoothly via `useFrame` and accelerate by 2.5x when the cursor enters the avatar landing zone.
+  - Added "Multi-Asset Batch Ingestion" toggle button in Companion Studio under 3D Stage & Environment with detailed tooltip guidance.
+  - Refined `CameraControls` initialization (`onInit={(controls) => controls.setLookAt(0, 1.35, 2.4, 0, 1.15, 0, false)}`) to ensure immediate centering on the avatar's upper body upon canvas mount.
+  - Fully verified with 15/15 passing Mocha backend tests, clean oxlint runs, and Playwright visual screenshots (`dashboard_batch_ingestion_section.png`, `drag_multi_batch_hud.png`).
+- **Phase 69: Real-time Cursor Target Zone Detection & Spoken Companion Reactions (v0.57.0)**:
+  - Added real-time screen-space cursor tracking during viewport file drags in `client/src/App.jsx`, dynamically calculating normalized cursor distance from center (`dist < 0.45 ? 'avatar' : 'stage'`) to establish `dragTargetZone`.
+  - Dynamically altered the 3D stage floor holographic reticle: highlighting an inner avatar aura ring (`ringGeometry args={[0.7, 0.88, 36]}` with `#ff4081` at 0.9 opacity) when near the avatar, or highlighting the outer perimeter guide (`ringGeometry args={[1.45, 1.62, 48]}` with `#00e5ff` at 0.85 opacity) when dragging across the wider stage.
+  - Implemented contextual AI companion spoken vocal reactions upon file drops (`voiceDropReactions`):
+    - `.vrm` avatar drops: `"I love this avatar! It looks amazing on stage."`
+    - `.fbx` animation drops: `"Retargeting new skeletal animation!"`
+    - `.glb`/`.gltf` stage drops: `"Welcome to our new surroundings! Custom stage environment loaded."`
+  - Added a dedicated "Voice Drop Reactions" toggle button ("🗣️ Spoken Reactions" / "Silent") in Companion Studio under Voice & Audio Studio with informative tooltip guidance.
+  - Verified with 15/15 passing Mocha backend tests, clean oxlint runs, and Playwright visual screenshots (`drag_reticle_avatar_aura.png`, `drag_reticle_stage_guide.png`, `dashboard_voice_drop_section.png`).
+- **Phase 68: Viewport FBX Animation Drag-and-Drop Retargeting & Default Camera Alignment (v0.56.0)**:
+  - Enabled drag-and-drop ingestion of Mixamo `.fbx` animation clips in `client/src/App.jsx` and `client/src/Character.jsx`.
+  - Dynamically parsed and retargeted dropped `.fbx` files using `MixamoVRMRetargeting.js` (`loadMixamoAnimation`), binding the new clip to the active character animation mixer actions and smoothly crossfading into it without re-materializing the character.
+  - Added dedicated custom animation chip buttons and badge in Companion Studio under 'AI Persona & Interaction' with a "Clear ✕" reset action reverting to default idle animation.
+  - Upgraded stage drag landing guide with a concentric multi-ring holographic reticle on the floor plane (`y = 0.02`), while prioritizing `.vrm` avatars first, `.fbx` animations second, `.glb`/`.gltf` stages third, and images fourth.
+  - Fixed default camera alignment via `CameraControls` (`onInit={(controls) => controls.setLookAt(0, 1.35, 2.4, 0, 1.15, 0, false)}`), ensuring the avatar's face and upper torso are immediately centered upon canvas mount rather than looking at floor level.
+  - Fully verified with 15/15 passing Mocha backend tests, clean oxlint runs, and Playwright visual screenshots (`custom_fbx_retargeting.png`, `camera_framing_fixed.png`, `canvas_drag_reticle.png`).
+- **Phase 63: Custom Camera FOV Zoom & Viewport Perspective Fine-Tuning**:
+  - Added interactive `Camera Field of View` slider (`cameraFov`, 25° to 75°) under 3D Stage & Environment in Companion Studio, dynamically re-projecting the Three.js viewport canvas.
+- **Phase 62: Animation Crossfade Duration Slider & Drag Rejection Chimes**:
+  - Added a real-time `Animation Crossfade` slider (0.1s to 1.0s) under AI Persona & Interaction in Companion Studio, dynamically configuring `crossfadeDuration` during Mixamo action blending in `Character.jsx`.
+  - Implemented low-frequency rejection audio feedback (`playInteractionChime(220, 0.25)`) when unsupported file types are dropped onto the viewport.
+- **Phase 61: Theatrical Drag Lighting Pulse & Dual-Ring Stage Reticle**:
+  - Upgraded the 3D stage landing zone to a concentric dual-ring holographic reticle (cyan core and magenta boundary) on the stage floor in `App.jsx`.
+  - Dynamically pulsed directional key light intensity to 2.8x with atmospheric tinting during active file drags across the viewport, creating theatrical lighting anticipation.
+- **Phase 60: Holographic Landing Zone & Multi-File Drag Prioritization**:
+  - Rendered 3D holographic landing zone reticle on the stage floor (`y = 0.02`) when dragging files over the viewport in `App.jsx`, providing visual spatial landing feedback.
+  - Upgraded drag ingestion handler to gracefully handle multi-file drops with priority hierarchy: `.vrm` avatars first, `.glb` environments second, and images third.
+- **Phase 59: Interactive VRM Avatar Metadata Inspector Modal**:
+  - Implemented `.avatar-inspector-modal` with glassmorphic modal overlay in `App.jsx` and `App.css`, detailing avatar model name, binary filesize (bytes + formatted MB), glTF header signature, IndexedDB caching location, spring bone physics status, and skeletal retargeting state.
+  - Linked to custom avatar model badges via dedicated "Inspect 🔍" trigger in Companion Studio.
+- **Phase 58: Spatial 3D Positional Audio for Environment Interactions**:
+  - Implemented real-time binaural spatial audio in `Environment.jsx` using the Web Audio API's `StereoPannerNode`.
+  - Maps 3D hit point coordinates along the X-axis (-1.0 left to +1.0 right) into stereo panned resonance chimes on hover, respecting the user's global sound effects toggle.
+- **Phase 57: Real-time Asset Ingestion Spinner Overlay**:
+  - Added `.asset-ingestion-spinner` with animated cyan rotating spinner and translucent glassmorphism backdrop in `App.jsx` and `App.css`, providing real-time visual progress during asynchronous VRM and GLB model parsing and IndexedDB caching.
+- **Phase 56: Contextual Drag-and-Drop HUD Detection & Dynamic Cues**:
+  - Implemented dynamic MIME-type detection during drag events in `App.jsx`, contextually styling and updating the visual HUD overlay to "Drop Image for AI Vision" (with camera icon) or "Materialize Avatar or Stage" (with 3D mask icon).
+- **Phase 55: Smooth Avatar Materialization & Scale Dissolve**:
+  - Implemented dynamic avatar scale interpolation in `Character.jsx`: smoothly ramps root scale from 0 to 1 over ~400ms (`mountOpacity`) upon mounting new or dropped avatars, eliminating visual popping and snap glitches.
+- **Phase 54: UI Sound Effects & Procedural Chimes**:
+  - Implemented synthetic Web Audio interactive feedback chimes (`playInteractionChime`) in `App.jsx` triggered on avatar touches, asset drops, and action buttons.
+  - Added UI interaction sound toggle button ("Sound On" / "Muted") under Voice & Audio Studio in Companion Studio with full tooltip guidance.
+- **Phase 53: Atmospheric Procedural Soundscapes**:
+  - Implemented real-time procedural background soundscape synthesizer in `App.jsx` using the Web Audio API without heavy static asset overhead.
+  - Offers detuned sawtooth-and-sine Cyber Drone filtering and pink noise rain simulation with dedicated volume gain control under Voice & Audio Studio.
+- **Phase 52: Automatic VRM Ground Alignment & Scale Normalization**:
+  - Implemented automated bounding box analysis (`THREE.Box3().setFromObject`) on newly loaded VRM models in `Character.jsx`.
+  - Automatically offsets `vrm.scene.position.y` so custom avatar feet align flush with the stage floor (`y = 0`) regardless of model origin disparities.
+  - Automatically normalizes outlier avatar scales so avatars consistently fit within the stage.
+- **Phase 51: Visual Drop Flash Ripple & Environment Camera Showcase**:
+  - Implemented `.drop-success-flash` fullscreen radial ripple animation in `App.jsx` and `App.css` triggered on successful drop of `.vrm`, `.glb`, or image files.
+  - Added programmatic camera showcase transition (`setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true)`) when dropping new 3D environment models.
+- **UI Category Harmonization & Component Hygiene (v0.38.1)**:
+  - Cleaned up category grouping in `App.jsx`: relocated all 3D lighting, bloom, shadow, and color controls directly inside "3D Stage & Environment".
+  - Moved `isHovered` state hook declaration to the top of `Character.jsx` adhering to idiomatic React hook order.
+  - Removed stray test script `client/screenshot.cjs` and added `*.db*` to `.gitignore`.
+- **Phase 50: Celebratory Avatar Materialization Stage Burst**:
+  - Implemented automatic stage celebratory sequence upon dropping and validating new VRM avatar models in `App.jsx`, triggering wave animations, joy blendshape easing, sparkle particle bursts, and welcoming vocal reactions.
+- **Phase 49: Multimodal Drag-and-Drop Auto-Prompt & Attachment Badges**:
+  - Enhanced multimodal image attachments in `App.jsx` with automatic analysis prompt pre-filling ("What do you see in this picture?") upon drop or upload.
+  - Added structured metadata badges for image format and file size in `App.css`.
 - **Phase 48: Avatar Hover Cursor & Attentive Gaze Tracking**:
   - Added pointer hover states (`onPointerOver`/`onPointerOut`) to the VRM avatar scene group in `Character.jsx` to dynamically update document cursor style to `pointer`.
   - Dynamically scaled gaze tracking responsiveness factor (`2.4x`) and brought gaze depth closer (`z=1.6`) when hovering over the companion.
@@ -54,6 +128,10 @@
 - **Phase 34: Facial Emotion Blendshape Easing & Transition Smoothing**:
   - Implemented procedural linear interpolation (lerp) for VRM expression blendshapes in `client/src/Character.jsx`.
   - Replaced abrupt blendshape resets with delta-timed exponential smoothing (`THREE.MathUtils.lerp(currentWeight, targetWeight, Math.min(1.0, delta * 8.0))`) across joy, anger, sorrow, relaxed, and surprised expressions.
+- **Phase 64 (v0.52.0): Real-Time WebGL Performance Statistics & Frame Rate Monitor**:
+  - Implemented rolling frame rate (FPS) calculation in `client/src/Character.jsx` using `useFrame`, computing instantaneous and smoothed FPS across rolling delta time windows.
+  - Designed floating glassmorphism HUD badge (`.viewport-fps-badge`) in the top-right canvas viewport displaying live FPS with a dynamic color-coded indicator dot (green >=50fps, orange >=30fps, red <30fps).
+  - Added dedicated toggle button under 3D Stage & Environment in `Companion Studio` with tooltip guidance and persistent state handling.
 - **Phase 33: VRM Spring Bone Physics & Backup Export/Import**:
   - Implemented dynamic VRM Spring Bone physics sliders (stiffness and damping/drag force) in `Companion Studio` under 3D Avatar Model.
   - Wired real-time spring bone joint adjustments in `client/src/Character.jsx` via `vrm.springBoneManager.joints`, enabling dynamic hair and clothing elasticity tuning without animation interruption.
@@ -76,6 +154,24 @@
   - Bumped `VERSION.md` and `package.json` to `0.30.0`.
   - Synchronized `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, `MEMORY.md`, `DEPLOY.md`, and `HANDOFF.md`.
 
+- **Phase 65: Atmospheric Particle Simulation Presets (v0.53.0)**:
+  - Extended particle effects beyond standard sparkles to support 4 selectable atmospheric presets: `none`, `sparkle` (100 particles, golden yellow #ffd166), `fireflies` (45 floating particles, glowing lime #aaff44 with gentle bobbing motion), `snow` (160 particles, icy white #e0f7fa with drifting vertical descent), and `stardust` (220 particles, luminous cyan #70d6ff with ambient drift).
+  - Designed responsive preset selector button grid in Companion Studio under "3D Stage & Environment" with real-time active highlighting and informative tooltips.
+  - Enhanced Companion system prompt to guide LLM particle tags (`[effect:sparkle]`, `[effect:fireflies]`, `[effect:snow]`, `[effect:stardust]`, `[effect:none]`).
+  - Successfully verified via visual Playwright screenshots, production Vite build, and 15/15 passing Mocha test suite.
+
+- **Phase 66: Drop Impact Ground Shockwave & Avatar Landing Physics (v0.54.0)**:
+  - Added 3D expanding ground shockwave ring (`dropShockwave`) rendered dynamically on the stage floor plane (`y = 0.03`) upon successful VRM/GLB drops via `triggerDropFlash` in `client/src/App.jsx`.
+  - Implemented vertical avatar landing bounce and damped spring settling physics (`landingOffsetY`) in `client/src/Character.jsx` during model loading and drops.
+  - Added "Drop Shockwave & Landing Bounce" toggle control (`dropPhysicsEnabled`) in Companion Studio with real-time audio chimes and descriptive tooltips.
+  - Successfully verified with Playwright visual screenshots, production Vite build, and 15/15 Mocha backend tests.
+
+- **Phase 67: Persistent Custom 3D Environments via IndexedDB (v0.55.0)**:
+  - Extended `client/src/CacheUtils.js` with `saveCustomEnvironment`, `getCustomEnvironment`, `getCustomEnvironmentMeta`, and `clearCustomEnvironment` to store `.glb` scenes and metadata in IndexedDB.
+  - Integrated custom environment caching and auto-restoration in `client/src/App.jsx` upon dropping or session startup.
+  - Added visual model metadata badge and one-click "Reset Room ✕" restore control in Companion Studio under "3D Stage & Environment".
+  - Verified with Playwright visual screenshots, production Vite build, and passing backend Mocha test suite.
+
 ## Next Steps
-- Dynamic ambient audio generator / background lo-fi soundscapes for immersive companion environments.
+- In-viewport camera snapshot / screenshot export button with resolution scaling.
 - Directional light orbital pitch and yaw angle position controls in Companion Studio.

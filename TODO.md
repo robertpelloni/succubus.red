@@ -39,4 +39,27 @@
 - [x] Interactive avatar touch/click reaction events and procedural animation responses.
 - [x] Interactive click-to-test toggle directly on the in-viewport microphone HUD badge.
 - [x] Avatar hover cursor styling and attentive gaze tracking responsiveness.
-- [ ] Atmospheric audio / spatial ambient soundscape generator.
+- [x] Multimodal drag-and-drop auto-prompt population and attachment metadata badges.
+- [x] Celebratory avatar materialization stage burst and greeting response.
+- [x] Fullscreen visual drop flash ripple and environment camera showcase.
+- [x] Automatic VRM bounding box ground alignment and scale normalization.
+- [x] Procedural atmospheric soundscape synthesizer (Cyber Drone and Warm Rain) with dynamic volume slider.
+- [x] UI sound effects and procedural interaction chimes with toggle button.
+- [x] Smooth avatar materialization scaling transition and opacity dissolve.
+- [x] Contextual drag-and-drop HUD detection and dynamic cue labels.
+- [x] Real-time asset ingestion spinner and progress feedback during 3D model parsing.
+- [x] Spatial 3D positional audio for environment hover interactions via StereoPannerNode.
+- [x] Interactive VRM avatar metadata inspector modal with spring bone and retargeting metrics.
+- [x] 3D holographic landing zone reticle and multi-file drag prioritization.
+- [x] Theatrical drag lighting pulse and dual-ring stage reticle.
+- [x] Multi-animation crossfade speed customization slider in Companion Studio and drag rejection audio chimes.
+- [x] Custom user-defined camera FOV zoom slider in Companion Studio.
+- [x] Real-time FPS and WebGL render statistics toggle overlay.
+- [x] Atmospheric particle simulation presets (Sparkle, Fireflies, Snow, Stardust) in Companion Studio.
+- [x] Drop impact ground shockwave ring and avatar landing bounce physics in Companion Studio.
+- [x] Persistent custom 3D environment loading and IndexedDB caching in Companion Studio.
+- [x] Viewport FBX animation drag-and-drop retargeting and default camera framing alignment.
+- [x] Real-time drag target zone reticle aura (avatar vs stage) and spoken companion reactions.
+- [x] Multi-asset drag batch ingestion HUD and animated holographic target reticle spinning.
+- [x] 3D holographic guidance beacon ray pillar and Web Audio rising harmonic materialization chords.
+- [ ] In-viewport camera snapshot / screenshot export button with resolution scaling.

@@ -9,23 +9,35 @@ import { loadMixamoAnimation } from './MixamoVRMRetargeting';
 export default function Character({
   url = '/avatar.vrm',
   currentAnimation = 'idle',
+  customAnimationAsset = null,
   emotion = null,
   isSpeaking = false,
   visemes = null,
   springBoneStiffness = 1.0,
   springBoneDragForce = 0.4,
+  crossfadeDuration = 0.25,
+  landingPhysicsEnabled = true,
+  onFpsUpdate = null,
   onAvatarPointerDown = null
 }) {
   const group = useRef();
   const [vrm, setVrm] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const mountScaleRef = useRef(0.0);
+  const landingOffsetYRef = useRef(landingPhysicsEnabled ? 0.35 : 0.0);
   const activeVrmRef = useRef(null);
   const activeMixerRef = useRef(null);
   const [mixer, setMixer] = useState(null);
   const [actions, setActions] = useState({});
 
   useEffect(() => {
-    const loader = new GLTFLoader();
-    loader.register((parser) => new VRMLoaderPlugin(parser));
+    let isCancelled = false;
+    mountScaleRef.current = 0.0;
+    landingOffsetYRef.current = landingPhysicsEnabled ? 0.35 : 0.0;
+    if (group.current) {
+      group.current.scale.set(0, 0, 0);
+      group.current.position.y = landingOffsetYRef.current;
+    }
 
     loader.load(
       '/avatar.vrm',
@@ -41,10 +53,27 @@ export default function Character({
         const newMixer = new THREE.AnimationMixer(loadedVrm.scene);
         setMixer(newMixer);
 
-        const loadAnim = async (url, name) => {
-          try {
-            const fbxLoader = new FBXLoader();
-            const animGltf = await fbxLoader.loadAsync(url);
+            // Compute bounding box to align feet flush with stage floor
+            const bbox = new THREE.Box3().setFromObject(loadedVrm.scene);
+            const modelHeight = bbox.max.y - bbox.min.y;
+
+            // Normalize outlier scales if model is abnormally small or oversized
+            if (modelHeight > 0.1 && (modelHeight < 0.8 || modelHeight > 2.5)) {
+              const desiredHeight = 1.6;
+              const scaleFactor = desiredHeight / modelHeight;
+              loadedVrm.scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
+              bbox.setFromObject(loadedVrm.scene);
+            }
+
+            // Align ground contact point to y = 0
+            if (bbox.min.y !== 0) {
+              loadedVrm.scene.position.y -= bbox.min.y;
+            }
+
+            // Set lookAt target for mouse tracking
+            if (loadedVrm.lookAt) {
+              loadedVrm.lookAt.target = lookAtTargetRef.current;
+            }
 
             setVrm(loadedVrm);
             activeVrmRef.current = loadedVrm;
@@ -105,21 +134,94 @@ export default function Character({
         }
       }
     };
-  }, [url]);
+  }, [url, landingPhysicsEnabled]);
 
   const currentActionRef = useRef(null);
   const previousAnimationRef = useRef(null);
+  const fpsFrameCountRef = useRef(0);
+  const fpsLastTimeRef = useRef(0);
+
+  // Dynamically load, retarget, and register custom dropped FBX animation
+  useEffect(() => {
+    if (!vrm || !mixer || !customAnimationAsset) return;
+
+    let isDisposed = false;
+    const loadCustomFbx = async () => {
+      try {
+        const { url: fbxUrl, name } = customAnimationAsset;
+        const fbxLoader = new FBXLoader();
+        const animGltf = await fbxLoader.loadAsync(fbxUrl);
+        if (isDisposed) return;
+
+        const clip = loadMixamoAnimation(animGltf, vrm);
+        if (clip) {
+          const action = mixer.clipAction(clip);
+          setActions((prev) => ({ ...prev, [name]: action }));
+
+          // Automatically switch and crossfade into the new dropped animation
+          if (currentActionRef.current) {
+            currentActionRef.current.fadeOut(crossfadeDuration);
+          }
+          action.reset().fadeIn(crossfadeDuration).play();
+          currentActionRef.current = action;
+          previousAnimationRef.current = name;
+        }
+      } catch (err) {
+        console.error("Failed to retarget custom FBX animation:", err);
+      }
+    };
+
+    loadCustomFbx();
+    return () => {
+      isDisposed = true;
+    };
+  }, [customAnimationAsset, vrm, mixer, crossfadeDuration]);
 
   useEffect(() => {
     if (vrm && actions[currentAnimation]) {
-      Object.values(actions).forEach((action) => action.fadeOut(0.2));
-      actions[currentAnimation].reset().fadeIn(0.2).play();
+      // Prevent resetting the animation if we are already playing it
+      if (previousAnimationRef.current === currentAnimation && currentActionRef.current) {
+        return;
+      }
+
+      const nextAction = actions[currentAnimation];
+
+      if (currentActionRef.current && currentActionRef.current !== nextAction) {
+        currentActionRef.current.fadeOut(crossfadeDuration);
+      }
+
+      nextAction.reset().fadeIn(crossfadeDuration).play();
+      currentActionRef.current = nextAction;
+      previousAnimationRef.current = currentAnimation;
     }
-  }, [currentAnimation, actions, vrm]);
+  }, [currentAnimation, actions, vrm, crossfadeDuration]);
 
   useFrame((state, delta) => {
+    // Rolling FPS calculation
+    fpsFrameCountRef.current += 1;
+    const now = state.clock.elapsedTime;
+    if (now - fpsLastTimeRef.current >= 0.5) {
+      const currentFps = Math.round((fpsFrameCountRef.current / (now - fpsLastTimeRef.current)));
+      if (onFpsUpdate) onFpsUpdate(currentFps);
+      fpsFrameCountRef.current = 0;
+      fpsLastTimeRef.current = now;
+    }
+
     if (mixer) mixer.update(delta);
-    if (vrm) {
+    if (vrm && group.current) {
+      // Smooth materialization scale-in directly on Three.js transform without re-rendering React
+      if (mountScaleRef.current < 1.0) {
+        mountScaleRef.current = Math.min(1.0, mountScaleRef.current + delta * 2.5);
+        const s = mountScaleRef.current;
+        group.current.scale.set(s, s, s);
+      }
+
+      // Smooth landing physics settling toward y = 0 directly on transform
+      if (landingOffsetYRef.current > 0.001) {
+        landingOffsetYRef.current = Math.max(0.0, landingOffsetYRef.current - landingOffsetYRef.current * delta * 6.0);
+        group.current.position.y = landingOffsetYRef.current;
+      }
+
       // Map mouse coordinates to 3D space for the lookAt target
       // Camera is usually at z=3, character at z=0.
       // We scale the mouse coordinates to make the head move naturally.
@@ -171,8 +273,6 @@ export default function Character({
     }
   });
 
-  const [isHovered, setIsHovered] = useState(false);
-
   const handlePointerDown = (e) => {
     e.stopPropagation();
     if (onAvatarPointerDown) {
@@ -195,7 +295,9 @@ export default function Character({
   return (
     <group
       ref={group}
+      position={[0, landingPhysicsEnabled ? 0.35 : 0.0, 0]}
       rotation={[0, Math.PI, 0]}
+      scale={[0, 0, 0]}
       onPointerDown={handlePointerDown}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}

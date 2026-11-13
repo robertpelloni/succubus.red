@@ -5,13 +5,38 @@ import Character from './Character';
 import Environment from './Environment';
 import { LipSyncAnalyser } from './LipSyncAnalyser';
 import { StorageService } from './StorageService';
-import { getCustomAvatar, getCustomAvatarMeta, saveCustomAvatar, clearCustomAvatar, validateVRMBinary } from './CacheUtils';
+import {
+  getCustomAvatar,
+  getCustomAvatarMeta,
+  saveCustomAvatar,
+  clearCustomAvatar,
+  validateVRMBinary,
+  saveCustomEnvironment,
+  getCustomEnvironment,
+  getCustomEnvironmentMeta,
+  clearCustomEnvironment
+} from './CacheUtils';
 import { KokoroTTS } from "kokoro-js";
 import './App.css';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [attachedImage, setAttachedImage] = useState(null);
+  const [attachedImageMeta, setAttachedImageMeta] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('');
+  const [activeUser, setActiveUser] = useState('');
+  const backupFileInputRef = useRef(null);
+
+  // Dashboard State & LocalStorage initialization
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+
+  // High-Value Controls & 3D Avatar State
   const [currentAnimation, setCurrentAnimation] = useState('idle');
   const [manualEmotion, setManualEmotion] = useState('none');
   const [apiKey, setApiKey] = useState('');
@@ -22,19 +47,97 @@ function App() {
   const [ambientLightScale, setAmbientLightScale] = useState(1.0);
   const [lightColor, setLightColor] = useState('#ffffff');
   const [shadowMapResolution, setShadowMapResolution] = useState(1024);
+  const [cameraFov, setCameraFov] = useState(45);
+  const [showPerformanceHud, setShowPerformanceHud] = useState(false);
+  const [fps, setFps] = useState(60);
 
   // Custom Avatar state
   const [avatarUrl, setAvatarUrl] = useState('/avatar.vrm');
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
   const [customAvatarMeta, setCustomAvatarMeta] = useState(null);
+  const [showAvatarInspector, setShowAvatarInspector] = useState(false);
   const [avatarMode, setAvatarMode] = useState('default'); // 'default' or 'custom'
   const [springStiffness, setSpringStiffness] = useState(1.0);
   const [springDragForce, setSpringDragForce] = useState(0.4);
+  const [crossfadeDuration, setCrossfadeDuration] = useState(0.25);
+
+  // Custom 3D Environment state
+  const [hasCustomEnv, setHasCustomEnv] = useState(false);
+  const [customEnvMeta, setCustomEnvMeta] = useState(null);
+
+  // Custom Animation (.fbx) state
+  const [customAnimationAsset, setCustomAnimationAsset] = useState(null);
 
   // Drag-and-Drop and Toast State
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isIngestingAsset, setIsIngestingAsset] = useState(false);
+  const [dropFlash, setDropFlash] = useState(false);
+  const [dropShockwave, setDropShockwave] = useState(false);
+  const [dropPhysicsEnabled, setDropPhysicsEnabled] = useState(true);
+  const [voiceDropReactions, setVoiceDropReactions] = useState(true);
+  const [stageBeaconEnabled, setStageBeaconEnabled] = useState(true);
+  const [dragTargetZone, setDragTargetZone] = useState('avatar'); // 'avatar' (center) or 'stage' (outer)
+  const [dropContextCue, setDropContextCue] = useState({ icon: '📥', title: 'Drop File Here', desc: 'Drop a .vrm avatar, .glb 3D environment, or an image to share' });
   const [toastMessage, setToastMessage] = useState(null);
   const dragCounterRef = useRef(0);
+
+  const playInteractionChime = (frequency = 520, duration = 0.15) => {
+    if (!soundEffectsEnabledRef.current) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = ambientAudioCtxRef.current || new AudioCtx();
+      ambientAudioCtxRef.current = ctx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch {}
+  };
+
+  const playMaterializationChord = () => {
+    if (!soundEffectsEnabledRef.current) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = ambientAudioCtxRef.current || new AudioCtx();
+      ambientAudioCtxRef.current = ctx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      // Rising harmonic triad: C5 (523.25Hz), E5 (659.25Hz), G5 (783.99Hz)
+      const chordFrequencies = [523.25, 659.25, 783.99];
+      chordFrequencies.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.09, ctx.currentTime + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.08);
+        osc.stop(ctx.currentTime + idx * 0.08 + 0.35);
+      });
+    } catch {}
+  };
+
+  const triggerDropFlash = () => {
+    playMaterializationChord();
+    setDropFlash(true);
+    if (dropPhysicsEnabled) {
+      setDropShockwave(true);
+      setTimeout(() => setDropShockwave(false), 1200);
+    }
+    setTimeout(() => setDropFlash(false), 700);
+  };
 
   const showToast = (msg, duration = 3000) => {
     setToastMessage(msg);
@@ -44,6 +147,7 @@ function App() {
   };
 
   const handleAvatarTouch = () => {
+    playInteractionChime(880, 0.2);
     // Interactive avatar touch reaction
     const emotions = ['joy', 'fun', 'surprised'];
     const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
@@ -69,7 +173,7 @@ Available animations: idle, wave, sitting, thinking.
 Available emotions: joy, angry, sorrow, fun, surprised.
 You are standing in a modern, neon-lit virtual room on a sleek stage.
 You can control the room lights using [lights:on] or [lights:off] tags.
-You can spawn visual particles using [effect:sparkle] and clear them with [effect:none].`;
+You can spawn visual particles using [effect:sparkle], [effect:fireflies], [effect:snow], [effect:stardust], and clear them with [effect:none].`;
 
   const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt);
 
@@ -82,6 +186,24 @@ You can spawn visual particles using [effect:sparkle] and clear them with [effec
 
   const [elevenLabsApiKey, setElevenLabsApiKey] = useState('');
   const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('');
+
+  // Atmospheric Soundscape State
+  const [ambientSoundscape, setAmbientSoundscape] = useState('none'); // 'none', 'cyber', 'rain'
+  const [ambientVolume, setAmbientVolume] = useState(0.3);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
+  const ambientVolumeRef = useRef(ambientVolume);
+  const soundEffectsEnabledRef = useRef(soundEffectsEnabled);
+  const ambientAudioCtxRef = useRef(null);
+  const ambientGainNodeRef = useRef(null);
+  const ambientSourceNodesRef = useRef([]);
+
+  useEffect(() => {
+    soundEffectsEnabledRef.current = soundEffectsEnabled;
+  }, [soundEffectsEnabled]);
+
+  useEffect(() => {
+    ambientVolumeRef.current = ambientVolume;
+  }, [ambientVolume]);
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [emotion, setEmotion] = useState(null);
@@ -102,6 +224,109 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
   const [errorMsg, setErrorMsg] = useState(null);
 
   const endOfMessagesRef = useRef(null);
+
+  // Procedural Web Audio Soundscape Synthesizer
+  useEffect(() => {
+    // Stop any existing soundscape nodes
+    ambientSourceNodesRef.current.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch {}
+    });
+    ambientSourceNodesRef.current = [];
+
+    if (ambientSoundscape === 'none') {
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!ambientAudioCtxRef.current) {
+        ambientAudioCtxRef.current = new AudioCtx();
+      }
+      const ctx = ambientAudioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      if (!ambientGainNodeRef.current) {
+        ambientGainNodeRef.current = ctx.createGain();
+        ambientGainNodeRef.current.connect(ctx.destination);
+      }
+      ambientGainNodeRef.current.gain.setValueAtTime(ambientVolumeRef.current, ctx.currentTime);
+
+      if (ambientSoundscape === 'cyber') {
+        // Procedural Cyber Drone (Dual detuned sine oscillators + lowpass filter)
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(65.41, ctx.currentTime); // C2 note
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(65.8, ctx.currentTime); // Slightly detuned
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(280, ctx.currentTime);
+        filter.Q.setValueAtTime(4.0, ctx.currentTime);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(ambientGainNodeRef.current);
+
+        osc1.start();
+        osc2.start();
+        ambientSourceNodesRef.current = [osc1, osc2];
+      } else if (ambientSoundscape === 'rain') {
+        // Procedural Pink Noise / Rain Simulation
+        const bufferSize = ctx.sampleRate * 2;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          output[i] = (b0 + b1 + b2 + white * 0.5362) * 0.11;
+        }
+
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const rainFilter = ctx.createBiquadFilter();
+        rainFilter.type = 'lowpass';
+        rainFilter.frequency.setValueAtTime(950, ctx.currentTime);
+
+        whiteNoise.connect(rainFilter);
+        rainFilter.connect(ambientGainNodeRef.current);
+
+        whiteNoise.start();
+        ambientSourceNodesRef.current = [whiteNoise];
+      }
+    } catch (err) {
+      console.warn("Soundscape generation error:", err);
+    }
+
+    return () => {
+      ambientSourceNodesRef.current.forEach(node => {
+        try {
+          node.stop();
+          node.disconnect();
+        } catch {}
+      });
+      ambientSourceNodesRef.current = [];
+    };
+  }, [ambientSoundscape]);
+
+  // Update soundscape volume dynamically
+  useEffect(() => {
+    if (ambientGainNodeRef.current && ambientAudioCtxRef.current) {
+      ambientGainNodeRef.current.gain.setValueAtTime(ambientVolume, ambientAudioCtxRef.current.currentTime);
+    }
+  }, [ambientVolume]);
 
   // Encode Float32Array to WAV format
   const encodeWAV = (samples, sampleRate) => {
@@ -141,7 +366,7 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
 
   // Initialize Custom Avatar from IndexedDB
   useEffect(() => {
-    const initAvatar = async () => {
+    const initAvatarAndEnv = async () => {
       try {
         const customUrl = await getCustomAvatar();
         if (customUrl) {
@@ -149,11 +374,19 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
           const meta = await getCustomAvatarMeta();
           if (meta) setCustomAvatarMeta(meta);
         }
+
+        const customEnvUrl = await getCustomEnvironment();
+        if (customEnvUrl) {
+          setEnvironmentFile(customEnvUrl);
+          setHasCustomEnv(true);
+          const envMeta = await getCustomEnvironmentMeta();
+          if (envMeta) setCustomEnvMeta(envMeta);
+        }
       } catch (e) {
-        console.warn("Error checking custom avatar:", e);
+        console.warn("Error checking cached avatar or environment:", e);
       }
     };
-    initAvatar();
+    initAvatarAndEnv();
   }, []);
 
   const handleAvatarUpload = async (event) => {
@@ -205,6 +438,14 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
     setAvatarMode('default');
     setAvatarUrl('/avatar.vrm');
     showToast("Default avatar restored.");
+  };
+
+  const handleResetEnvironment = async () => {
+    await clearCustomEnvironment();
+    setHasCustomEnv(false);
+    setCustomEnvMeta(null);
+    setEnvironmentFile('room.glb');
+    showToast("Default room environment restored.");
   };
 
   // Initialize Kokoro
@@ -423,31 +664,56 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
     }
   };
 
+  const processImageFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedImage(event.target.result);
+      setAttachedImageMeta({
+        name: file.name,
+        size: (file.size / 1024).toFixed(0) + ' KB',
+        type: file.type.split('/')[1]?.toUpperCase() || 'IMAGE'
+      });
+      triggerDropFlash();
+      // Suggest default question prompt if field is blank
+      setInput(prev => prev.trim() ? prev : "What do you see in this picture?");
+      showToast(`📷 ${file.name} attached! Hit Send to analyze.`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert("Please select a valid image file (PNG, JPEG, WebP).");
+      showToast("❌ Please select a valid image file (PNG, JPEG, WebP, GIF).");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setAttachedImage(event.target.result);
-      showToast("📷 Image attached! Ask a question about it.");
-    };
-    reader.readAsDataURL(file);
+    processImageFile(file);
   };
 
-  // Viewport Drag-and-Drop Handler
-  const handleFileDrop = async (file) => {
-    if (!file) return;
+  const handleFileDropRef = useRef(null);
+
+  // Viewport Drag-and-Drop Handler supporting multi-file prioritization
+  const handleFilesDrop = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+
+    // Prioritize VRM avatar, then FBX animation, then GLB environment, then image
+    const vrmFile = files.find(f => f.name.toLowerCase().endsWith('.vrm'));
+    const fbxFile = files.find(f => f.name.toLowerCase().endsWith('.fbx'));
+    const glbFile = files.find(f => f.name.toLowerCase().endsWith('.glb') || f.name.toLowerCase().endsWith('.gltf'));
+    const imgFile = files.find(f => f.type.startsWith('image/'));
+
+    const file = vrmFile || fbxFile || glbFile || imgFile || files[0];
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith('.vrm')) {
+      setIsIngestingAsset(true);
       const isValid = await validateVRMBinary(file);
       if (!isValid) {
+        setIsIngestingAsset(false);
         showToast("❌ Dropped file is not a valid glTF/VRM binary.");
         return;
       }
@@ -458,34 +724,151 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
         setCustomAvatarMeta(meta);
         setHasCustomAvatar(true);
         setAvatarMode('custom');
-        showToast(`✨ Custom avatar "${meta.name}" cached & loaded!`);
+        triggerDropFlash();
+
+        // Celebratory stage effects and greeting
+        setCurrentAnimation('wave');
+        setEmotion({ name: 'joy', value: 1.0 });
+        setParticleEffect('sparkle');
+        setTimeout(() => {
+          setCurrentAnimation('idle');
+          setEmotion(null);
+          setParticleEffect('none');
+        }, 4000);
+
+        if (voiceDropReactions) {
+          speak("I love this avatar! It looks amazing on stage.");
+        }
+        showToast(`✨ Avatar "${meta.name}" materialized on stage!`);
       } catch (err) {
         console.error("Drop VRM error:", err);
         showToast("❌ Failed to load VRM file.");
+      } finally {
+        setIsIngestingAsset(false);
+      }
+    } else if (fileName.endsWith('.fbx')) {
+      setIsIngestingAsset(true);
+      try {
+        const animName = file.name.replace(/\.[^/.]+$/, "").toLowerCase();
+        const animBlobUrl = URL.createObjectURL(file);
+        setCustomAnimationAsset({ url: animBlobUrl, name: animName });
+        setCurrentAnimation(animName);
+        triggerDropFlash();
+        if (voiceDropReactions) {
+          speak("Retargeting new skeletal animation!");
+        }
+        showToast(`💃 Custom animation "${file.name}" retargeted and playing!`);
+      } catch (err) {
+        console.error("Drop FBX error:", err);
+        showToast("❌ Failed to process FBX animation file.");
+      } finally {
+        setIsIngestingAsset(false);
       }
     } else if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+      setIsIngestingAsset(true);
       try {
-        const envUrl = URL.createObjectURL(file);
+        const { url: envUrl, meta: envMeta } = await saveCustomEnvironment(file);
         setEnvironmentFile(envUrl);
-        showToast(`🌐 Custom 3D environment "${file.name}" loaded!`);
+        setCustomEnvMeta(envMeta);
+        setHasCustomEnv(true);
+        triggerDropFlash();
+
+        // Smooth camera showcase transition when switching environment
+        cameraControlRef.current?.setLookAt(1.2, 1.8, 3.2, 0, 1.0, 0, true);
+        if (voiceDropReactions) {
+          speak("Welcome to our new surroundings! Custom stage environment loaded.");
+        }
+
+        showToast(`🌐 Custom 3D environment "${envMeta.name}" saved to cache!`);
       } catch (err) {
         console.error("Drop GLB error:", err);
         showToast("❌ Failed to load 3D environment model.");
+      } finally {
+        setIsIngestingAsset(false);
       }
     } else if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAttachedImage(event.target.result);
-        showToast("📷 Image attached! Type a prompt or hit send.");
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file);
     } else {
-      showToast("⚠️ Unsupported file format. Drop a .vrm avatar, .glb environment, or image file.");
+      playInteractionChime(220, 0.25);
+      showToast("⚠️ Unsupported format. Drop a .vrm avatar, .fbx animation, .glb environment, or image file.");
     }
-    const savedPrompt = localStorage.getItem('system_prompt');
-    if (savedPrompt) setSystemPrompt(savedPrompt);
-    const savedKey = localStorage.getItem('openrouter_key');
-    if (savedKey) setOpenRouterKey(savedKey);
+  };
+
+  useEffect(() => {
+    handleFileDropRef.current = handleFilesDrop;
+  });
+
+  useEffect(() => {
+    const handleDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current += 1;
+
+      if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
+        setIsDraggingFile(true);
+
+        // Detect contextual drag item type
+        const item = e.dataTransfer.items[0];
+        if (item.type?.startsWith('image/')) {
+          setDropContextCue({
+            icon: '📷',
+            title: 'Drop Image for AI Vision',
+            desc: 'Succubus will analyze and discuss this image with you'
+          });
+        } else {
+          setDropContextCue({
+            icon: '🎭',
+            title: 'Materialize Avatar or Stage',
+            desc: 'Drop a .vrm avatar model or .glb 3D environment'
+          });
+        }
+      }
+    };
+
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current -= 1;
+      if (dragCounterRef.current <= 0) {
+        dragCounterRef.current = 0;
+        setIsDraggingFile(false);
+      }
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Track screen distance to center to determine drop target affinity
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight * 0.45;
+      const dx = (e.clientX - centerX) / (window.innerWidth / 2);
+      const dy = (e.clientY - centerY) / (window.innerHeight / 2);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      setDragTargetZone(dist < 0.45 ? 'avatar' : 'stage');
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current = 0;
+      setIsDraggingFile(false);
+
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        handleFileDropRef.current?.(e.dataTransfer.files);
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
   }, []);
 
   const handleSaveSettings = () => {
@@ -576,13 +959,24 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#222', overflow: 'hidden' }}>
 
+      {/* Fullscreen Success Drop Ripple Flash */}
+      {dropFlash && <div className="drop-success-flash" />}
+
+      {/* Real-time Asset Ingestion Spinner */}
+      {isIngestingAsset && (
+        <div className="asset-ingestion-spinner">
+          <div className="ingestion-spinner-circle" />
+          <span className="ingestion-spinner-text">Materializing 3D Asset...</span>
+        </div>
+      )}
+
       {/* Drag & Drop Visual HUD Overlay */}
       {isDraggingFile && (
         <div className="drop-overlay">
           <div className="drop-overlay-box">
-            <div className="drop-overlay-icon">📥</div>
-            <h2 className="drop-overlay-title">Drop File Here</h2>
-            <p className="drop-overlay-desc">Drop a .vrm avatar, .glb 3D environment, or an image to share</p>
+            <div className="drop-overlay-icon">{dropContextCue.icon}</div>
+            <h2 className="drop-overlay-title">{dropContextCue.title}</h2>
+            <p className="drop-overlay-desc">{dropContextCue.desc}</p>
           </div>
         </div>
       )}
@@ -591,6 +985,16 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
       {toastMessage && (
         <div className="toast-notification">
           <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Viewport Performance & FPS HUD Badge */}
+      {showPerformanceHud && (
+        <div className="viewport-fps-badge">
+          <span className="fps-indicator-dot" style={{ background: fps >= 50 ? '#00ff88' : fps >= 30 ? '#ffaa00' : '#ff4081' }} />
+          <span>{fps} FPS</span>
+          <span style={{ opacity: 0.6 }}>|</span>
+          <span style={{ fontSize: '11px', opacity: 0.8 }}>WebGL 2.0</span>
         </div>
       )}
 
@@ -614,6 +1018,46 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
           </div>
         )}
       </div>
+
+      {/* VRM Avatar Metadata Inspector Modal */}
+      {showAvatarInspector && (
+        <div className="avatar-inspector-modal-backdrop" onClick={() => setShowAvatarInspector(false)}>
+          <div className="avatar-inspector-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="avatar-inspector-header">
+              <h3>VRM Avatar Inspector</h3>
+              <button className="dashboard-close-btn" onClick={() => setShowAvatarInspector(false)}>✕</button>
+            </div>
+            <div className="avatar-inspector-body">
+              <div className="inspector-row">
+                <span className="inspector-label">Model Filename</span>
+                <span className="inspector-val">{customAvatarMeta?.name || 'avatar.vrm'}</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Binary File Size</span>
+                <span className="inspector-val">
+                  {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(2)} MB (${customAvatarMeta.size.toLocaleString()} bytes)` : 'Default Model Asset'}
+                </span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Format Header</span>
+                <span className="inspector-val">glTF Binary 2.0 (VRM)</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Storage Location</span>
+                <span className="inspector-val">Browser IndexedDB (WebWaifuCache)</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Spring Bone Physics</span>
+                <span className="inspector-val">Active (Stiffness: {springStiffness.toFixed(1)}, Damping: {springDragForce.toFixed(2)})</span>
+              </div>
+              <div className="inspector-row">
+                <span className="inspector-label">Retargeting Engine</span>
+                <span className="inspector-val">Mixamo to VRM Skeletal Normalizer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Toggle Button */}
       <button
@@ -692,13 +1136,27 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
                 borderRadius: '8px',
                 border: '1px solid rgba(255,255,255,0.08)'
               }}>
-                <div style={{ fontSize: '11px', color: '#aaccff', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                <div style={{ fontSize: '11px', color: '#aaccff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span
+                    style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px', cursor: 'pointer' }}
+                    onClick={() => setShowAvatarInspector(true)}
+                    title="Click to view detailed model inspection"
+                  >
                     📦 {customAvatarMeta?.name || 'custom_avatar.vrm'}
                   </span>
-                  <span>
-                    {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'IndexedDB'}
-                  </span>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button
+                      className="chip-button"
+                      style={{ padding: '2px 6px', fontSize: '10px' }}
+                      onClick={() => setShowAvatarInspector(true)}
+                      title="Inspect VRM Metadata"
+                    >
+                      Inspect 🔍
+                    </button>
+                    <span>
+                      {customAvatarMeta?.size ? `${(customAvatarMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'IndexedDB'}
+                    </span>
+                  </div>
                 </div>
                 <button
                   className="action-button danger"
@@ -781,6 +1239,22 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Animation Crossfade: {crossfadeDuration.toFixed(2)}s
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls skeletal blending speed when transitioning between animation poses (0.1s to 1.0s).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.1" max="1" step="0.05"
+              value={crossfadeDuration}
+              onChange={(e) => setCrossfadeDuration(parseFloat(e.target.value))}
+            />
           </div>
 
           <div className="dashboard-section">
@@ -925,6 +1399,149 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Atmospheric Soundscape
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Procedural Web Audio background loops (Cyber Drone or Warm Rain) for immersive presence.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={ambientSoundscape}
+              onChange={(e) => setAmbientSoundscape(e.target.value)}
+            >
+              <option value="none">None (Silent Stage)</option>
+              <option value="cyber">Cyber Drone Atmosphere</option>
+              <option value="rain">Warm Ambient Rain</option>
+            </select>
+          </div>
+
+          {ambientSoundscape !== 'none' && (
+            <div className="dashboard-section">
+              <label className="dashboard-label">
+                Ambient Soundscape Volume: {Math.round(ambientVolume * 100)}%
+                <div className="tooltip-container">?
+                  <span className="tooltip-text">Volume gain level of procedural background audio.</span>
+                </div>
+              </label>
+              <input
+                type="range"
+                className="dashboard-slider"
+                min="0.05" max="1" step="0.05"
+                value={ambientVolume}
+                onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+              />
+            </div>
+          )}
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              UI Interaction Sound Effects
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Enable subtle procedural audio chimes when clicking avatars, dropping assets, or triggering actions.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${soundEffectsEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setSoundEffectsEnabled(true);
+                  playInteractionChime(750, 0.15);
+                }}
+              >
+                🔔 Sound On
+              </button>
+              <button
+                className={`chip-button ${!soundEffectsEnabled ? 'active' : ''}`}
+                onClick={() => setSoundEffectsEnabled(false)}
+              >
+                🔕 Muted
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Stage Landing Guidance Beacon
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Toggles the 3D illuminated holographic beacon light cylinder that descends onto the landing zone when dragging files onto the stage.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${stageBeaconEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setStageBeaconEnabled(true);
+                  playInteractionChime(750, 0.15);
+                }}
+              >
+                💡 Beacon Ray
+              </button>
+              <button
+                className={`chip-button ${!stageBeaconEnabled ? 'active' : ''}`}
+                onClick={() => setStageBeaconEnabled(false)}
+              >
+                Disabled
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Drop Shockwave & Landing Bounce
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Enables dynamic 3D expanding ground shockwave ring and soft vertical avatar landing bounce physics when files are dropped.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${dropPhysicsEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setDropPhysicsEnabled(true);
+                  playInteractionChime(700, 0.15);
+                }}
+              >
+                🌊 Shockwave & Bounce
+              </button>
+              <button
+                className={`chip-button ${!dropPhysicsEnabled ? 'active' : ''}`}
+                onClick={() => {
+                  setDropPhysicsEnabled(false);
+                  playInteractionChime(400, 0.15);
+                }}
+              >
+                Static
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Voice Drop Reactions
+              <div className="tooltip-container">?
+                <span className="tooltip-text">When enabled, the companion dynamically vocalizes spoken reactions and observations when avatars, animations, or environments are dropped onto the stage.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${voiceDropReactions ? 'active' : ''}`}
+                onClick={() => {
+                  setVoiceDropReactions(true);
+                  playInteractionChime(620, 0.15);
+                }}
+              >
+                🗣️ Spoken Reactions
+              </button>
+              <button
+                className={`chip-button ${!voiceDropReactions ? 'active' : ''}`}
+                onClick={() => setVoiceDropReactions(false)}
+              >
+                Silent
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               Microphone Input Tester
               <div className="tooltip-container">?
                 <span className="tooltip-text">Test your microphone input gain in real-time with Web Audio API VU meter before voice chatting.</span>
@@ -1005,6 +1622,45 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
 
           <div className="dashboard-section">
             <label className="dashboard-label">
+              Performance HUD Overlay
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Displays live WebGL rendering frame rate (FPS) and engine status on the 3D viewport.</span>
+              </div>
+            </label>
+            <div className="button-grid">
+              <button
+                className={`chip-button ${showPerformanceHud ? 'active' : ''}`}
+                onClick={() => setShowPerformanceHud(true)}
+              >
+                📊 Show FPS HUD
+              </button>
+              <button
+                className={`chip-button ${!showPerformanceHud ? 'active' : ''}`}
+                onClick={() => setShowPerformanceHud(false)}
+              >
+                Hidden
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Camera Field of View: {cameraFov}°
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls viewport perspective and focal zoom (25° telephoto to 75° wide angle).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="25" max="75" step="1"
+              value={cameraFov}
+              onChange={(e) => setCameraFov(parseInt(e.target.value, 10))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
               3D Environment Asset
               <div className="tooltip-container">?
                 <span className="tooltip-text">Switch active GLB virtual stage model, cached automatically in IndexedDB.</span>
@@ -1012,13 +1668,32 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
             </label>
             <select
               className="dashboard-input"
-              value={environmentFile}
-              onChange={(e) => setEnvironmentFile(e.target.value)}
+              value={environmentFile.startsWith('blob:') || environmentFile.startsWith('data:') ? 'custom' : environmentFile}
+              onChange={(e) => {
+                if (e.target.value !== 'custom') {
+                  setEnvironmentFile(e.target.value);
+                }
+              }}
             >
               <option value="none">Void (Empty Space)</option>
               <option value="room.glb">Modern Neon Room</option>
               <option value="room2.glb">Sci-Fi Deck</option>
+              {hasCustomEnv && <option value="custom">🌐 Custom ({customEnvMeta?.name || 'IndexedDB Cached'})</option>}
             </select>
+            {hasCustomEnv && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: '#00e5ff' }}>
+                  📦 {customEnvMeta?.name || 'Custom Environment'} ({((customEnvMeta?.size || 0) / 1024 / 1024).toFixed(1)} MB)
+                </span>
+                <button
+                  className="chip-button"
+                  style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                  onClick={handleResetEnvironment}
+                >
+                  Reset Room ✕
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="dashboard-section">
@@ -1046,12 +1721,12 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
 
           <div className="dashboard-section">
             <label className="dashboard-label">
-              Visual Particle Effects
+              Atmospheric Particle Simulation
               <div className="tooltip-container">?
-                <span className="tooltip-text">Toggles ambient sparkles and visual particle simulations. Can also be triggered by AI via [effect:sparkle].</span>
+                <span className="tooltip-text">Selects ambient 3D particle simulation presets (Sparkles, Fireflies, Digital Snow, or Stardust). Can also be triggered by AI via [effect:name].</span>
               </div>
             </label>
-            <div className="button-grid">
+            <div className="button-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))' }}>
               <button
                 className={`chip-button ${particleEffect === 'none' ? 'active' : ''}`}
                 onClick={() => setParticleEffect('none')}
@@ -1064,7 +1739,91 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
               >
                 ✨ Sparkles
               </button>
+              <button
+                className={`chip-button ${particleEffect === 'fireflies' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('fireflies')}
+              >
+                🌿 Fireflies
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'snow' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('snow')}
+              >
+                ❄️ Snow
+              </button>
+              <button
+                className={`chip-button ${particleEffect === 'stardust' ? 'active' : ''}`}
+                onClick={() => setParticleEffect('stardust')}
+              >
+                🌌 Stardust
+              </button>
             </div>
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0" max="3" step="0.1"
+              value={bloomIntensity}
+              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
+              </div>
+            </label>
+            <input
+              type="range"
+              className="dashboard-slider"
+              min="0.2" max="2" step="0.1"
+              value={ambientLightScale}
+              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Key Light Color
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Sets directional key light hue and atmosphere tint.</span>
+              </div>
+            </label>
+            <input
+              type="color"
+              className="dashboard-input"
+              style={{ height: '36px', padding: '2px', cursor: 'pointer' }}
+              value={lightColor}
+              onChange={(e) => setLightColor(e.target.value)}
+            />
+          </div>
+
+          <div className="dashboard-section">
+            <label className="dashboard-label">
+              Shadow Quality
+              <div className="tooltip-container">?
+                <span className="tooltip-text">Resolution buffer size for real-time dynamic directional shadows.</span>
+              </div>
+            </label>
+            <select
+              className="dashboard-input"
+              value={shadowMapResolution}
+              onChange={(e) => setShadowMapResolution(parseInt(e.target.value, 10))}
+            >
+              <option value={512}>Low (512x512)</option>
+              <option value={1024}>Medium (1024x1024)</option>
+              <option value={2048}>High (2048x2048)</option>
+            </select>
           </div>
         </div>
 
@@ -1204,72 +1963,6 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
               </button>
             </div>
           </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Bloom Glow Intensity: {bloomIntensity.toFixed(1)}
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Controls postprocessing neon glow and emissive bloom luminance threshold (0.0 to 3.0).</span>
-              </div>
-            </label>
-            <input
-              type="range"
-              className="dashboard-slider"
-              min="0" max="3" step="0.1"
-              value={bloomIntensity}
-              onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Ambient Light Brightness: {ambientLightScale.toFixed(1)}x
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Scales overall scene ambient fill light level (0.2x to 2.0x).</span>
-              </div>
-            </label>
-            <input
-              type="range"
-              className="dashboard-slider"
-              min="0.2" max="2" step="0.1"
-              value={ambientLightScale}
-              onChange={(e) => setAmbientLightScale(parseFloat(e.target.value))}
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Key Light Color
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Sets directional key light hue and atmosphere tint.</span>
-              </div>
-            </label>
-            <input
-              type="color"
-              className="dashboard-input"
-              style={{ height: '36px', padding: '2px', cursor: 'pointer' }}
-              value={lightColor}
-              onChange={(e) => setLightColor(e.target.value)}
-            />
-          </div>
-
-          <div className="dashboard-section">
-            <label className="dashboard-label">
-              Shadow Quality
-              <div className="tooltip-container">?
-                <span className="tooltip-text">Resolution buffer size for real-time dynamic directional shadows.</span>
-              </div>
-            </label>
-            <select
-              className="dashboard-input"
-              value={shadowMapResolution}
-              onChange={(e) => setShadowMapResolution(parseInt(e.target.value, 10))}
-            >
-              <option value={512}>Low (512x512)</option>
-              <option value={1024}>Medium (1024x1024)</option>
-              <option value={2048}>High (2048x2048)</option>
-            </select>
-          </div>
         </div>
 
         <button
@@ -1291,40 +1984,130 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
       </div>
 
       {/* 3D Canvas Viewport */}
-      <Canvas shadows camera={{ position: [0, 1.5, 3], fov: 45 }}>
-        <ambientLight intensity={(lightsOn ? 0.8 : 0.05) * ambientLightScale} />
+      <Canvas shadows camera={{ position: [0, 1.3, 2.6], fov: cameraFov }}>
+        <ambientLight intensity={(lightsOn ? 0.45 : 0.05) * ambientLightScale} />
         <directionalLight
           castShadow
-          position={[5, 5, 5]}
-          intensity={lightsOn ? 2.0 : 0.1}
-          color={lightColor}
+          position={[3, 4, 4]}
+          intensity={lightsOn ? (isDraggingFile ? 1.8 : 1.2) : 0.1}
+          color={isDraggingFile ? '#aaccff' : lightColor}
           shadow-mapSize={[shadowMapResolution, shadowMapResolution]}
         />
-        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.5 : 0.05} color="#aaccff" />
+        <pointLight position={[-3, 2, -3]} intensity={lightsOn ? 0.3 : 0.05} color="#aaccff" />
 
         <Suspense fallback={null}>
-          {environmentFile !== 'none' && <Environment lightsOn={lightsOn} file={environmentFile} />}
+          {environmentFile !== 'none' && (
+            <Environment
+              lightsOn={lightsOn}
+              file={environmentFile}
+              soundEffectsEnabled={soundEffectsEnabled}
+            />
+          )}
 
           {particleEffect === 'sparkle' && (
              <Sparkles count={100} scale={2.5} size={6} speed={0.4} opacity={0.8} color="#ffffaa" position={[0, 1, 0]} />
+          )}
+          {particleEffect === 'fireflies' && (
+             <Sparkles count={45} scale={3.5} size={8} speed={0.25} opacity={0.9} color="#aaff44" position={[0, 1.2, 0]} />
+          )}
+          {particleEffect === 'snow' && (
+             <Sparkles count={160} scale={4.0} size={5} speed={0.8} opacity={0.85} color="#e0f7fa" position={[0, 2.0, 0]} />
+          )}
+          {particleEffect === 'stardust' && (
+             <Sparkles count={220} scale={3.2} size={3.5} speed={0.18} opacity={0.75} color="#70d6ff" position={[0, 1.0, 0]} />
+          )}
+
+          {/* Holographic 3D Stage Landing Zone Reticle when dragging files */}
+          {isDraggingFile && (
+            <group position={[0, 0.02, 0]}>
+              {/* Stage Guidance Beacon Ray Cylinder */}
+              {stageBeaconEnabled && (
+                <mesh position={[0, 2.0, 0]}>
+                  <cylinderGeometry args={[0.08, 0.45, 4.0, 32, 1, true]} />
+                  <meshBasicMaterial
+                    color={dragTargetZone === 'avatar' ? '#ff4081' : '#00e5ff'}
+                    transparent
+                    opacity={dragTargetZone === 'avatar' ? 0.45 : 0.25}
+                    side={2}
+                    wireframe={false}
+                  />
+                </mesh>
+              )}
+              {/* Avatar Center Aura Ring */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.7, 0.88, 36]} />
+                <meshBasicMaterial
+                  color={dragTargetZone === 'avatar' ? '#ff4081' : '#00e5ff'}
+                  transparent
+                  opacity={dragTargetZone === 'avatar' ? 0.9 : 0.4}
+                  side={2}
+                />
+              </mesh>
+              {/* Outer Stage Floor Perimeter Ring */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[1.45, 1.62, 48]} />
+                <meshBasicMaterial
+                  color={dragTargetZone === 'stage' ? '#00e5ff' : '#aaccff'}
+                  transparent
+                  opacity={dragTargetZone === 'stage' ? 0.85 : 0.35}
+                  side={2}
+                />
+              </mesh>
+              {/* Inner Bullseye Target Circle */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.3, 32]} />
+                <meshBasicMaterial
+                  color={dragTargetZone === 'avatar' ? '#ff4081' : '#00e5ff'}
+                  transparent
+                  opacity={dragTargetZone === 'avatar' ? 0.5 : 0.25}
+                  side={2}
+                />
+              </mesh>
+            </group>
+          )}
+
+          {/* 3D Drop Impact Expanding Shockwave Ring */}
+          {dropShockwave && (
+            <group position={[0, 0.03, 0]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[1.1, 1.35, 48]} />
+                <meshBasicMaterial color="#00e5ff" transparent opacity={0.8} side={2} />
+              </mesh>
+              <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.4, 0.55, 32]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.9} side={2} />
+              </mesh>
+            </group>
           )}
 
           <Character
             url={avatarUrl}
             currentAnimation={currentAnimation}
+            customAnimationAsset={customAnimationAsset}
             emotion={emotion}
             isSpeaking={isSpeaking}
             visemes={visemes}
             springBoneStiffness={springStiffness}
             springBoneDragForce={springDragForce}
+            crossfadeDuration={crossfadeDuration}
+            landingPhysicsEnabled={dropPhysicsEnabled}
+            onFpsUpdate={setFps}
             onAvatarPointerDown={handleAvatarTouch}
           />
           <EffectComposer>
-            <Bloom intensity={bloomIntensity} luminanceThreshold={0.8} luminanceSmoothing={0.025} />
+            <Bloom intensity={bloomIntensity * 0.4} luminanceThreshold={0.92} luminanceSmoothing={0.05} />
           </EffectComposer>
         </Suspense>
 
-        <OrbitControls target={[0, 1.1, 0]} minPolarAngle={Math.PI/4} maxPolarAngle={Math.PI/2 + 0.1} minDistance={1.5} maxDistance={5} />
+        <CameraControls
+          ref={cameraControlRef}
+          minDistance={0.5}
+          maxDistance={5}
+          maxPolarAngle={Math.PI / 1.5}
+          onInit={(controls) => {
+            controls.setLookAt(0, 1.35, 2.4, 0, 1.15, 0, false);
+          }}
+        />
       </Canvas>
 
       <div style={{
@@ -1345,9 +2128,65 @@ Do not wrap the JSON in markdown code blocks, output only the JSON object.`
         fontFamily: 'system-ui, -apple-system, sans-serif'
       }}>
 
-        {errorMsg && (
-          <div className="error-message">
-            <strong>Warning:</strong> {errorMsg}
+            return (
+              <div key={idx} style={{
+                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                background: msg.role === 'user' ? 'linear-gradient(135deg, #007bff, #0056b3)' : 'linear-gradient(135deg, #444, #333)',
+                padding: '10px 14px',
+                borderRadius: '20px',
+                borderBottomRightRadius: msg.role === 'user' ? '4px' : '20px',
+                borderBottomLeftRadius: msg.role === 'user' ? '20px' : '4px',
+                maxWidth: '80%',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                lineHeight: '1.4'
+              }}>
+                {imgPart && (
+                  <img
+                    src={imgPart}
+                    alt="attachment"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '160px',
+                      borderRadius: '8px',
+                      marginBottom: textPart ? '8px' : '0',
+                      display: 'block'
+                    }}
+                  />
+                )}
+                {textPart}
+              </div>
+            );
+          })}
+          <div ref={endOfMessagesRef} />
+        </div>
+
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div className="attached-image-bar">
+            <img
+              src={attachedImage}
+              alt="preview"
+              className="attached-image-thumb"
+            />
+            <div className="attached-image-info">
+              <span className="attached-image-title">
+                {attachedImageMeta?.name || 'Attached Image'}
+              </span>
+              <div className="attached-image-badges">
+                <span className="attached-badge">{attachedImageMeta?.type || 'IMAGE'}</span>
+                <span className="attached-badge">{attachedImageMeta?.size || ''}</span>
+              </div>
+            </div>
+            <button
+              className="attached-image-remove"
+              onClick={() => {
+                setAttachedImage(null);
+                setAttachedImageMeta(null);
+              }}
+              title="Remove attached image"
+            >
+              ✕
+            </button>
           </div>
         )}
 
